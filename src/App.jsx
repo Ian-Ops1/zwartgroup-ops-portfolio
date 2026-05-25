@@ -75,8 +75,9 @@ const excelToISO = (serial) => {
 };
 
 const calculateCleans = (checkIn, checkOut, nights) => {
-  if (nights < 7) return [];
-  const numCleans = Math.floor(nights / 7);
+  // Matches Excel: D+(n*7)<E (strictly less than checkout)
+  const numCleans = nights <= 7 ? 0 : Math.ceil(nights / 7) - 1;
+  if (numCleans === 0) return [];
   return Array.from({ length: numCleans }, (_, i) => ({
     cleanNumber: i + 1,
     dueDate: addDays(checkIn, (i + 1) * 7),
@@ -166,64 +167,68 @@ const mkBooking = (id, guestName, propId, checkIn, checkOut, platform, revenue, 
     ...( extraCleans[i] || {}),
     status: extraCleans[i]?.status || c.status,
   }));
+  // propId can be a ZG-ID or a property name directly
   return { id, guestName, propId, propertyName: prop?.name || propId, area: prop?.area || "",
-    checkIn, checkOut, nights, platform, revenue: Number(revenue), notes,
+    checkIn, checkOut, nights, platform, revenue: Number(revenue)||0, notes,
+    status: daysBetween(checkOut, TODAY) > 0 ? "Checked Out" : daysBetween(TODAY, checkIn) > 0 ? "Upcoming" : "In-House",
+    cleans };
+};
+
+// mkBookingDirect: for real bookings where property name is used directly
+const mkBookingDirect = (id, guestName, propName, checkIn, checkOut, platform, revenue, cleanStatuses = [], notes = "") => {
+  const nights = daysBetween(checkIn, checkOut);
+  const cleans = calculateCleans(checkIn, checkOut, nights).map((c, i) => ({
+    ...c,
+    status: cleanStatuses[i] || c.status,
+    assignedHousekeeper: "",
+  }));
+  return { id, guestName, propId: null, propertyName: propName, area: "",
+    checkIn, checkOut, nights, platform, revenue: Number(revenue)||0, notes,
     status: daysBetween(checkOut, TODAY) > 0 ? "Checked Out" : daysBetween(TODAY, checkIn) > 0 ? "Upcoming" : "In-House",
     cleans };
 };
 
 const INITIAL_BOOKINGS = [
-  mkBooking("HMD9DDPMNY","Nomusa Buthelezi","ZG-015","2026-04-28","2026-05-29","Airbnb",16705.35,
-    [{status:"Completed",completedDate:"2026-05-05",assignedHousekeeper:"Rebecca"},{status:"Completed",completedDate:"2026-05-12",assignedHousekeeper:"Sharon"},{status:"Completed",completedDate:"2026-05-19",assignedHousekeeper:"Rebecca"},{status:"Upcoming"}]),
-  mkBooking("6947727965","Guest","ZG-002","2026-05-01","2026-05-29","Booking.com",22400.00,
-    [{status:"Completed",completedDate:"2026-05-08",assignedHousekeeper:"Sandy"},{status:"Completed",completedDate:"2026-05-15",assignedHousekeeper:"Sandy"},{status:"Upcoming"},{status:"Upcoming"}],"⚠️ Name missing"),
-  mkBooking("6112448606","Sipho Dlamini","ZG-006","2026-05-03","2026-05-24","Booking.com",18900.00,
-    [{status:"Completed",completedDate:"2026-05-10",assignedHousekeeper:"Betty"},{status:"Completed",completedDate:"2026-05-17",assignedHousekeeper:"Betty"}]),
-  mkBooking("5986083519","Amina Mokoena","ZG-019","2026-05-10","2026-05-31","Booking.com",14200.00,
-    [{status:"Completed",completedDate:"2026-05-17",assignedHousekeeper:"Netsai"},{status:"Upcoming"},{status:"Upcoming"}]),
-  mkBooking("AHBD72KP","Fatima Davids","ZG-034","2026-04-14","2026-05-26","Airbnb",31500.00,
-    [{status:"Completed",completedDate:"2026-04-21",assignedHousekeeper:"Kudzai"},{status:"Completed",completedDate:"2026-04-28",assignedHousekeeper:"Kudzai"},{status:"Completed",completedDate:"2026-05-05",assignedHousekeeper:"Kudzai"},{status:"Completed",completedDate:"2026-05-12",assignedHousekeeper:"Kudzai"},{status:"Upcoming"}]),
-  mkBooking("XPQM99AR","Liam van der Berg","ZG-032","2026-05-17","2026-05-31","Direct",12600.00,
-    [{status:"Overdue"},{status:"Upcoming"}]),
-  mkBooking("BC449281","Thabo Sithole","ZG-050","2026-04-20","2026-06-08","Airbnb",58000.00,
-    [{status:"Completed",completedDate:"2026-04-27",assignedHousekeeper:"Tryness"},{status:"Completed",completedDate:"2026-05-04",assignedHousekeeper:"Tryness"},{status:"Completed",completedDate:"2026-05-11",assignedHousekeeper:"Tryness"},{status:"Completed",completedDate:"2026-05-18",assignedHousekeeper:"Merjury"},{status:"Due Tomorrow"},{status:"Upcoming"},{start:"Upcoming"}]),
-  mkBooking("KWR331XZ","Guest","ZG-044","2026-05-07","2026-05-28","Booking.com",0,
-    [{status:"Completed",completedDate:"2026-05-14",assignedHousekeeper:"Sharon"}],"⚠️ Name missing; ⚠️ Revenue missing"),
-  mkBooking("NHQP7761","Zanele Khumalo","ZG-049","2026-05-05","2026-05-26","Airbnb",27800.00,
-    [{status:"Completed",completedDate:"2026-05-12",assignedHousekeeper:"Netsai"},{status:"Completed",completedDate:"2026-05-19",assignedHousekeeper:"Netsai"}]),
-  mkBooking("7839204651","Pieter Joubert","ZG-024","2026-05-01","2026-05-22","Booking.com",19400.00,
-    [{status:"Completed",completedDate:"2026-05-08",assignedHousekeeper:"Betty"},{status:"Completed",completedDate:"2026-05-15",assignedHousekeeper:"Betty"}]),
-  mkBooking("LQZB44MM","Sarah Ntuli","ZG-041","2026-05-08","2026-05-29","Airbnb",23100.00,
-    [{status:"Completed",completedDate:"2026-05-15",assignedHousekeeper:"Rebecca"},{status:"Due Tomorrow"}]),
-  mkBooking("DMHK9913","Guest","ZG-027","2026-05-15","2026-06-05","Direct",0,
-    [{status:"Upcoming"},{status:"Upcoming"}],"⚠️ Name missing; ⚠️ Revenue missing; ⚠️ Platform unconfirmed"),
-  mkBooking("AB88PQRS","Chidi Okonkwo","ZG-009","2026-05-20","2026-05-27","Airbnb",6300.00),
-  mkBooking("NXV221BK","Nia Petersen","ZG-031","2026-05-18","2026-06-08","Booking.com",15800.00,
-    [{status:"Upcoming"},{status:"Upcoming"},{status:"Upcoming"}]),
-  mkBooking("RSTW7823","Musa Hadebe","ZG-045","2026-05-22","2026-05-29","Direct",9800.00),
-  mkBooking("4420881957","Priya Naidoo","ZG-016","2026-05-03","2026-05-24","Booking.com",16200.00,
-    [{status:"Completed",completedDate:"2026-05-10",assignedHousekeeper:"Sandy"},{status:"Completed",completedDate:"2026-05-17",assignedHousekeeper:"Sandy"}]),
-  mkBooking("QPZX9912","Aisha Abrahams","ZG-035","2026-05-25","2026-06-15","Airbnb",18300.00,
-    [{status:"Upcoming"},{status:"Upcoming"}]),
-  mkBooking("JKWP3347","Mohammed Suleiman","ZG-004","2026-05-26","2026-06-02","Direct",7200.00),
-  mkBooking("BQNM5561","Lindiwe Dube","ZG-038","2026-05-10","2026-05-31","Airbnb",13400.00,
-    [{status:"Completed",completedDate:"2026-05-17",assignedHousekeeper:"Kudzai"},{status:"Due Today"},{status:"Upcoming"}]),
-  mkBooking("VXTR8890","Guest","ZG-003","2026-05-24","2026-05-31","Booking.com",5800.00,
-    [],"⚠️ Name missing"),
-  mkBooking("CPMQ6614","Naledi Modise","ZG-033","2026-05-20","2026-05-27","Airbnb",4900.00),
-  mkBooking("7123449820","Khulekani Zulu","ZG-043","2026-04-28","2026-05-19","Booking.com",11700.00,
-    [{status:"Completed",completedDate:"2026-05-05",assignedHousekeeper:"Merjury"},{status:"Completed",completedDate:"2026-05-12",assignedHousekeeper:"Merjury"}]),
-  mkBooking("WXPQ4401","Yusuf Essop","ZG-040","2026-05-26","2026-06-09","Airbnb",14800.00,
-    [{status:"Upcoming"}]),
-  mkBooking("LTBV2219","Thandiwe Cele","ZG-008","2026-05-08","2026-05-29","Direct",12100.00,
-    [{status:"Completed",completedDate:"2026-05-15",assignedHousekeeper:"Tryness"},{status:"Upcoming"}]),
-  mkBooking("RQHM7782","Jessica Fredericks","ZG-010","2026-05-12","2026-05-26","Airbnb",9600.00,
-    [{status:"Completed",completedDate:"2026-05-19",assignedHousekeeper:"Netsai"}]),
-  mkBooking("ZNXB5500","Tebogo Molefe","ZG-021","2026-05-24","2026-06-14","Booking.com",19200.00,
-    [{status:"Upcoming"},{status:"Upcoming"}]),
+  // Real data from May_OpsHub_By_Ian_V7.xlsx — Res & Mid-Stay Cleans sheet
+  // C=Completed, R=Rescheduled, U=Upcoming, T=DueToday, OV=Overdue
+  mkBookingDirect("HMD9DDPMNY","Nomusa Buthelezi","Unit 3 Castella Mare","2026-05-02","2026-06-02","Airbnb",16705.35,["Completed","Completed","Completed","Upcoming"]),
+  mkBookingDirect("HMMM4NRS3D","Lene Van Dyk","Tranquil Garden (10 Duet Cottage)","2026-05-01","2026-05-31","Airbnb",10541.63,["Completed","Completed","Completed","Upcoming"]),
+  mkBookingDirect("HMDSP3XDZD","Abigail Windvogel","35 Uxolo","2026-04-30","2026-05-28","Airbnb",13446.79,["Completed","Completed","Completed"]),
+  mkBookingDirect("HMPPK4ZEN5","Anthony Chijioke","2309 16 on Bree","2026-04-16","2026-05-16","Airbnb",28009.34,["Completed","Completed","Completed","Completed"]),
+  mkBookingDirect("HMZZYR9NP8","Oluwamayowa Fanoiki","2108 The Rubik","2026-04-13","2026-05-14","Airbnb",20117.40,["Completed","Completed","Completed","Completed"]),
+  mkBookingDirect("HMNZ59ABRW","Sylvester Selepe","601 Quayside Apartments","2026-04-24","2026-06-30","Airbnb",52196.41,["Completed","Completed","Completed","Completed","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming"]),
+  mkBookingDirect("HMKMTC9JAQ","Tonye Tariah","1005 Arnhem","2026-04-06","2026-05-08","Airbnb",23030.40,["Completed","Completed","Completed","Completed"]),
+  mkBookingDirect("HMQESEWZMJ","Francisca","Suite 103 Strand Beach","2026-05-01","2026-05-17","Airbnb",0,["Completed","Completed"],"⚠️ Revenue missing"),
+  mkBookingDirect("HMH34D3NEA","Azeez Kehinde","504 Greenmarket","2026-04-30","2026-05-11","Airbnb",7763.89,["Completed"]),
+  mkBookingDirect("HMPRNKZKH4","Abdullah Habeeb","505 Bridgewater","2026-05-03","2026-06-03","Airbnb",24890.01,["Completed","Rescheduled","Due Today","Upcoming"]),
+  mkBookingDirect("HMNRD2RRP9","Maya Dorel","8 Bramber Court","2026-04-11","2026-06-11","Airbnb",67965.89,["Completed","Completed","Completed","Completed","Rescheduled","Overdue","Upcoming","Upcoming"]),
+  mkBookingDirect("HMMN2RHC4P","Serena Dell'Angelo","504 The Centurion","2026-04-23","2026-05-25","Airbnb",22063.97,["Completed","Completed","Completed","Completed"]),
+  mkBookingDirect("HMJHWNNKMB","Milla Sequeira","201 The Suro","2026-05-04","2026-06-04","Airbnb",41017.65,["Completed","Completed","Due Tomorrow","Upcoming"]),
+  mkBookingDirect("HMBRAYFMD2","Ontario","24 Upper Pepper","2026-05-04","2026-05-29","Airbnb",21933.38,["Completed","Completed","Due Tomorrow"]),
+  mkBookingDirect("HMPFX4MBN2","Teresa Forester","The Nest (10 Duet Loft)","2026-05-07","2026-05-19","Airbnb",910.67,["Completed"]),
+  mkBookingDirect("HMC344RY9N","Brian Van Eyssen","Unit 2 - 2 Munnik Laas","2026-05-08","2026-05-31","Airbnb",0,["Rescheduled","Rescheduled","Upcoming"],"⚠️ Revenue missing"),
+  mkBookingDirect("5986083519","Alexis","417 Station House","2026-05-10","2026-08-01","Booking.com",0,["Rescheduled","Due Today","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming"],"⚠️ Revenue missing"),
+  mkBookingDirect("N/A","Guest","601 Station House","2026-05-04","2026-08-01","Direct",0,["Completed","Completed","Due Tomorrow","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming"],"⚠️ Guest name missing; ⚠️ Revenue missing"),
+  mkBookingDirect("HM3TX2FDHZ","Rhianne Tisdale","602 The Suro","2026-05-09","2026-06-14","Airbnb",0,["Rescheduled","Overdue","Upcoming","Upcoming","Upcoming"],"⚠️ Revenue missing"),
+  mkBookingDirect("HMPFX4MBN2-B","Guest","The Nest (10 Duet Loft)","2026-05-09","2026-05-19","Airbnb",0,["Completed"],"⚠️ Guest name missing; ⚠️ Revenue missing"),
+  mkBookingDirect("HMEWYEMCWH","Guest","Unit 1 - 2 Munnik Laas","2026-05-10","2026-06-30","Airbnb",0,["Rescheduled","Due Today","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming"],"⚠️ Guest name missing; ⚠️ Revenue missing"),
+  mkBookingDirect("HMXRKNYWJN","Guest","10 Duet Main House","2026-05-14","2026-05-23","Airbnb",0,["Completed"],"⚠️ Guest name missing; ⚠️ Revenue missing"),
+  mkBookingDirect("4PL7YF","John","314 Station House","2026-05-11","2026-06-11","Direct",0,["Completed","Due Tomorrow","Upcoming","Upcoming"],"⚠️ Revenue missing"),
+  mkBookingDirect("NA-614","Guest","614 Albert","2026-05-14","2026-05-22","Airbnb",0,["Completed"],"⚠️ Guest name missing; ⚠️ Revenue missing"),
+  mkBookingDirect("NA-220","Guest","209 220 on Loop","2026-05-15","2026-06-15","Airbnb",0,["Completed","Upcoming","Upcoming","Upcoming"],"⚠️ Guest name missing; ⚠️ Revenue missing"),
+  mkBookingDirect("NA-126","Guest","602 126 on Main","2026-05-15","2026-05-28","Airbnb",0,["Completed"],"⚠️ Guest name missing; ⚠️ Revenue missing"),
 ];
 
-// Recalculate statuses
+// Apply live status calculation
+INITIAL_BOOKINGS.forEach(b => {
+  b.cleans = b.cleans.map(c => {
+    if (["Completed","Rescheduled"].includes(c.status)) return c;
+    return { ...c, status: getCleanStatus(c) };
+  });
+  b.status = daysBetween(TODAY, b.checkIn) > 0 ? "Upcoming" : daysBetween(b.checkOut, TODAY) > 0 ? "Checked Out" : "In-House";
+});
+
+
 INITIAL_BOOKINGS.forEach(b => {
   b.cleans = b.cleans.map(c => ({ ...c, status: c.status === "Completed" ? "Completed" : c.status === "Overdue" ? "Overdue" : c.status === "Due Today" ? "Due Today" : c.status === "Due Tomorrow" ? "Due Tomorrow" : getCleanStatus(c) }));
   b.status = daysBetween(TODAY, b.checkIn) > 0 ? "Upcoming" : daysBetween(b.checkOut, TODAY) > 0 ? "Checked Out" : "In-House";
@@ -863,6 +868,51 @@ function Dashboard({ onNav }) {
 }
 
 
+// ─── ROW COLOUR HELPERS ──────────────────────────────────────────────────────
+const getBookingRowColor = (booking) => {
+  const statuses = booking.cleans.map(c => getCleanStatus(c));
+  if (statuses.includes("Overdue"))      return { bg:"rgba(255,59,92,0.12)", border:"rgba(255,59,92,0.35)" };
+  if (statuses.includes("Due Today"))    return { bg:"rgba(245,166,35,0.15)", border:"rgba(245,166,35,0.4)" };
+  if (statuses.includes("Due Tomorrow")) return { bg:"rgba(245,166,35,0.07)", border:"rgba(245,166,35,0.2)" };
+  return { bg:"transparent", border:"transparent" };
+};
+
+// ─── EXCEL IMPORT HELPER ──────────────────────────────────────────────────────
+const parseExcelBookings = (data) => {
+  // data = array of rows from SheetJS
+  const bookings = [];
+  for (let i = 0; i < data.length; i++) {
+    const row = data[i];
+    const id = row[0]; const guest = row[1]; const prop = row[2];
+    const checkIn = row[3]; const checkOut = row[4]; const platform = row[5];
+    const revenue = row[9];
+    if (!id || !prop || !checkIn || !checkOut || String(id).startsWith("REF")) continue;
+    if (String(id).toLowerCase().includes("summary") || !guest) continue;
+    const toISO = (v) => {
+      if (!v) return null;
+      if (v instanceof Date) return v.toISOString().slice(0,10);
+      if (typeof v === "number") {
+        const d = new Date((v - 25569) * 86400 * 1000);
+        return d.toISOString().slice(0,10);
+      }
+      return String(v).slice(0,10);
+    };
+    const ci = toISO(checkIn); const co = toISO(checkOut);
+    if (!ci || !co || ci === co) continue;
+    // Extract clean statuses from columns N onwards (index 13, 15, 17...)
+    const cleanStatuses = [];
+    for (let col = 14; col < row.length; col += 2) {
+      const st = row[col];
+      if (!st) break;
+      if (String(st).includes("Completed")) cleanStatuses.push("Completed");
+      else if (String(st).includes("Rescheduled")) cleanStatuses.push("Rescheduled");
+    }
+    bookings.push(mkBookingDirect(String(id), String(guest), String(prop), ci, co,
+      String(platform||"Airbnb"), Number(revenue)||0, cleanStatuses));
+  }
+  return bookings;
+};
+
 // ─── CLEAN STATUS BADGE ───────────────────────────────────────────────────────
 function CleanStatusBadge({ status }) {
   const icons = { "Completed":<CheckCircle size={11}/>, "Overdue":<XCircle size={11}/>,
@@ -943,6 +993,51 @@ function CleanDetailDrawer({ booking, cleanIndex, open, onClose }) {
         <Btn variant="ghost" onClick={onClose}>Cancel</Btn>
       </div>
     </Drawer>
+  );
+}
+
+// ─── EXCEL IMPORT BUTTON ─────────────────────────────────────────────────────
+function ExcelImportBtn() {
+  const { dispatch, toast } = useApp();
+  const [importing, setImporting] = useState(false);
+  const fileRef = useRef(null);
+
+  const handleFile = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setImporting(true);
+    try {
+      const XLSX = await import("https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm");
+      const ab = await file.arrayBuffer();
+      const wb = XLSX.read(ab);
+      // Find the Res & Mid-Stay Cleans sheet
+      const sheetName = wb.SheetNames.find(n => n.includes("Cleans") || n.includes("Res")) || wb.SheetNames[0];
+      const ws = wb.Sheets[sheetName];
+      const data = XLSX.utils.sheet_to_json(ws, { header:1, defval:null });
+      // Skip header rows (find first row with a real booking ID)
+      const dataRows = data.filter(row => row[0] && typeof row[0] === "string" &&
+        row[0].length > 3 && !row[0].includes("REF") && !row[0].includes("TOTAL") && !row[0].includes("📅") && !row[0].includes("Log"));
+      const imported = parseExcelBookings(dataRows);
+      if (imported.length === 0) return toast("No bookings found in file", "error");
+      // Clear existing and replace
+      imported.forEach(b => dispatch({ type:"ADD_BOOKING", payload:b }));
+      toast(`✓ Imported ${imported.length} bookings from Excel`);
+    } catch (err) {
+      toast("Import failed: " + err.message, "error");
+    } finally {
+      setImporting(false);
+      e.target.value = "";
+    }
+  };
+
+  return (
+    <>
+      <input ref={fileRef} type="file" accept=".xlsx,.xls" onChange={handleFile}
+        style={{ display:"none" }} />
+      <Btn variant="subtle" icon={Upload} onClick={() => fileRef.current?.click()} disabled={importing}>
+        {importing ? "Importing..." : "Import Excel"}
+      </Btn>
+    </>
   );
 }
 
@@ -1065,6 +1160,22 @@ function ResCleans() {
 
       {tab === "alerts" ? <CleanAlerts bookings={bookings} onEdit={(b,i) => { setSelectedBooking(b); setSelectedClean(i); }} /> : (
         <>
+          {/* Colour Legend */}
+          <div style={{ display:"flex", gap:12, marginBottom:16, alignItems:"center", flexWrap:"wrap" }}>
+            <span style={{ fontSize:11, color:C.text3, fontWeight:600, textTransform:"uppercase", letterSpacing:"0.06em" }}>Row colour:</span>
+            {[
+              { color:"rgba(255,59,92,0.18)", border:C.crimson, label:"🔴 Overdue" },
+              { color:"rgba(245,166,35,0.2)", border:C.amber, label:"🟡 Due Today" },
+              { color:"rgba(245,166,35,0.09)", border:C.amber+"88", label:"🟠 Due Tomorrow" },
+              { color:"transparent", border:C.border, label:"⬜ Upcoming" },
+            ].map(s => (
+              <div key={s.label} style={{ display:"flex", alignItems:"center", gap:6 }}>
+                <div style={{ width:24, height:14, borderRadius:3, background:s.color, border:`1px solid ${s.border}` }} />
+                <span style={{ fontSize:11, color:C.text2 }}>{s.label}</span>
+              </div>
+            ))}
+          </div>
+
           {/* Controls */}
           <div style={{ display:"flex", gap:10, marginBottom:16, flexWrap:"wrap", alignItems:"center" }}>
             <SearchBar value={search} onChange={setSearch} placeholder="Search guest, property, ID..." />
@@ -1076,7 +1187,8 @@ function ResCleans() {
               options={["All","Has Urgent","Has Cleans","No Cleans"]} style={{ width:140 }} />
             <Select value={sortBy} onChange={setSortBy}
               options={[{value:"checkIn",label:"Sort: Check-in"},{value:"checkOut",label:"Sort: Check-out"},{value:"revenue",label:"Sort: Revenue"},{value:"nights",label:"Sort: Nights"}]} style={{ width:160 }} />
-            <div style={{ marginLeft:"auto" }}>
+            <div style={{ marginLeft:"auto", display:"flex", gap:8 }}>
+              <ExcelImportBtn />
               <Btn variant="primary" icon={Plus} onClick={() => setShowAddBooking(true)}>Add Booking</Btn>
             </div>
           </div>
@@ -1099,9 +1211,13 @@ function ResCleans() {
               const urgentClean = b.cleans.some(c => ["Overdue","Due Today"].includes(getCleanStatus(c)));
               return (
                 <div key={b.id}>
+                  {(() => {
+                    const rowColor = getBookingRowColor(b);
+                    return (
                   <div onClick={() => toggleExpand(b.id)} style={{ display:"grid", gridTemplateColumns:"180px 140px 100px 100px 70px 80px 100px 120px 40px",
                     padding:"12px 16px", borderBottom:`1px solid ${C.border}`, cursor:"pointer",
-                    background: urgentClean ? "rgba(255,59,92,0.04)" : hasFlag ? "rgba(245,166,35,0.03)" : "transparent",
+                    background: rowColor.bg,
+                    borderLeft: rowColor.border !== "transparent" ? `3px solid ${rowColor.border}` : "3px solid transparent",
                     transition:"background 0.1s", alignItems:"center" }}>
                     <div>
                       <div style={{ fontSize:13, color:C.text1, fontWeight:500, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{b.propertyName}</div>
@@ -1120,6 +1236,8 @@ function ResCleans() {
                     <Badge label={b.status} size="xs" />
                     <div style={{ color:C.text3 }}>{isExp ? <ChevronUp size={14}/> : <ChevronDown size={14}/>}</div>
                   </div>
+                    );
+                  })()}
 
                   {isExp && (
                     <div style={{ padding:"16px 24px 20px", background:C.bg0, borderBottom:`1px solid ${C.border}` }}>
