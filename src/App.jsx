@@ -51,7 +51,7 @@ const C = {
 };
 
 // ─── UTILITIES ────────────────────────────────────────────────────────────────
-const TODAY = "2026-05-24";
+const TODAY = new Date().toISOString().slice(0, 10); // Always uses real current date
 const addDays = (iso, n) => {
   const d = new Date(iso + "T12:00:00Z");
   d.setUTCDate(d.getUTCDate() + n);
