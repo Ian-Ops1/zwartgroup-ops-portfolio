@@ -2100,10 +2100,30 @@ function GuestTemplates() {
 
 // ─── PROPERTIES ───────────────────────────────────────────────────────────────
 function PropertiesModule() {
-  const { state } = useApp();
+  const { state, dispatch, toast } = useApp();
   const [search, setSearch] = useState("");
   const [portFilter, setPortFilter] = useState("All");
   const [selected, setSelected] = useState(null);
+  const [showAdd, setShowAdd] = useState(false);
+  const [form, setForm] = useState({ id:"", name:"", address:"", area:"", type:"Apartment", portfolio:"1" });
+
+  const handleAdd = () => {
+    if (!form.id || !form.name) return toast("Property ID and Name are required", "error");
+    if (state.properties.find(p => p.id === form.id)) return toast("Property ID already exists", "error");
+    dispatch({ type:"ADD_PROPERTY", payload:{
+      id: form.id.toUpperCase(),
+      name: form.name,
+      address: form.address,
+      area: form.area,
+      type: form.type,
+      portfolio: Number(form.portfolio),
+      flag: null,
+      status: "Active",
+    }});
+    toast("Property added successfully");
+    setShowAdd(false);
+    setForm({ id:"", name:"", address:"", area:"", type:"Apartment", portfolio:"1" });
+  };
 
   const filtered = state.properties.filter(p => {
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.id.toLowerCase().includes(search.toLowerCase()) || p.area.toLowerCase().includes(search.toLowerCase());
@@ -2121,6 +2141,7 @@ function PropertiesModule() {
         <div style={{ display:"flex", gap:8 }}>
           <SearchBar value={search} onChange={setSearch} placeholder="Search property..." />
           <Select value={portFilter} onChange={setPortFilter} options={["All","1","2"]} style={{ width:120 }} />
+          <Btn variant="primary" icon={Plus} onClick={() => setShowAdd(true)}>Add Property</Btn>
         </div>
       </div>
       <div style={{ display:"flex", gap:12, marginBottom:20 }}>
@@ -2160,6 +2181,36 @@ function PropertiesModule() {
           );
         })}
       </div>
+
+      {/* Add Property Modal */}
+      <Modal open={showAdd} onClose={() => setShowAdd(false)} title="Add New Property" width={520}>
+        <FormRow label="Property ID (e.g. ZG-053)" required>
+          <Input value={form.id} onChange={v => setForm(f => ({...f, id:v}))} placeholder="ZG-053" />
+        </FormRow>
+        <FormRow label="Property Name" required>
+          <Input value={form.name} onChange={v => setForm(f => ({...f, name:v}))} placeholder="e.g. 201 The Suro" />
+        </FormRow>
+        <FormRow label="Full Address">
+          <Input value={form.address} onChange={v => setForm(f => ({...f, address:v}))} placeholder="e.g. Holmfirth Road, Cape Town, 8060" />
+        </FormRow>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+          <FormRow label="Area">
+            <Input value={form.area} onChange={v => setForm(f => ({...f, area:v}))} placeholder="e.g. Sea Point" />
+          </FormRow>
+          <FormRow label="Type">
+            <Select value={form.type} onChange={v => setForm(f => ({...f, type:v}))}
+              options={["Apartment","House","Cottage","Villa","Studio"]} />
+          </FormRow>
+        </div>
+        <FormRow label="Portfolio">
+          <Select value={form.portfolio} onChange={v => setForm(f => ({...f, portfolio:v}))}
+            options={[{value:"1",label:"Portfolio 1"},{value:"2",label:"Portfolio 2"}]} />
+        </FormRow>
+        <div style={{ display:"flex", gap:8 }}>
+          <Btn variant="primary" icon={Plus} onClick={handleAdd}>Add Property</Btn>
+          <Btn variant="ghost" onClick={() => setShowAdd(false)}>Cancel</Btn>
+        </div>
+      </Modal>
 
       {/* Property Detail Modal */}
       <Modal open={!!selected} onClose={() => setSelected(null)} title={selected?.name || ""} width={600}>
@@ -2446,4 +2497,3 @@ export default function App() {
     </AppProvider>
   );
 }
-
