@@ -579,6 +579,7 @@ const NAV = [
   { id:"revenue",       icon:TrendingUp,   label:"Revenue Strategy",   badge:null },
   { id:"incidents",     icon:AlertTriangle,label:"Incidents & Complaints", badge:"incidents" },
   { id:"reviews",       icon:Star,         label:"Reviews",            badge:"reviews" },
+  { id:"scorecard",     icon:Target,       label:"Property Scorecard",  badge:null },
   { id:"statements",    icon:FileText,     label:"Owner Statements",   badge:null },
   { id:"team",          icon:Users,        label:"Team & Vendors",     badge:null },
   { id:"sops",          icon:BookOpen,     label:"SOPs",               badge:null },
@@ -1805,42 +1806,336 @@ function IncidentRegister() {
 // ─── REVIEWS ─────────────────────────────────────────────────────────────────
 function Reviews() {
   const { state, dispatch, toast } = useApp();
-  const avgRating = (state.reviews.reduce((s,r) => s + r.rating, 0) / state.reviews.length).toFixed(1);
+  const [tab, setTab] = useState("pending");
+  const [showAdd, setShowAdd] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [form, setForm] = useState({ rating:5, comment:"", platform:"Airbnb", date:TODAY });
+
+  // All checked-out bookings from Res & Cleans
+  const checkedOut = state.bookings.filter(b => b.status === "Checked Out" || daysBetween(b.checkOut, TODAY) >= 0);
+
+  // Which bookings already have a review
+  const reviewedBookingIds = new Set(state.reviews.map(r => r.bookingId).filter(Boolean));
+
+  // Pending = checked out but no review yet
+  const pending = checkedOut.filter(b => !reviewedBookingIds.has(b.id));
+
+  const avgRating = state.reviews.length
+    ? (state.reviews.reduce((s,r) => s + r.rating, 0) / state.reviews.length).toFixed(1)
+    : "—";
+
+  const openAddReview = (booking) => {
+    setSelectedBooking(booking);
+    setForm({ rating:5, comment:"", platform: booking.platform || "Airbnb", date:TODAY });
+    setShowAdd(true);
+  };
+
+  const handleAdd = () => {
+    if (!selectedBooking) return;
+    const id = `REV-${String(state.reviews.length + 1).padStart(3,"0")}`;
+    dispatch({ type:"ADD_REVIEW", payload:{
+      id, bookingId: selectedBooking.id,
+      propertyId: selectedBooking.propId,
+      propertyName: selectedBooking.propertyName,
+      guestName: selectedBooking.guestName,
+      date: form.date,
+      rating: Number(form.rating),
+      platform: form.platform,
+      comment: form.comment,
+      responded: false,
+    }});
+    toast("Review added");
+    setShowAdd(false);
+    setSelectedBooking(null);
+  };
+
+  const StarRating = ({ value, onChange }) => (
+    <div style={{ display:"flex", gap:6, marginBottom:4 }}>
+      {[1,2,3,4,5].map(n => (
+        <span key={n} onClick={() => onChange(n)} style={{ fontSize:28, cursor:"pointer",
+          color: n <= value ? C.amber : C.border, transition:"color 0.1s" }}>★</span>
+      ))}
+      <span style={{ fontSize:14, color:C.text2, alignSelf:"center", marginLeft:8 }}>{value} / 5</span>
+    </div>
+  );
+
   return (
     <div style={{ animation:"fadeIn 0.25s ease" }}>
       <SectionTitle>Reviews</SectionTitle>
+
+      {/* KPIs */}
       <div style={{ display:"flex", gap:12, marginBottom:20 }}>
-        <KPICard label="Avg Rating" value={`${avgRating} ⭐`} color={C.amber} />
+        <KPICard label="Avg Rating" value={state.reviews.length ? `${avgRating} ⭐` : "—"} color={C.amber} />
         <KPICard label="Total Reviews" value={state.reviews.length} color={C.teal} />
-        <KPICard label="Unresponded" value={state.reviews.filter(r => !r.responded).length} color={C.crimson} />
+        <KPICard label="Pending Reviews" value={pending.length} color={pending.length > 0 ? C.crimson : C.green} />
         <KPICard label="5-Star" value={state.reviews.filter(r => r.rating === 5).length} color={C.green} />
+        <KPICard label="Unresponded" value={state.reviews.filter(r => !r.responded).length} color={C.blue} />
       </div>
-      <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-        {state.reviews.sort((a,b) => b.date.localeCompare(a.date)).map(r => (
-          <Card key={r.id} hover>
-            <div style={{ display:"flex", gap:16, alignItems:"flex-start" }}>
-              <div style={{ flex:1 }}>
-                <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:8, flexWrap:"wrap" }}>
-                  <span style={{ fontSize:16 }}>{"⭐".repeat(r.rating)}</span>
-                  <Badge label={r.platform} size="xs" />
-                  <span style={{ fontSize:11, color:C.text3 }}>{fmtDate(r.date)}</span>
-                  {!r.responded && <Badge label="Overdue" size="xs" />}
-                  {r.responded && <span style={{ fontSize:11, color:C.green }}>✓ Responded</span>}
-                </div>
-                <div style={{ fontSize:14, fontWeight:600, color:C.text1, marginBottom:2 }}>{r.propertyName}</div>
-                <div style={{ fontSize:12, color:C.text3, marginBottom:6 }}>{r.guestName}</div>
-                <div style={{ fontSize:13, color:C.text2, fontStyle:"italic" }}>"{r.comment}"</div>
-              </div>
-              {!r.responded && (
-                <Btn size="sm" variant="subtle" onClick={() => {
-                  dispatch({ type:"UPDATE_REVIEW", payload:{ id:r.id, responded:true }});
-                  toast("Marked as responded");
-                }}>Mark Responded</Btn>
-              )}
-            </div>
-          </Card>
+
+      {/* Tabs */}
+      <div style={{ display:"flex", borderBottom:`1px solid ${C.border}`, marginBottom:20 }}>
+        {[["pending","Pending Reviews"],["all","All Reviews"]].map(([id,label]) => (
+          <button key={id} onClick={() => setTab(id)} style={{ padding:"8px 24px", background:"none", border:"none",
+            borderBottom:`2px solid ${tab===id ? C.teal : "transparent"}`, color: tab===id ? C.teal : C.text2,
+            cursor:"pointer", fontSize:13, fontWeight: tab===id ? 600 : 400 }}>
+            {label}
+            <span style={{ fontFamily:"'DM Mono',monospace", fontSize:11, marginLeft:6,
+              color: id==="pending" ? C.crimson : C.text3 }}>
+              ({id==="pending" ? pending.length : state.reviews.length})
+            </span>
+          </button>
         ))}
       </div>
+
+      {/* Pending Tab — auto-populated from Res & Cleans */}
+      {tab === "pending" && (
+        <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+          {pending.length === 0 && <EmptyState icon={Star} title="All caught up!" sub="No pending reviews — every checkout has been reviewed." />}
+          {pending.map(b => (
+            <Card key={b.id} hover>
+              <div style={{ display:"flex", alignItems:"center", gap:16 }}>
+                <div style={{ flex:1 }}>
+                  <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:6, flexWrap:"wrap" }}>
+                    <Badge label={b.platform} size="xs" />
+                    <span style={{ fontSize:11, color:C.text3, fontFamily:"'DM Mono',monospace" }}>{b.id}</span>
+                    <span style={{ fontSize:11, color:C.text3 }}>Checked out {fmtDate(b.checkOut)}</span>
+                  </div>
+                  <div style={{ fontSize:14, fontWeight:600, color:C.text1 }}>{b.propertyName}</div>
+                  <div style={{ fontSize:12, color:C.text3, marginTop:2 }}>{b.guestName} · {b.nights} nights</div>
+                </div>
+                <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+                  <span style={{ fontSize:11, color:C.amber }}>⭐ Awaiting review</span>
+                  <Btn variant="primary" size="sm" icon={Plus} onClick={() => openAddReview(b)}>Add Review</Btn>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* All Reviews Tab */}
+      {tab === "all" && (
+        <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+          {state.reviews.length === 0 && <EmptyState icon={Star} title="No reviews yet" sub="Reviews will appear here once added." />}
+          {[...state.reviews].sort((a,b) => b.date.localeCompare(a.date)).map(r => (
+            <Card key={r.id} hover>
+              <div style={{ display:"flex", gap:16, alignItems:"flex-start" }}>
+                <div style={{ flex:1 }}>
+                  <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:8, flexWrap:"wrap" }}>
+                    <span style={{ fontSize:18, letterSpacing:2 }}>{"★".repeat(r.rating)}{"☆".repeat(5-r.rating)}</span>
+                    <span style={{ fontFamily:"'DM Mono',monospace", fontSize:13, color:C.amber, fontWeight:600 }}>{r.rating}/5</span>
+                    <Badge label={r.platform} size="xs" />
+                    <span style={{ fontSize:11, color:C.text3 }}>{fmtDate(r.date)}</span>
+                    {!r.responded && <Badge label="Overdue" size="xs" />}
+                    {r.responded && <span style={{ fontSize:11, color:C.green }}>✓ Responded</span>}
+                  </div>
+                  <div style={{ fontSize:14, fontWeight:600, color:C.text1, marginBottom:2 }}>{r.propertyName}</div>
+                  <div style={{ fontSize:12, color:C.text3, marginBottom:6 }}>{r.guestName}</div>
+                  {r.comment && <div style={{ fontSize:13, color:C.text2, fontStyle:"italic", padding:"8px 12px", background:C.bg2, borderRadius:6 }}>"{r.comment}"</div>}
+                </div>
+                {!r.responded && (
+                  <Btn size="sm" variant="subtle" onClick={() => {
+                    dispatch({ type:"UPDATE_REVIEW", payload:{ id:r.id, responded:true }});
+                    toast("Marked as responded");
+                  }}>Mark Responded</Btn>
+                )}
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Add Review Modal */}
+      <Modal open={showAdd} onClose={() => setShowAdd(false)} title="Add Guest Review" width={500}>
+        {selectedBooking && (
+          <div style={{ background:C.bg2, borderRadius:8, padding:"12px 16px", marginBottom:20 }}>
+            <div style={{ fontSize:13, fontWeight:600, color:C.text1 }}>{selectedBooking.propertyName}</div>
+            <div style={{ fontSize:12, color:C.text3, marginTop:2 }}>{selectedBooking.guestName} · {fmtDate(selectedBooking.checkIn)} → {fmtDate(selectedBooking.checkOut)}</div>
+          </div>
+        )}
+        <FormRow label="Guest Star Rating" required>
+          <div style={{ display:"flex", gap:6, marginBottom:4 }}>
+            {[1,2,3,4,5].map(n => (
+              <span key={n} onClick={() => setForm(f => ({...f, rating:n}))}
+                style={{ fontSize:32, cursor:"pointer", color: n <= form.rating ? C.amber : C.border, transition:"color 0.1s" }}>★</span>
+            ))}
+            <span style={{ fontSize:14, color:C.text2, alignSelf:"center", marginLeft:8 }}>{form.rating} / 5</span>
+          </div>
+        </FormRow>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+          <FormRow label="Platform">
+            <Select value={form.platform} onChange={v => setForm(f => ({...f, platform:v}))}
+              options={["Airbnb","Booking.com","Direct","Google"]} />
+          </FormRow>
+          <FormRow label="Review Date">
+            <Input type="date" value={form.date} onChange={v => setForm(f => ({...f, date:v}))} />
+          </FormRow>
+        </div>
+        <FormRow label="Guest Comment (optional)">
+          <textarea value={form.comment} onChange={e => setForm(f => ({...f, comment:e.target.value}))}
+            placeholder="Paste the guest's review comment here..." rows={4}
+            style={{ ...inputStyle, resize:"vertical" }} />
+        </FormRow>
+        <div style={{ display:"flex", gap:8 }}>
+          <Btn variant="primary" icon={Star} onClick={handleAdd}>Save Review</Btn>
+          <Btn variant="ghost" onClick={() => setShowAdd(false)}>Cancel</Btn>
+        </div>
+      </Modal>
+    </div>
+  );
+}
+
+// ─── PROPERTY SCORECARD ───────────────────────────────────────────────────────
+function PropertyScorecard() {
+  const { state } = useApp();
+  const [sortBy, setSortBy] = useState("rating");
+  const [areaFilter, setAreaFilter] = useState("All");
+
+  // Build scorecard per property
+  const scorecards = state.properties.map(prop => {
+    const propReviews = state.reviews.filter(r => r.propertyName === prop.name || r.propertyId === prop.id);
+    const propBookings = state.bookings.filter(b => b.propertyName === prop.name || b.propId === prop.id);
+    const avgRating = propReviews.length
+      ? (propReviews.reduce((s,r) => s + r.rating, 0) / propReviews.length)
+      : null;
+    const revenue = propBookings.reduce((s,b) => s + b.revenue, 0);
+    const fiveStars = propReviews.filter(r => r.rating === 5).length;
+    const lowRatings = propReviews.filter(r => r.rating <= 3).length;
+    return { prop, reviews: propReviews, bookings: propBookings, avgRating, revenue, fiveStars, lowRatings };
+  }).filter(s => s.reviews.length > 0 || s.bookings.length > 0);
+
+  const areas = ["All", ...new Set(state.properties.map(p => p.area).filter(Boolean))];
+
+  const filtered = scorecards
+    .filter(s => areaFilter === "All" || s.prop.area === areaFilter)
+    .sort((a,b) => {
+      if (sortBy === "rating") return (b.avgRating||0) - (a.avgRating||0);
+      if (sortBy === "reviews") return b.reviews.length - a.reviews.length;
+      if (sortBy === "revenue") return b.revenue - a.revenue;
+      return 0;
+    });
+
+  const totalAvg = state.reviews.length
+    ? (state.reviews.reduce((s,r) => s + r.rating, 0) / state.reviews.length).toFixed(2)
+    : "—";
+
+  const getRatingColor = (r) => {
+    if (!r) return C.text3;
+    if (r >= 4.5) return C.green;
+    if (r >= 4.0) return C.teal;
+    if (r >= 3.5) return C.amber;
+    return C.crimson;
+  };
+
+  const getRatingLabel = (r) => {
+    if (!r) return "No reviews";
+    if (r >= 4.8) return "Exceptional";
+    if (r >= 4.5) return "Excellent";
+    if (r >= 4.0) return "Good";
+    if (r >= 3.5) return "Average";
+    return "Needs Attention";
+  };
+
+  return (
+    <div style={{ animation:"fadeIn 0.25s ease" }}>
+      <SectionTitle>Property Scorecard</SectionTitle>
+
+      {/* Portfolio KPIs */}
+      <div style={{ display:"flex", gap:12, marginBottom:24 }}>
+        <KPICard label="Portfolio Avg Rating" value={`${totalAvg} ⭐`} color={C.amber} />
+        <KPICard label="Properties Reviewed" value={scorecards.filter(s => s.reviews.length > 0).length} color={C.teal} />
+        <KPICard label="5-Star Reviews" value={state.reviews.filter(r => r.rating===5).length} color={C.green} />
+        <KPICard label="Needs Attention" value={scorecards.filter(s => s.avgRating && s.avgRating < 4.0).length} color={C.crimson} />
+      </div>
+
+      {/* Filters */}
+      <div style={{ display:"flex", gap:10, marginBottom:20, alignItems:"center" }}>
+        <Select value={areaFilter} onChange={setAreaFilter}
+          options={areas} style={{ width:160 }} />
+        <Select value={sortBy} onChange={setSortBy}
+          options={[{value:"rating",label:"Sort: Rating"},{value:"reviews",label:"Sort: Reviews"},{value:"revenue",label:"Sort: Revenue"}]}
+          style={{ width:180 }} />
+        <span style={{ fontSize:12, color:C.text3, marginLeft:8 }}>Showing {filtered.length} properties</span>
+      </div>
+
+      {/* Scorecard Grid */}
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(280px, 1fr))", gap:14 }}>
+        {filtered.map(({ prop, reviews, bookings, avgRating, revenue, fiveStars, lowRatings }) => {
+          const ratingColor = getRatingColor(avgRating);
+          const ratingLabel = getRatingLabel(avgRating);
+          return (
+            <div key={prop.id} style={{ background:C.bg1, border:`1px solid ${C.border}`, borderRadius:10,
+              padding:16, borderTop:`3px solid ${ratingColor}` }}>
+              {/* Header */}
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:12 }}>
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ fontSize:10, color:C.text3, fontFamily:"'DM Mono',monospace", marginBottom:2 }}>{prop.id}</div>
+                  <div style={{ fontSize:13, fontWeight:600, color:C.text1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{prop.name}</div>
+                  <div style={{ fontSize:11, color:C.text3 }}>{prop.area} · {prop.type}</div>
+                </div>
+                <div style={{ textAlign:"right", flexShrink:0, marginLeft:8 }}>
+                  <div style={{ fontSize:22, fontWeight:700, color:ratingColor, fontFamily:"'DM Mono',monospace", lineHeight:1 }}>
+                    {avgRating ? avgRating.toFixed(1) : "—"}
+                  </div>
+                  <div style={{ fontSize:10, color:ratingColor, fontWeight:600 }}>{ratingLabel}</div>
+                </div>
+              </div>
+
+              {/* Star bar */}
+              {avgRating && (
+                <div style={{ marginBottom:12 }}>
+                  <div style={{ display:"flex", gap:2, marginBottom:4 }}>
+                    {[1,2,3,4,5].map(n => (
+                      <div key={n} style={{ flex:1, height:4, borderRadius:2,
+                        background: n <= Math.round(avgRating) ? ratingColor : C.border }} />
+                    ))}
+                  </div>
+                  <div style={{ fontSize:11, color:C.text3 }}>{avgRating.toFixed(2)} average from {reviews.length} review{reviews.length!==1?"s":""}</div>
+                </div>
+              )}
+
+              {/* Stats row */}
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8 }}>
+                {[
+                  { label:"Reviews", value: reviews.length, color:C.text2 },
+                  { label:"5-Star", value: fiveStars, color:C.green },
+                  { label:"≤3 Star", value: lowRatings, color: lowRatings > 0 ? C.crimson : C.text3 },
+                ].map(s => (
+                  <div key={s.label} style={{ background:C.bg2, borderRadius:6, padding:"8px 10px", textAlign:"center" }}>
+                    <div style={{ fontSize:16, fontWeight:700, color:s.color, fontFamily:"'DM Mono',monospace" }}>{s.value}</div>
+                    <div style={{ fontSize:10, color:C.text3 }}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Revenue */}
+              {revenue > 0 && (
+                <div style={{ marginTop:10, paddingTop:10, borderTop:`1px solid ${C.border}20`,
+                  display:"flex", justifyContent:"space-between", fontSize:11 }}>
+                  <span style={{ color:C.text3 }}>Revenue</span>
+                  <span style={{ fontFamily:"'DM Mono',monospace", color:C.teal }}>{fmtCurr(revenue)}</span>
+                </div>
+              )}
+
+              {/* Recent reviews */}
+              {reviews.slice(0,2).map(r => (
+                <div key={r.id} style={{ marginTop:8, padding:"6px 10px", background:C.bg2, borderRadius:6,
+                  borderLeft:`2px solid ${getRatingColor(r.rating)}` }}>
+                  <div style={{ display:"flex", justifyContent:"space-between", marginBottom:2 }}>
+                    <span style={{ fontSize:11, color:C.text3 }}>{r.guestName}</span>
+                    <span style={{ fontSize:11, color:getRatingColor(r.rating), fontWeight:600 }}>{"★".repeat(r.rating)}</span>
+                  </div>
+                  {r.comment && <div style={{ fontSize:11, color:C.text2, fontStyle:"italic", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>"{r.comment}"</div>}
+                </div>
+              ))}
+            </div>
+          );
+        })}
+      </div>
+
+      {filtered.length === 0 && (
+        <EmptyState icon={Star} title="No scorecards yet" sub="Add reviews from the Reviews page to see property performance here." />
+      )}
     </div>
   );
 }
@@ -2407,6 +2702,7 @@ function ModuleContent({ active, onNav }) {
     revenue:     <RevenueStrategy />,
     incidents:   <IncidentRegister />,
     reviews:     <Reviews />,
+    scorecard:   <PropertyScorecard />,
     statements:  <OwnerStatements />,
     team:        <TeamVendors />,
     sops:        <SOPs />,
