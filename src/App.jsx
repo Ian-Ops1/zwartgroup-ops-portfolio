@@ -243,12 +243,6 @@ const INITIAL_INCIDENTS = [
   { id:"INC-003", propertyId:"ZG-004", propertyName:"109 Mouille Grange", date:"2026-05-22", type:"Guest Complaint", description:"Guest reports dirty ceiling fan and snack basket was not replenished as per listing description.", guest:"Uzoamaka", severity:"Low", status:"Open", resolution:"", resolvedDate:null },
 ];
 
-const INITIAL_MAINTENANCE = [
-  { id:"MNT-001", propertyId:"ZG-003", propertyName:"8 Bramber Court", issue:"AC capacitor replacement", vendor:"Andy", raisedDate:"2026-05-14", scheduledDate:"2026-05-15", status:"Completed", cost:850, notes:"Resolved same day." },
-  { id:"MNT-002", propertyId:"ZG-012", propertyName:"10 Duet Main House", issue:"Geyser pressure relief valve leaking", vendor:"Cleanix", raisedDate:"2026-05-20", scheduledDate:"2026-05-27", status:"Scheduled", cost:1200, notes:"Parts on order." },
-  { id:"MNT-003", propertyId:"ZG-044", propertyName:"Beach House 2 Big Bay", issue:"Pool pump not priming", vendor:"Cleanix", raisedDate:"2026-05-22", scheduledDate:"2026-05-28", status:"Scheduled", cost:0, notes:"Awaiting quote." },
-  { id:"MNT-004", propertyId:"ZG-019", propertyName:"201 Atlantic Views", issue:"Dishwasher not draining", vendor:"Andy", raisedDate:"2026-05-23", scheduledDate:"2026-05-25", status:"Pending", cost:0, notes:"Guest reported. Booking active." },
-];
 
 const INITIAL_COMPLAINTS = [
   { id:"CMP-001", propertyId:"ZG-004", propertyName:"109 Mouille Grange", date:"2026-05-22", guestName:"Uzoamaka", type:"Cleanliness", description:"Dirty fan blades. Snack basket empty.", status:"Open", resolvedDate:null },
@@ -322,7 +316,6 @@ const initialState = {
   properties: PROPERTIES,
   bookings: INITIAL_BOOKINGS,
   incidents: INITIAL_INCIDENTS,
-  maintenance: INITIAL_MAINTENANCE,
   complaints: INITIAL_COMPLAINTS,
   reviews: INITIAL_REVIEWS,
   team: INITIAL_TEAM,
@@ -353,8 +346,6 @@ function reducer(state, action) {
     case "DELETE_BOOKING": return { ...state, bookings: state.bookings.filter(b => b.id !== action.payload) };
     case "ADD_INCIDENT": return { ...state, incidents: [...state.incidents, action.payload] };
     case "UPDATE_INCIDENT": return { ...state, incidents: state.incidents.map(i => i.id === action.payload.id ? { ...i, ...action.payload } : i) };
-    case "ADD_MAINTENANCE": return { ...state, maintenance: [...state.maintenance, action.payload] };
-    case "UPDATE_MAINTENANCE": return { ...state, maintenance: state.maintenance.map(m => m.id === action.payload.id ? { ...m, ...action.payload } : m) };
     case "ADD_COMPLAINT": return { ...state, complaints: [...state.complaints, action.payload] };
     case "UPDATE_COMPLAINT": return { ...state, complaints: state.complaints.map(c => c.id === action.payload.id ? { ...c, ...action.payload } : c) };
     case "ADD_REVIEW": return { ...state, reviews: [...state.reviews, action.payload] };
@@ -587,7 +578,6 @@ const NAV = [
   { id:"metrics",       icon:BarChart2,    label:"Advanced Metrics",   badge:null },
   { id:"revenue",       icon:TrendingUp,   label:"Revenue Strategy",   badge:null },
   { id:"incidents",     icon:AlertTriangle,label:"Incident Register",  badge:"incidents" },
-  { id:"maintenance",   icon:Wrench,       label:"Maintenance",        badge:"maintenance" },
   { id:"complaints",    icon:MessageSquare,label:"Complaints",         badge:"complaints" },
   { id:"reviews",       icon:Star,         label:"Reviews",            badge:"reviews" },
   { id:"statements",    icon:FileText,     label:"Owner Statements",   badge:null },
@@ -604,12 +594,12 @@ function Sidebar({ active, onNav, collapsed, onToggle }) {
   const { state } = useApp();
   const badges = useMemo(() => {
     const openIncidents = state.incidents.filter(i => i.status === "Open").length;
-    const pendingMaint = state.maintenance.filter(m => m.status !== "Completed").length;
+    const pendingMaint = 0;
     const openComplaints = state.complaints.filter(c => c.status === "Open").length;
     const unrespondedReviews = state.reviews.filter(r => !r.responded).length;
     const urgentCleans = state.bookings.flatMap(b => b.cleans).filter(c =>
       ["Due Today","Due Tomorrow","Overdue"].includes(c.status)).length;
-    return { incidents: openIncidents, maintenance: pendingMaint,
+    return { incidents: openIncidents, maintenance: 0,
       complaints: openComplaints, reviews: unrespondedReviews, cleans: urgentCleans };
   }, [state]);
 
@@ -1725,94 +1715,6 @@ function IncidentRegister() {
 }
 
 
-// ─── MAINTENANCE ──────────────────────────────────────────────────────────────
-function Maintenance() {
-  const { state, dispatch, toast } = useApp();
-  const [showAdd, setShowAdd] = useState(false);
-  const [form, setForm] = useState({ propertyId:"", issue:"", vendor:"", raisedDate:TODAY, scheduledDate:"", status:"Pending", cost:"", notes:"" });
-
-  const handleAdd = () => {
-    if (!form.propertyId || !form.issue) return toast("Fill required fields","error");
-    const prop = state.properties.find(p => p.id === form.propertyId);
-    const id = `MNT-${String(state.maintenance.length + 1).padStart(3,"0")}`;
-    dispatch({ type:"ADD_MAINTENANCE", payload:{ id, propertyName:prop?.name || form.propertyId, cost:Number(form.cost)||0, ...form }});
-    toast("Maintenance logged"); setShowAdd(false);
-  };
-
-  const updateStatus = (mnt, status) => {
-    dispatch({ type:"UPDATE_MAINTENANCE", payload:{ id:mnt.id, status }});
-    toast(`Maintenance marked ${status}`);
-  };
-
-  return (
-    <div style={{ animation:"fadeIn 0.25s ease" }}>
-      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:24 }}>
-        <SectionTitle>Maintenance</SectionTitle>
-        <Btn variant="primary" icon={Plus} onClick={() => setShowAdd(true)}>Log Issue</Btn>
-      </div>
-      <div style={{ display:"flex", gap:12, marginBottom:20 }}>
-        {["Pending","Scheduled","Completed"].map(s => (
-          <KPICard key={s} label={s} value={state.maintenance.filter(m => m.status === s).length} color={s==="Pending" ? C.amber : s==="Scheduled" ? C.blue : C.green} />
-        ))}
-        <KPICard label="Total Cost" value={`R ${state.maintenance.reduce((s,m) => s + (m.cost||0), 0).toLocaleString()}`} color={C.teal} icon={DollarSign} />
-      </div>
-      <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-        {state.maintenance.map(m => (
-          <Card key={m.id} hover>
-            <div style={{ display:"flex", gap:16, alignItems:"flex-start" }}>
-              <div style={{ flex:1 }}>
-                <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:6, flexWrap:"wrap" }}>
-                  <span style={{ fontFamily:"'DM Mono',monospace", fontSize:11, color:C.text3 }}>{m.id}</span>
-                  <Badge label={m.status} />
-                  {m.cost > 0 && <span style={{ fontSize:11, color:C.amber, fontFamily:"'DM Mono',monospace" }}>R {m.cost.toLocaleString()}</span>}
-                </div>
-                <div style={{ fontSize:14, fontWeight:600, color:C.text1, marginBottom:4 }}>{m.propertyName}</div>
-                <div style={{ fontSize:13, color:C.text2, marginBottom:4 }}>{m.issue}</div>
-                <div style={{ fontSize:11, color:C.text3, display:"flex", gap:16 }}>
-                  <span>Vendor: {m.vendor || "—"}</span>
-                  <span>Raised: {fmtDate(m.raisedDate)}</span>
-                  {m.scheduledDate && <span>Scheduled: {fmtDate(m.scheduledDate)}</span>}
-                </div>
-                {m.notes && <div style={{ marginTop:6, fontSize:12, color:C.text3, fontStyle:"italic" }}>{m.notes}</div>}
-              </div>
-              <div style={{ display:"flex", gap:8 }}>
-                {m.status !== "Completed" && <Btn size="sm" variant="primary" onClick={() => updateStatus(m, "Completed")}>Mark Done</Btn>}
-                {m.status === "Pending" && <Btn size="sm" variant="subtle" onClick={() => updateStatus(m, "Scheduled")}>Schedule</Btn>}
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
-      <Modal open={showAdd} onClose={() => setShowAdd(false)} title="Log Maintenance Issue">
-        <FormRow label="Property" required>
-          <Select value={form.propertyId} onChange={v => setForm(f => ({...f, propertyId:v}))}
-            options={["", ...state.properties.map(p => ({ value:p.id, label:`${p.id} · ${p.name}` }))]} />
-        </FormRow>
-        <FormRow label="Issue Description" required>
-          <textarea value={form.issue} onChange={e => setForm(f => ({...f, issue:e.target.value}))} rows={2} style={{ ...inputStyle, resize:"vertical" }} />
-        </FormRow>
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
-          <FormRow label="Vendor">
-            <Select value={form.vendor} onChange={v => setForm(f => ({...f, vendor:v}))} options={["","Andy","Cleanix","Other"]} />
-          </FormRow>
-          <FormRow label="Status">
-            <Select value={form.status} onChange={v => setForm(f => ({...f, status:v}))} options={["Pending","Scheduled","Completed"]} />
-          </FormRow>
-        </div>
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
-          <FormRow label="Scheduled Date"><Input type="date" value={form.scheduledDate} onChange={v => setForm(f => ({...f, scheduledDate:v}))} /></FormRow>
-          <FormRow label="Cost (ZAR)"><Input type="number" value={form.cost} onChange={v => setForm(f => ({...f, cost:v}))} placeholder="0" /></FormRow>
-        </div>
-        <FormRow label="Notes"><Input value={form.notes} onChange={v => setForm(f => ({...f, notes:v}))} /></FormRow>
-        <div style={{ display:"flex", gap:8 }}>
-          <Btn variant="primary" onClick={handleAdd} icon={Wrench}>Log Issue</Btn>
-          <Btn variant="ghost" onClick={() => setShowAdd(false)}>Cancel</Btn>
-        </div>
-      </Modal>
-    </div>
-  );
-}
-
 // ─── COMPLAINTS ───────────────────────────────────────────────────────────────
 function Complaints() {
   const { state, dispatch, toast } = useApp();
@@ -2457,7 +2359,6 @@ function ModuleContent({ active, onNav }) {
     metrics:     <AdvancedMetrics />,
     revenue:     <RevenueStrategy />,
     incidents:   <IncidentRegister />,
-    maintenance: <Maintenance />,
     complaints:  <Complaints />,
     reviews:     <Reviews />,
     statements:  <OwnerStatements />,
