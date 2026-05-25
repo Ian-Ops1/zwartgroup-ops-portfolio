@@ -1153,6 +1153,49 @@ function ResCleans() {
 
       {tab === "alerts" ? <CleanAlerts bookings={bookings} onEdit={(b,i) => { setSelectedBooking(b); setSelectedClean(i); }} /> : (
         <>
+          {/* Tomorrow's Cleans Banner */}
+          {(() => {
+            const tomorrowCleans = state.bookings.flatMap(b =>
+              b.cleans.map((c, ci) => ({ ...c, booking:b, ci, liveStatus: getCleanStatus(c) }))
+            ).filter(c => c.liveStatus === "Due Tomorrow");
+
+            if (tomorrowCleans.length === 0) return null;
+            return (
+              <div style={{ background:C.bg1, border:`1px solid rgba(0,212,184,0.3)`, borderRadius:10,
+                padding:"16px 20px", marginBottom:20, borderLeft:`4px solid ${C.teal}` }}>
+                <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:14 }}>
+                  <div style={{ width:8, height:8, borderRadius:"50%", background:C.teal,
+                    animation:"pulse 1.5s infinite" }} />
+                  <span style={{ fontFamily:"'Syne',sans-serif", fontSize:14, fontWeight:700, color:C.teal }}>
+                    Tomorrow's Cleans — {tomorrowCleans.length} propert{tomorrowCleans.length===1?"y":"ies"} due
+                  </span>
+                  <span style={{ fontSize:11, color:C.text3, marginLeft:4 }}>{fmtDate(addDays(TODAY, 1))}</span>
+                </div>
+                <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(220px, 1fr))", gap:10 }}>
+                  {tomorrowCleans.map((c, i) => (
+                    <div key={i} style={{ background:C.bg2, borderRadius:8, padding:"12px 14px",
+                      border:`1px solid rgba(0,212,184,0.15)`, cursor:"pointer" }}
+                      onClick={() => { setSelectedBooking(c.booking); setSelectedClean(c.ci); }}>
+                      <div style={{ fontSize:12, fontWeight:600, color:C.text1, marginBottom:4,
+                        overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                        {c.booking.propertyName}
+                      </div>
+                      <div style={{ fontSize:11, color:C.text3, marginBottom:6 }}>
+                        {c.booking.guestName} · Clean #{c.cleanNumber}
+                      </div>
+                      <div style={{ display:"flex", gap:6, alignItems:"center", justifyContent:"space-between" }}>
+                        <Badge label={c.booking.platform} size="xs" />
+                        {c.assignedHousekeeper
+                          ? <span style={{ fontSize:11, color:C.teal }}>👤 {c.assignedHousekeeper}</span>
+                          : <span style={{ fontSize:11, color:C.amber }}>⚠️ Unassigned</span>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Colour Legend */}
           <div style={{ display:"flex", gap:12, marginBottom:16, alignItems:"center", flexWrap:"wrap" }}>
             <span style={{ fontSize:11, color:C.text3, fontWeight:600, textTransform:"uppercase", letterSpacing:"0.06em" }}>Row colour:</span>
