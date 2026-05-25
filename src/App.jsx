@@ -873,7 +873,7 @@ const getBookingRowColor = (booking) => {
   const statuses = booking.cleans.map(c => getCleanStatus(c));
   if (statuses.includes("Overdue"))      return { bg:"rgba(255,59,92,0.12)", border:"rgba(255,59,92,0.35)" };
   if (statuses.includes("Due Today"))    return { bg:"rgba(245,166,35,0.15)", border:"rgba(245,166,35,0.4)" };
-  if (statuses.includes("Due Tomorrow")) return { bg:"rgba(245,166,35,0.07)", border:"rgba(245,166,35,0.2)" };
+  if (statuses.includes("Due Tomorrow")) return { bg:"rgba(0,212,184,0.09)", border:"rgba(0,212,184,0.4)" };
   return { bg:"transparent", border:"transparent" };
 };
 
@@ -1166,7 +1166,7 @@ function ResCleans() {
             {[
               { color:"rgba(255,59,92,0.18)", border:C.crimson, label:"🔴 Overdue" },
               { color:"rgba(245,166,35,0.2)", border:C.amber, label:"🟡 Due Today" },
-              { color:"rgba(245,166,35,0.09)", border:C.amber+"88", label:"🟠 Due Tomorrow" },
+              { color:"rgba(0,212,184,0.12)", border:"rgba(0,212,184,0.5)", label:"🩵 Due Tomorrow" },
               { color:"transparent", border:C.border, label:"⬜ Upcoming" },
             ].map(s => (
               <div key={s.label} style={{ display:"flex", alignItems:"center", gap:6 }}>
