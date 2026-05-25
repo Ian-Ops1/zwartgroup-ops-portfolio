@@ -100,62 +100,65 @@ const getCleanStatus = (clean) => {
 };
 
 // ─── STATIC DATA ──────────────────────────────────────────────────────────────
-// [id, name, area, beds, baths, portfolio]
+// [id, name, address, area, type]
 const PROP_RAW = [
-  ["ZG-001","605 The Tokyo","De Waterkant",1,1,1],
-  ["ZG-002","601 Quayside","V&A Waterfront",2,2,1],
-  ["ZG-003","8 Bramber Court","Sea Point",2,1,1],
-  ["ZG-004","109 Mouille Grange","Green Point",1,1,1],
-  ["ZG-005","310 De Waterkant Village","De Waterkant",1,1,1],
-  ["ZG-006","Penthouse 1 The Tide","Blouberg",3,2,1],
-  ["ZG-007","Unit 4 Sunset Manor","Sea Point",2,2,1],
-  ["ZG-008","12A Loader Street","De Waterkant",2,1,1],
-  ["ZG-009","501 Harbour Bridge","V&A Waterfront",2,2,1],
-  ["ZG-010","204 Rockwell","Green Point",2,2,1],
-  ["ZG-011","Loft 3 Bree Street Studios","CBD",1,1,1],
-  ["ZG-012","10 Duet Main House","Blouberg",4,3,1,"⚠️ Duplicate flag"],
-  ["ZG-013","Unit 7 Paarden Eiland Lofts","Paarden Eiland",2,1,1],
-  ["ZG-014","1503 The Houghton","Sea Point",3,2,1],
-  ["ZG-015","Unit 3 Castella Mare","Blouberg",3,2,1],
-  ["ZG-016","808 Granger Bay Court","V&A Waterfront",2,2,1],
-  ["ZG-017","605 The Tokyo","De Waterkant",1,1,1,"⚠️ Duplicate of ZG-001"],
-  ["ZG-018","22 Loader Lane Studio","De Waterkant",1,1,1],
-  ["ZG-019","201 Atlantic Views","Camps Bay",2,2,1],
-  ["ZG-020","Apartment 6 Chelsea Square","Green Point",1,1,1],
-  ["ZG-021","Villa Rosa Ground Floor","Fresnaye",3,2,1],
-  ["ZG-022","304 The Metropolitan","CBD",2,2,1],
-  ["ZG-023","Unit 9 Ocean Palms","Blouberg",2,1,1],
-  ["ZG-024","502 Waterfront Place","V&A Waterfront",3,3,1],
-  ["ZG-025","Garden Suite Clifton Views","Clifton",2,2,1],
-  ["ZG-026","301 Strand Street Lofts","CBD",1,1,2],
-  ["ZG-027","Penthouse B Blouberg Rise","Blouberg",3,2,2],
-  ["ZG-028","Unit 11 Signal Hill Estate","Signal Hill",2,2,2],
-  ["ZG-029","1204 The Peninsula","Sea Point",2,2,2],
-  ["ZG-030","Suite 2 Cape Quarter","De Waterkant",1,1,2],
-  ["ZG-031","7 Kloof Street Hideaway","Gardens",2,1,2],
-  ["ZG-032","403 Azure","Camps Bay",3,2,2],
-  ["ZG-033","Studio 5 The Foundry","Green Point",1,1,2],
-  ["ZG-034","Villa Ibiza Clifton 3rd","Clifton",4,3,2],
-  ["ZG-035","102 Salt Circle","Mouille Point",2,2,2],
-  ["ZG-036","201 Lions Head Lodge","Signal Hill",3,2,2],
-  ["ZG-037","Unit 6 Blouberg Sands","Blouberg",2,2,2],
-  ["ZG-038","1802 Portside Tower","CBD",2,2,2],
-  ["ZG-039","Garden Apt Park Road","Gardens",2,1,2],
-  ["ZG-040","Suite 401 De Waterkant House","De Waterkant",2,2,2],
-  ["ZG-041","Penthouse 3 Granger Bay","V&A Waterfront",3,3,2],
-  ["ZG-042","Unit 14 The Tigris","Blouberg",2,2,2],
-  ["ZG-043","503 Amsterdam Towers","CBD",2,1,2],
-  ["ZG-044","Beach House 2 Big Bay","Blouberg",4,3,2],
-  ["ZG-045","501 Bantry Bay Suites","Bantry Bay",3,2,2],
-  ["ZG-046","10 Duet Main House","Blouberg",4,3,2,"⚠️ Duplicate of ZG-012"],
-  ["ZG-047","Unit 8 Mouille Point Quay","Mouille Point",2,2,2],
-  ["ZG-048","Garden Studio Tamboerskloof","Tamboerskloof",1,1,2],
-  ["ZG-049","1601 One&Only Residences","V&A Waterfront",3,3,2],
-  ["ZG-050","Clifton Cove Villa","Clifton",5,4,2],
+  ["ZG-001","605 The Tokyo","87 Loop Street, Cape Town","CBD","Apartment"],
+  ["ZG-002","109 Station House","Station House Sea Point","Sea Point","Apartment"],
+  ["ZG-003","602 The Suro","The Suro, Holmfirth Road","Sea Point","Apartment"],
+  ["ZG-004","Suite 103 Strand Beach","243 High Level Road","Sea Point","Apartment"],
+  ["ZG-005","1322 16 on Bree","1322 Bree Street","CBD","Apartment"],
+  ["ZG-006","2309 16 on Bree","1322 Bree Street","CBD","Apartment"],
+  ["ZG-007","201 The Sage","Arthurs Road, Sea Point","Sea Point","Apartment"],
+  ["ZG-008","504 The Centurion","1 Frere Road, Sea Point","Sea Point","Apartment"],
+  ["ZG-009","314 Station House","Station House Sea Point","Sea Point","Apartment"],
+  ["ZG-010","10 Duet Loft","10 Duet Close, Durbanville","Durbanville","Cottage"],
+  ["ZG-011","10 Duet Cottage","10 Duet Close, Durbanville","Durbanville","Cottage"],
+  ["ZG-012","10 Duet Main House","10 Duet Close, Durbanville","Durbanville","House"],
+  ["ZG-013","5 Sunglint","24 Dudley Road, Sea Point","Sea Point","Apartment"],
+  ["ZG-014","201 The Suro","The Suro, Holmfirth Road","Sea Point","Apartment"],
+  ["ZG-015","Unit 3 Castella Mare","47 Coral Road, Table View","Table View","Apartment"],
+  ["ZG-016","417 Station House","Station House Sea Point","Sea Point","Apartment"],
+  ["ZG-017","605 The Tokyo","87 Loop Street, Cape Town","CBD","Apartment"],
+  ["ZG-018","35 Uxolo","Uxolo Apartments, Cape Town","CBD","Apartment"],
+  ["ZG-019","601 Station House","Station House Sea Point","Sea Point","Apartment"],
+  ["ZG-020","209 220 on Loop","220 Loop Street, Cape Town","CBD","Apartment"],
+  ["ZG-021","411 72 Kloof","72 Kloof, 1 Nicol Street","Gardens","Apartment"],
+  ["ZG-022","21 Bungalow","Clifton Beach","Clifton","House"],
+  ["ZG-023","Bungalow 25","Clifton Beach","Clifton","House"],
+  ["ZG-024","504 Greenmarket","Shortmarket Street, Cape Town","CBD","Apartment"],
+  ["ZG-025","601 Quayside Apartments","34 Prestwich Street, De Waterkant","DWK","Apartment"],
+  ["ZG-026","110 220 on Loop","220 Loop Street, Cape Town","CBD","Apartment"],
+  ["ZG-027","108 343 on B","343 Main Road, Cape Town","CBD","Apartment"],
+  ["ZG-028","1008 The Tokyo","87 Loop Street, Cape Town","CBD","Apartment"],
+  ["ZG-029","602 The Tokyo","87 Loop Street, Cape Town","CBD","Apartment"],
+  ["ZG-030","Unit 4 Villa Palmar","Upper Portswood Road, Green Point","Green Point","Apartment"],
+  ["ZG-031","8 Bramber Court","12 Ravenscraig Road, Sea Point","Sea Point","Apartment"],
+  ["ZG-032","506 Greenmarket","Shortmarket Street, Cape Town","CBD","Apartment"],
+  ["ZG-033","24 Upper Pepper","24 Upper Pepper Street, Bo-Kaap","Bo-Kaap","House"],
+  ["ZG-034","109 Doric","Doric Court, York Road, Green Point","Green Point","Apartment"],
+  ["ZG-035","315 100 on Main","100 Main Road, Cape Town","CBD","Apartment"],
+  ["ZG-036","109 Mouille Grange","11 Beach Road, Mouille Point","Mouille Point","Apartment"],
+  ["ZG-037","2108 The Rubik","Loop Street, Cape Town","CBD","Apartment"],
+  ["ZG-038","602 126 on Main","126 Main Road, Cape Town","CBD","Apartment"],
+  ["ZG-039","92 Highstrand","Green Point","Green Point","Apartment"],
+  ["ZG-040","526 St Martini Gardens","Queen Victoria Street, Cape Town","CBD","Apartment"],
+  ["ZG-041","1005 Arnhem","6 Loxton Road, Milnerton","Milnerton","Apartment"],
+  ["ZG-042","57 North Walk","57 North Walk, Pinelands","Pinelands","House"],
+  ["ZG-043","505 Bridgewater","Conference Lane, Century City","Century City","Apartment"],
+  ["ZG-044","17 Upper Paradise","17 Upper Paradise Road, Newlands","Newlands","Cottage"],
+  ["ZG-045","35A Constantia Road","35A Constantia Road, Gardens","Gardens","Apartment"],
+  ["ZG-046","10 Duet Main House","10 Duet Close, Durbanville","Durbanville","House"],
+  ["ZG-047","59 Elgin","59 Elgin Road, Rondebosch","Rondebosch","House"],
+  ["ZG-048","78 Bryant Street","78 Bryant Street, Bo-Kaap","Bo-Kaap","House"],
+  ["ZG-049","614 Albert","1a Albert Road, Woodstock","Woodstock","Apartment"],
+  ["ZG-050","Unit 1, 2 Munnik Laas","2 Munnik Laas Street, N1 City","N1 City","House"],
+  ["ZG-051","Unit 2, 2 Munnik Laas","2 Munnik Laas Street, N1 City","N1 City","House"],
+  ["ZG-052","Unit 3, 2 Munnik Laas","2 Munnik Laas Street, N1 City","N1 City","House"],
 ];
-const PROPERTIES = PROP_RAW.map(([id,name,area,beds,baths,portfolio,flag]) => ({
-  id, name, area, beds, baths, portfolio, flag: flag||null,
-  type: beds === 1 ? "Studio/1-Bed" : beds <= 2 ? "2-Bed" : beds <= 3 ? "3-Bed" : "4+ Bed",
+const PROPERTIES = PROP_RAW.map(([id,name,address,area,type]) => ({
+  id, name, address, area, type,
+  flag: (id === "ZG-046") ? "⚠️ Duplicate of ZG-012" : (id === "ZG-017") ? "⚠️ Duplicate of ZG-001" : null,
+  portfolio: parseInt(id.replace("ZG-","")) <= 30 ? 1 : 2,
   status: "Active",
 }));
 
@@ -673,10 +676,10 @@ function Sidebar({ active, onNav, collapsed, onToggle }) {
       {!collapsed && (
         <div style={{ padding:"12px 16px", borderTop:`1px solid ${C.border}`, fontSize:11, color:C.text3 }}>
           <div style={{ display:"flex", gap:8, marginBottom:6 }}>
-            <span style={{ background:C.tealBg, color:C.teal, padding:"2px 8px", borderRadius:3, fontSize:10, fontWeight:600 }}>P1 ×25</span>
-            <span style={{ background:C.amberBg, color:C.amber, padding:"2px 8px", borderRadius:3, fontSize:10, fontWeight:600 }}>P2 ×25</span>
+            <span style={{ background:C.tealBg, color:C.teal, padding:"2px 8px", borderRadius:3, fontSize:10, fontWeight:600 }}>P1 ×30</span>
+            <span style={{ background:C.amberBg, color:C.amber, padding:"2px 8px", borderRadius:3, fontSize:10, fontWeight:600 }}>P2 ×22</span>
           </div>
-          <div style={{ color:C.text3, fontSize:10 }}>50 Properties · Cape Town</div>
+          <div style={{ color:C.text3, fontSize:10 }}>52 Properties · Cape Town</div>
         </div>
       )}
     </div>
@@ -2121,7 +2124,7 @@ function PropertiesModule() {
         </div>
       </div>
       <div style={{ display:"flex", gap:12, marginBottom:20 }}>
-        <KPICard label="Total Properties" value={50} color={C.teal} />
+        <KPICard label="Total Properties" value={state.properties.length} color={C.teal} />
         <KPICard label="Portfolio 1" value={state.properties.filter(p => p.portfolio===1).length} color={C.blue} />
         <KPICard label="Portfolio 2" value={state.properties.filter(p => p.portfolio===2).length} color={C.amber} />
         <KPICard label="Flags" value={state.properties.filter(p => p.flag).length} color={C.crimson} />
@@ -2146,7 +2149,7 @@ function PropertiesModule() {
                     {currentBooking && <Badge label="In-House" size="xs" />}
                   </div>
                   <div style={{ fontSize:13, fontWeight:600, color:C.text1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{p.name}</div>
-                  <div style={{ fontSize:11, color:C.text3, marginTop:2 }}>{p.area} · {p.beds}BR {p.baths}BA</div>
+                  <div style={{ fontSize:11, color:C.text3, marginTop:2 }}>{p.area} · {p.type}</div>
                   <div style={{ display:"flex", gap:12, marginTop:6, fontSize:11, color:C.text2 }}>
                     <span>{propBookings.length} bookings</span>
                     <span style={{ color:C.teal, fontFamily:"'DM Mono',monospace" }}>R {(propRevenue/1000).toFixed(1)}k</span>
