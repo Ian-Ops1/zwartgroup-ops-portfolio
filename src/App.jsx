@@ -577,8 +577,7 @@ const NAV = [
   { id:"financials",    icon:DollarSign,   label:"Financials",         badge:null },
   { id:"metrics",       icon:BarChart2,    label:"Advanced Metrics",   badge:null },
   { id:"revenue",       icon:TrendingUp,   label:"Revenue Strategy",   badge:null },
-  { id:"incidents",     icon:AlertTriangle,label:"Incident Register",  badge:"incidents" },
-  { id:"complaints",    icon:MessageSquare,label:"Complaints",         badge:"complaints" },
+  { id:"incidents",     icon:AlertTriangle,label:"Incidents & Complaints", badge:"incidents" },
   { id:"reviews",       icon:Star,         label:"Reviews",            badge:"reviews" },
   { id:"statements",    icon:FileText,     label:"Owner Statements",   badge:null },
   { id:"team",          icon:Users,        label:"Team & Vendors",     badge:null },
@@ -595,11 +594,11 @@ function Sidebar({ active, onNav, collapsed, onToggle }) {
   const badges = useMemo(() => {
     const openIncidents = state.incidents.filter(i => i.status === "Open").length;
     const pendingMaint = 0;
-    const openComplaints = state.complaints.filter(c => c.status === "Open").length;
     const unrespondedReviews = state.reviews.filter(r => !r.responded).length;
     const urgentCleans = state.bookings.flatMap(b => b.cleans).filter(c =>
       ["Due Today","Due Tomorrow","Overdue"].includes(c.status)).length;
-    return { incidents: openIncidents, maintenance: 0,
+    const openComplaints = state.complaints.filter(c => c.status === "Open").length;
+    return { incidents: openIncidents + openComplaints, maintenance: 0,
       complaints: openComplaints, reviews: unrespondedReviews, cleans: urgentCleans };
   }, [state]);
 
@@ -1622,14 +1621,16 @@ function RevenueStrategy() {
   );
 }
 
-// ─── INCIDENT REGISTER ────────────────────────────────────────────────────────
+// ─── INCIDENTS & COMPLAINTS (COMBINED) ───────────────────────────────────────
 function IncidentRegister() {
   const { state, dispatch, toast } = useApp();
+  const [tab, setTab] = useState("incidents");
   const [showAdd, setShowAdd] = useState(false);
-  const [selected, setSelected] = useState(null);
+  const [showAddComp, setShowAddComp] = useState(false);
   const [form, setForm] = useState({ propertyId:"", type:"Cleaning Issue", description:"", guest:"", severity:"Medium", date:TODAY });
+  const [compForm, setCompForm] = useState({ propertyId:"", type:"Cleanliness", description:"", guestName:"", date:TODAY });
 
-  const handleAdd = () => {
+  const handleAddIncident = () => {
     if (!form.propertyId || !form.description) return toast("Fill required fields","error");
     const prop = state.properties.find(p => p.id === form.propertyId);
     const id = `INC-${String(state.incidents.length + 1).padStart(3,"0")}`;
@@ -1638,54 +1639,119 @@ function IncidentRegister() {
     setForm({ propertyId:"", type:"Cleaning Issue", description:"", guest:"", severity:"Medium", date:TODAY });
   };
 
-  const resolve = (inc) => {
+  const handleAddComplaint = () => {
+    if (!compForm.propertyId || !compForm.description) return toast("Fill required fields","error");
+    const prop = state.properties.find(p => p.id === compForm.propertyId);
+    const id = `CMP-${String(state.complaints.length + 1).padStart(3,"0")}`;
+    dispatch({ type:"ADD_COMPLAINT", payload:{ id, propertyName:prop?.name || compForm.propertyId, status:"Open", resolvedDate:null, ...compForm }});
+    toast("Complaint logged"); setShowAddComp(false);
+    setCompForm({ propertyId:"", type:"Cleanliness", description:"", guestName:"", date:TODAY });
+  };
+
+  const resolveIncident = (inc) => {
     const resolution = prompt("Enter resolution details:");
     if (!resolution) return;
     dispatch({ type:"UPDATE_INCIDENT", payload:{ id:inc.id, status:"Resolved", resolution, resolvedDate:TODAY }});
     toast("Incident resolved");
   };
 
+  const resolveComplaint = (c) => {
+    dispatch({ type:"UPDATE_COMPLAINT", payload:{ id:c.id, status:"Resolved", resolvedDate:TODAY }});
+    toast("Complaint resolved");
+  };
+
+  const totalOpen = state.incidents.filter(i => i.status==="Open").length + state.complaints.filter(c => c.status==="Open").length;
+
   return (
     <div style={{ animation:"fadeIn 0.25s ease" }}>
-      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:24 }}>
-        <SectionTitle>Incident Register</SectionTitle>
-        <Btn variant="primary" icon={Plus} onClick={() => setShowAdd(true)}>Log Incident</Btn>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:20 }}>
+        <SectionTitle>Incidents & Complaints</SectionTitle>
+        <Btn variant="primary" icon={Plus} onClick={() => tab==="incidents" ? setShowAdd(true) : setShowAddComp(true)}>
+          Log {tab === "incidents" ? "Incident" : "Complaint"}
+        </Btn>
       </div>
+
+      {/* KPI Row */}
       <div style={{ display:"flex", gap:12, marginBottom:20 }}>
-        {["Open","Resolved"].map(s => (
-          <KPICard key={s} label={s} value={state.incidents.filter(i => i.status === s).length} color={s==="Open" ? C.crimson : C.green} />
-        ))}
-        {["High","Medium","Low"].map(s => (
-          <KPICard key={s} label={`${s} Severity`} value={state.incidents.filter(i => i.severity === s).length} color={s==="High" ? C.crimson : s==="Medium" ? C.amber : C.blue} />
+        <KPICard label="Total Open" value={totalOpen} color={totalOpen > 0 ? C.crimson : C.green} icon={AlertCircle} />
+        <KPICard label="Open Incidents" value={state.incidents.filter(i=>i.status==="Open").length} color={C.crimson} />
+        <KPICard label="Open Complaints" value={state.complaints.filter(c=>c.status==="Open").length} color={C.amber} />
+        <KPICard label="Resolved (All)" value={state.incidents.filter(i=>i.status==="Resolved").length + state.complaints.filter(c=>c.status==="Resolved").length} color={C.green} />
+      </div>
+
+      {/* Tabs */}
+      <div style={{ display:"flex", gap:0, marginBottom:20, borderBottom:`1px solid ${C.border}` }}>
+        {[["incidents","Incidents"],["complaints","Complaints"]].map(([id,label]) => (
+          <button key={id} onClick={() => setTab(id)} style={{ padding:"8px 24px", background:"none", border:"none",
+            borderBottom:`2px solid ${tab===id ? C.teal : "transparent"}`, color: tab===id ? C.teal : C.text2,
+            cursor:"pointer", fontSize:13, fontWeight: tab===id ? 600 : 400, transition:"all 0.15s" }}>
+            {label} <span style={{ fontFamily:"'DM Mono',monospace", fontSize:11, marginLeft:4,
+              color: id==="incidents" ? C.crimson : C.amber }}>
+              ({id==="incidents" ? state.incidents.length : state.complaints.length})
+            </span>
+          </button>
         ))}
       </div>
-      <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
-        {state.incidents.map(inc => (
-          <Card key={inc.id} hover>
-            <div style={{ display:"flex", alignItems:"flex-start", gap:16 }}>
-              <div style={{ flex:1 }}>
-                <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:8, flexWrap:"wrap" }}>
-                  <span style={{ fontFamily:"'DM Mono',monospace", fontSize:11, color:C.text3 }}>{inc.id}</span>
-                  <Badge label={inc.status} />
-                  <Badge label={inc.severity === "High" ? "Overdue" : inc.severity === "Medium" ? "Due Today" : "Upcoming"} />
-                  <span style={{ fontSize:12, color:C.text3 }}>{inc.type}</span>
+
+      {/* Incidents Tab */}
+      {tab === "incidents" && (
+        <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+          {state.incidents.length === 0 && <EmptyState icon={AlertTriangle} title="No incidents logged" />}
+          {state.incidents.map(inc => (
+            <Card key={inc.id} hover>
+              <div style={{ display:"flex", alignItems:"flex-start", gap:16 }}>
+                <div style={{ flex:1 }}>
+                  <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:8, flexWrap:"wrap" }}>
+                    <span style={{ fontFamily:"'DM Mono',monospace", fontSize:11, color:C.text3 }}>{inc.id}</span>
+                    <Badge label={inc.status} />
+                    <span style={{ fontSize:11, padding:"2px 8px", borderRadius:4, fontWeight:600,
+                      background: inc.severity==="High" ? C.crimsonBg : inc.severity==="Medium" ? C.amberBg : C.blueBg,
+                      color: inc.severity==="High" ? C.crimson : inc.severity==="Medium" ? C.amber : C.blue }}>
+                      {inc.severity}
+                    </span>
+                    <span style={{ fontSize:12, color:C.text3 }}>{inc.type}</span>
+                  </div>
+                  <div style={{ fontSize:14, fontWeight:600, color:C.text1, marginBottom:4 }}>{inc.propertyName}</div>
+                  <div style={{ fontSize:13, color:C.text2, marginBottom:6 }}>{inc.description}</div>
+                  <div style={{ display:"flex", gap:16, fontSize:11, color:C.text3 }}>
+                    <span>Guest: {inc.guest || "—"}</span>
+                    <span>Date: {fmtDate(inc.date)}</span>
+                    {inc.resolvedDate && <span>Resolved: {fmtDate(inc.resolvedDate)}</span>}
+                  </div>
+                  {inc.resolution && <div style={{ marginTop:8, fontSize:12, color:C.green, padding:"8px 12px", background:C.greenBg, borderRadius:6 }}>✓ {inc.resolution}</div>}
                 </div>
-                <div style={{ fontSize:14, fontWeight:600, color:C.text1, marginBottom:4 }}>{inc.propertyName}</div>
-                <div style={{ fontSize:13, color:C.text2, marginBottom:6 }}>{inc.description}</div>
-                <div style={{ display:"flex", gap:16, fontSize:11, color:C.text3 }}>
-                  <span>Guest: {inc.guest || "—"}</span>
-                  <span>Date: {fmtDate(inc.date)}</span>
-                  {inc.resolvedDate && <span>Resolved: {fmtDate(inc.resolvedDate)}</span>}
+                {inc.status === "Open" && <Btn size="sm" variant="primary" onClick={() => resolveIncident(inc)}>Resolve</Btn>}
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Complaints Tab */}
+      {tab === "complaints" && (
+        <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+          {state.complaints.length === 0 && <EmptyState icon={MessageSquare} title="No complaints logged" />}
+          {state.complaints.map(c => (
+            <Card key={c.id} hover>
+              <div style={{ display:"flex", alignItems:"flex-start", gap:16 }}>
+                <div style={{ flex:1 }}>
+                  <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:8, flexWrap:"wrap" }}>
+                    <span style={{ fontFamily:"'DM Mono',monospace", fontSize:11, color:C.text3 }}>{c.id}</span>
+                    <Badge label={c.status} />
+                    <span style={{ fontSize:12, color:C.text3 }}>{c.type}</span>
+                  </div>
+                  <div style={{ fontSize:14, fontWeight:600, color:C.text1, marginBottom:4 }}>{c.propertyName}</div>
+                  <div style={{ fontSize:13, color:C.text2, marginBottom:6 }}>{c.description}</div>
+                  <div style={{ fontSize:11, color:C.text3 }}>Guest: {c.guestName || "—"} · {fmtDate(c.date)}</div>
                 </div>
-                {inc.resolution && <div style={{ marginTop:8, fontSize:12, color:C.green, padding:"8px 12px", background:C.greenBg, borderRadius:6 }}>✓ {inc.resolution}</div>}
+                {c.status === "Open" && <Btn size="sm" variant="primary" onClick={() => resolveComplaint(c)}>Resolve</Btn>}
               </div>
-              <div style={{ display:"flex", gap:8 }}>
-                {inc.status === "Open" && <Btn size="sm" variant="primary" onClick={() => resolve(inc)}>Resolve</Btn>}
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Add Incident Modal */}
       <Modal open={showAdd} onClose={() => setShowAdd(false)} title="Log Incident">
         <FormRow label="Property" required>
           <Select value={form.propertyId} onChange={v => setForm(f => ({...f, propertyId:v}))}
@@ -1695,7 +1761,7 @@ function IncidentRegister() {
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
           <FormRow label="Type">
             <Select value={form.type} onChange={v => setForm(f => ({...f, type:v}))}
-              options={["Cleaning Issue","Maintenance - HVAC","Maintenance - Plumbing","Guest Complaint","Security","Damage","Access Issue","Other"]} />
+              options={["Cleaning Issue","Guest Complaint","Security","Damage","Access Issue","Noise","Other"]} />
           </FormRow>
           <FormRow label="Severity">
             <Select value={form.severity} onChange={v => setForm(f => ({...f, severity:v}))} options={["High","Medium","Low"]} />
@@ -1706,54 +1772,35 @@ function IncidentRegister() {
           <textarea value={form.description} onChange={e => setForm(f => ({...f, description:e.target.value}))} rows={3} style={{ ...inputStyle, resize:"vertical" }} />
         </FormRow>
         <div style={{ display:"flex", gap:8 }}>
-          <Btn variant="danger" onClick={handleAdd} icon={AlertTriangle}>Log Incident</Btn>
+          <Btn variant="danger" onClick={handleAddIncident} icon={AlertTriangle}>Log Incident</Btn>
           <Btn variant="ghost" onClick={() => setShowAdd(false)}>Cancel</Btn>
+        </div>
+      </Modal>
+
+      {/* Add Complaint Modal */}
+      <Modal open={showAddComp} onClose={() => setShowAddComp(false)} title="Log Complaint">
+        <FormRow label="Property" required>
+          <Select value={compForm.propertyId} onChange={v => setCompForm(f => ({...f, propertyId:v}))}
+            options={["", ...state.properties.map(p => ({ value:p.id, label:`${p.id} · ${p.name}` }))]} />
+        </FormRow>
+        <FormRow label="Date"><Input type="date" value={compForm.date} onChange={v => setCompForm(f => ({...f, date:v}))} /></FormRow>
+        <FormRow label="Type">
+          <Select value={compForm.type} onChange={v => setCompForm(f => ({...f, type:v}))}
+            options={["Cleanliness","Noise","Amenities","Communication","Damage","Other"]} />
+        </FormRow>
+        <FormRow label="Guest Name"><Input value={compForm.guestName} onChange={v => setCompForm(f => ({...f, guestName:v}))} /></FormRow>
+        <FormRow label="Description" required>
+          <textarea value={compForm.description} onChange={e => setCompForm(f => ({...f, description:e.target.value}))} rows={3} style={{ ...inputStyle, resize:"vertical" }} />
+        </FormRow>
+        <div style={{ display:"flex", gap:8 }}>
+          <Btn variant="amber" onClick={handleAddComplaint} icon={MessageSquare}>Log Complaint</Btn>
+          <Btn variant="ghost" onClick={() => setShowAddComp(false)}>Cancel</Btn>
         </div>
       </Modal>
     </div>
   );
 }
 
-
-// ─── COMPLAINTS ───────────────────────────────────────────────────────────────
-function Complaints() {
-  const { state, dispatch, toast } = useApp();
-  return (
-    <div style={{ animation:"fadeIn 0.25s ease" }}>
-      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:24 }}>
-        <SectionTitle>Complaints</SectionTitle>
-      </div>
-      <div style={{ display:"flex", gap:12, marginBottom:20 }}>
-        <KPICard label="Open" value={state.complaints.filter(c => c.status === "Open").length} color={C.crimson} />
-        <KPICard label="Resolved" value={state.complaints.filter(c => c.status === "Resolved").length} color={C.green} />
-        <KPICard label="Total" value={state.complaints.length} color={C.teal} />
-      </div>
-      <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-        {state.complaints.map(c => (
-          <Card key={c.id} hover>
-            <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:8 }}>
-              <span style={{ fontFamily:"'DM Mono',monospace", fontSize:11, color:C.text3 }}>{c.id}</span>
-              <Badge label={c.status} />
-              <Badge label={c.type} size="xs" />
-            </div>
-            <div style={{ fontSize:14, fontWeight:600, color:C.text1, marginBottom:4 }}>{c.propertyName}</div>
-            <div style={{ fontSize:13, color:C.text2, marginBottom:4 }}>{c.description}</div>
-            <div style={{ fontSize:11, color:C.text3 }}>Guest: {c.guestName} · {fmtDate(c.date)}</div>
-            {c.status === "Open" && (
-              <div style={{ marginTop:10 }}>
-                <Btn size="sm" variant="primary" onClick={() => {
-                  dispatch({ type:"UPDATE_COMPLAINT", payload:{ id:c.id, status:"Resolved", resolvedDate:TODAY }});
-                  toast("Complaint resolved");
-                }}>Mark Resolved</Btn>
-              </div>
-            )}
-          </Card>
-        ))}
-        {state.complaints.length === 0 && <EmptyState icon={MessageSquare} title="No complaints" sub="All guests are happy!" />}
-      </div>
-    </div>
-  );
-}
 
 // ─── REVIEWS ─────────────────────────────────────────────────────────────────
 function Reviews() {
@@ -2359,7 +2406,6 @@ function ModuleContent({ active, onNav }) {
     metrics:     <AdvancedMetrics />,
     revenue:     <RevenueStrategy />,
     incidents:   <IncidentRegister />,
-    complaints:  <Complaints />,
     reviews:     <Reviews />,
     statements:  <OwnerStatements />,
     team:        <TeamVendors />,
