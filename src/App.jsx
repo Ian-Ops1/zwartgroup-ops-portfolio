@@ -51,7 +51,7 @@ const C = {
 };
 
 // ─── UTILITIES ────────────────────────────────────────────────────────────────
-const TODAY = new Date().toISOString().slice(0, 10); // Always uses real current date
+const TODAY = new Date().toISOString().slice(0, 10);
 const addDays = (iso, n) => {
   const d = new Date(iso + "T12:00:00Z");
   d.setUTCDate(d.getUTCDate() + n);
@@ -75,7 +75,6 @@ const excelToISO = (serial) => {
 };
 
 const calculateCleans = (checkIn, checkOut, nights) => {
-  // Matches Excel: D+(n*7)<E (strictly less than checkout)
   const numCleans = nights <= 7 ? 0 : Math.ceil(nights / 7) - 1;
   if (numCleans === 0) return [];
   return Array.from({ length: numCleans }, (_, i) => ({
@@ -100,65 +99,62 @@ const getCleanStatus = (clean) => {
 };
 
 // ─── STATIC DATA ──────────────────────────────────────────────────────────────
-// [id, name, address, area, type]
+// [id, name, area, beds, baths, portfolio]
 const PROP_RAW = [
-  ["ZG-001","605 The Tokyo","87 Loop Street, Cape Town, Western Cape, 8000, ZA","CBD","Apartment"],
-  ["ZG-002","109 Station House","Station House Sea Point, Cape Town, Western Cape, 8060, ZA","Sea Point","Apartment"],
-  ["ZG-003","602 The Suro","The Suro, Holmfirth Road, Cape Town, Western Cape, 8060, ZA","Sea Point","Apartment"],
-  ["ZG-004","Suite 103 Strand Beach","243 High Level Road, Cape Town, Western Cape, 8005, ZA","Sea Point","Apartment"],
-  ["ZG-005","1322 16 on Bree","1322 Bree Street, Cape Town, Western Cape, 8000, ZA","CBD","Apartment"],
-  ["ZG-006","2309 16 on Bree","1322 Bree Street, Cape Town, Western Cape, 8000, ZA","CBD","Apartment"],
-  ["ZG-007","201 The Sage","Arthurs Road, Cape Town, Western Cape, 8060, ZA","Sea Point","Apartment"],
-  ["ZG-008","504 The Centurion","The Centurion, 1 Frere Road, Cape Town, Western Cape, 8005, ZA","Sea Point","Apartment"],
-  ["ZG-009","314 Station House","Station House Sea Point, Cape Town, Western Cape, 8060, ZA","Sea Point","Apartment"],
-  ["ZG-010","10 Duet Loft","10 Duet Close, Cape Town, Western Cape, 7550, ZA","Durbanville","Cottage"],
-  ["ZG-011","10 Duet Cottage","10 Duet Close, Cape Town, Western Cape, 7550, ZA","Durbanville","Cottage"],
-  ["ZG-012","10 Duet Main House","10 Duet Close, Cape Town, Western Cape, 7550, ZA","Durbanville","House"],
-  ["ZG-013","5 Sunglint","1 Sunglint, 24 Dudley Road cnr. Oldfield Sea Point, Cape Town, 8060","Sea Point","Apartment"],
-  ["ZG-014","201 The Suro","The Suro, Holmfirth Road, Cape Town, Western Cape, 8060, ZA","Sea Point","Apartment"],
-  ["ZG-015","Unit 3 Castella Mare","47 Coral Road, Cape Town, Western Cape, 7439, ZA","Table View","Apartment"],
-  ["ZG-016","417 Station House","Station House Sea Point, Cape Town, Western Cape, 8060, ZA","Sea Point","Apartment"],
-  ["ZG-017","605 The Tokyo","87 Loop Street, Cape Town, Western Cape, 8000, ZA","CBD","Apartment"],
-  ["ZG-018","35 Uxolo","Uxolo Apartments, Cape Town, Western Cape, 8001, ZA","CBD","Apartment"],
-  ["ZG-019","601 Station House","Station House Sea Point, Cape Town, Western Cape, 8060, ZA","Sea Point","Apartment"],
-  ["ZG-020","209 220 on Loop","220 Loop Street, Cape Town, Western Cape, 8000, ZA","CBD","Apartment"],
-  ["ZG-021","411 72 Kloof","72 Kloof, 1 Nicol Street, Cape Town, Western Cape, 8001, ZA","Gardens","Apartment"],
-  ["ZG-022","21 Bungalow","Clifton Beach","Clifton","House"],
-  ["ZG-023","Bungalow 25","Clifton Beach","Clifton","House"],
-  ["ZG-024","504 Greenmarket","Shortmarket Street, Cape Town, Western Cape, 8000, ZA","CBD","Apartment"],
-  ["ZG-025","601 Quayside Apartments","34 Prestwich Street, Cape Town, Western Cape, 8001, ZA","DWK","Apartment"],
-  ["ZG-026","110 220 on Loop","220 Loop Street, Cape Town, Western Cape, 8000, ZA","CBD","Apartment"],
-  ["ZG-027","108 343 on B","THREE43 on B, 343 Main Road, Cape Town, Western Cape, 8005, ZA","CBD","Apartment"],
-  ["ZG-028","1008 The Tokyo","87 Loop Street, Cape Town, Western Cape, 8000, ZA","CBD","Apartment"],
-  ["ZG-029","602 The Tokyo","87 Loop Street, Cape Town, Western Cape, 8000, ZA","CBD","Apartment"],
-  ["ZG-030","Unit 4 Villa Palmar","Unit 4, Upper Portswood Road, Cape Town, Western Cape, 8051, ZA","Green Point","Apartment"],
-  ["ZG-031","8 Bramber Court","12 Ravenscraig Road, Cape Town, Western Cape, 8005, ZA","Sea Point","Apartment"],
-  ["ZG-032","506 Greenmarket","Shortmarket Street, Cape Town, Western Cape, 8000, ZA","CBD","Apartment"],
-  ["ZG-033","24 Upper Pepper","24 Upper Pepper Street, Cape Town, Western Cape, 8001, ZA","Bo-Kaap","House"],
-  ["ZG-034","109 Doric","Doric Court, York Road, Cape Town, Western Cape, 8051, ZA","Green Point","Apartment"],
-  ["ZG-035","315 100 on Main","Unit 315, 100 Main Road, Cape Town, Western Cape, 8005, ZA","CBD","Apartment"],
-  ["ZG-036","109 Mouille Grange","11 Beach Road, Cape Town, Western Cape, 8005, ZA","Mouille Point","Apartment"],
-  ["ZG-037","2108 The Rubik","2108 Rubik, Loop Street, Cape Town, Western Cape, 8000, ZA","CBD","Apartment"],
-  ["ZG-038","602 126 on Main","126 Main Road, Cape Town, Western Cape, 8060, ZA","CBD","Apartment"],
-  ["ZG-039","92 Highstrand","Green Point, Cape Town","Green Point","Apartment"],
-  ["ZG-040","526 St Martini Gardens","Queen Victoria Street, Cape Town, Western Cape, 8000, ZA","CBD","Apartment"],
-  ["ZG-041","1005 Arnhem","6 Loxton Road, Cape Town, Western Cape, 7441, ZA","Milnerton","Apartment"],
-  ["ZG-042","57 North Walk","57 North Walk, Cape Town, Western Cape, 7405, ZA","Pinelands","House"],
-  ["ZG-043","505 Bridgewater","505 Conference Lane, Cape Town, Western Cape, 7441, ZA","Century City","Apartment"],
-  ["ZG-044","17 Upper Paradise","17 Upper Paradise Road, Cape Town, Western Cape, 7700, ZA","Newlands","Cottage"],
-  ["ZG-045","35A Constantia Road","35A Constantia Road, Cape Town, Western Cape, 8001, ZA","Gardens","Apartment"],
-  ["ZG-046","10 Duet Main House","10 Duet Close, Cape Town, Western Cape, 7550, ZA","Durbanville","House"],
-  ["ZG-047","59 Elgin","59 Elgin Road, Cape Town, Western Cape, 7700, ZA","Rondebosch","House"],
-  ["ZG-048","78 Bryant Street","78 Bryant Street, Cape Town","Bo-Kaap","House"],
-  ["ZG-049","614 Albert","1a Albert Road, Cape Town, Western Cape, 8001, ZA","Woodstock","Apartment"],
-  ["ZG-050","Unit 1, 2 Munnik Laas","2 Munnik Laas Street, Cape Town, Western Cape, 7500, ZA","N1 City","House"],
-  ["ZG-051","Unit 2, 2 Munnik Laas","2 Munnik Laas Street, Cape Town, Western Cape, 7500, ZA","N1 City","House"],
-  ["ZG-052","Unit 3, 2 Munnik Laas","2 Munnik Laas Street, Cape Town, Western Cape, 7500, ZA","N1 City","House"],
+  ["ZG-001","605 The Tokyo","De Waterkant",1,1,1],
+  ["ZG-002","601 Quayside","V&A Waterfront",2,2,1],
+  ["ZG-003","8 Bramber Court","Sea Point",2,1,1],
+  ["ZG-004","109 Mouille Grange","Green Point",1,1,1],
+  ["ZG-005","310 De Waterkant Village","De Waterkant",1,1,1],
+  ["ZG-006","Penthouse 1 The Tide","Blouberg",3,2,1],
+  ["ZG-007","Unit 4 Sunset Manor","Sea Point",2,2,1],
+  ["ZG-008","12A Loader Street","De Waterkant",2,1,1],
+  ["ZG-009","501 Harbour Bridge","V&A Waterfront",2,2,1],
+  ["ZG-010","204 Rockwell","Green Point",2,2,1],
+  ["ZG-011","Loft 3 Bree Street Studios","CBD",1,1,1],
+  ["ZG-012","10 Duet Main House","Blouberg",4,3,1,"⚠️ Duplicate flag"],
+  ["ZG-013","Unit 7 Paarden Eiland Lofts","Paarden Eiland",2,1,1],
+  ["ZG-014","1503 The Houghton","Sea Point",3,2,1],
+  ["ZG-015","Unit 3 Castella Mare","Blouberg",3,2,1],
+  ["ZG-016","808 Granger Bay Court","V&A Waterfront",2,2,1],
+  ["ZG-017","605 The Tokyo","De Waterkant",1,1,1,"⚠️ Duplicate of ZG-001"],
+  ["ZG-018","22 Loader Lane Studio","De Waterkant",1,1,1],
+  ["ZG-019","201 Atlantic Views","Camps Bay",2,2,1],
+  ["ZG-020","Apartment 6 Chelsea Square","Green Point",1,1,1],
+  ["ZG-021","Villa Rosa Ground Floor","Fresnaye",3,2,1],
+  ["ZG-022","304 The Metropolitan","CBD",2,2,1],
+  ["ZG-023","Unit 9 Ocean Palms","Blouberg",2,1,1],
+  ["ZG-024","502 Waterfront Place","V&A Waterfront",3,3,1],
+  ["ZG-025","Garden Suite Clifton Views","Clifton",2,2,1],
+  ["ZG-026","301 Strand Street Lofts","CBD",1,1,2],
+  ["ZG-027","Penthouse B Blouberg Rise","Blouberg",3,2,2],
+  ["ZG-028","Unit 11 Signal Hill Estate","Signal Hill",2,2,2],
+  ["ZG-029","1204 The Peninsula","Sea Point",2,2,2],
+  ["ZG-030","Suite 2 Cape Quarter","De Waterkant",1,1,2],
+  ["ZG-031","7 Kloof Street Hideaway","Gardens",2,1,2],
+  ["ZG-032","403 Azure","Camps Bay",3,2,2],
+  ["ZG-033","Studio 5 The Foundry","Green Point",1,1,2],
+  ["ZG-034","Villa Ibiza Clifton 3rd","Clifton",4,3,2],
+  ["ZG-035","102 Salt Circle","Mouille Point",2,2,2],
+  ["ZG-036","201 Lions Head Lodge","Signal Hill",3,2,2],
+  ["ZG-037","Unit 6 Blouberg Sands","Blouberg",2,2,2],
+  ["ZG-038","1802 Portside Tower","CBD",2,2,2],
+  ["ZG-039","Garden Apt Park Road","Gardens",2,1,2],
+  ["ZG-040","Suite 401 De Waterkant House","De Waterkant",2,2,2],
+  ["ZG-041","Penthouse 3 Granger Bay","V&A Waterfront",3,3,2],
+  ["ZG-042","Unit 14 The Tigris","Blouberg",2,2,2],
+  ["ZG-043","503 Amsterdam Towers","CBD",2,1,2],
+  ["ZG-044","Beach House 2 Big Bay","Blouberg",4,3,2],
+  ["ZG-045","501 Bantry Bay Suites","Bantry Bay",3,2,2],
+  ["ZG-046","10 Duet Main House","Blouberg",4,3,2,"⚠️ Duplicate of ZG-012"],
+  ["ZG-047","Unit 8 Mouille Point Quay","Mouille Point",2,2,2],
+  ["ZG-048","Garden Studio Tamboerskloof","Tamboerskloof",1,1,2],
+  ["ZG-049","1601 One&Only Residences","V&A Waterfront",3,3,2],
+  ["ZG-050","Clifton Cove Villa","Clifton",5,4,2],
 ];
-const PROPERTIES = PROP_RAW.map(([id,name,address,area,type]) => ({
-  id, name, address, area, type,
-  flag: (id === "ZG-046") ? "⚠️ Duplicate of ZG-012" : (id === "ZG-017") ? "⚠️ Duplicate of ZG-001" : null,
-  portfolio: parseInt(id.replace("ZG-","")) <= 30 ? 1 : 2,
+const PROPERTIES = PROP_RAW.map(([id,name,area,beds,baths,portfolio,flag]) => ({
+  id, name, area, beds, baths, portfolio, flag: flag||null,
+  type: beds === 1 ? "Studio/1-Bed" : beds <= 2 ? "2-Bed" : beds <= 3 ? "3-Bed" : "4+ Bed",
   status: "Active",
 }));
 
@@ -170,68 +166,64 @@ const mkBooking = (id, guestName, propId, checkIn, checkOut, platform, revenue, 
     ...( extraCleans[i] || {}),
     status: extraCleans[i]?.status || c.status,
   }));
-  // propId can be a ZG-ID or a property name directly
   return { id, guestName, propId, propertyName: prop?.name || propId, area: prop?.area || "",
-    checkIn, checkOut, nights, platform, revenue: Number(revenue)||0, notes,
-    status: daysBetween(checkOut, TODAY) > 0 ? "Checked Out" : daysBetween(TODAY, checkIn) > 0 ? "Upcoming" : "In-House",
-    cleans };
-};
-
-// mkBookingDirect: for real bookings where property name is used directly
-const mkBookingDirect = (id, guestName, propName, checkIn, checkOut, platform, revenue, cleanStatuses = [], notes = "") => {
-  const nights = daysBetween(checkIn, checkOut);
-  const cleans = calculateCleans(checkIn, checkOut, nights).map((c, i) => ({
-    ...c,
-    status: cleanStatuses[i] || c.status,
-    assignedHousekeeper: "",
-  }));
-  return { id, guestName, propId: null, propertyName: propName, area: "",
-    checkIn, checkOut, nights, platform, revenue: Number(revenue)||0, notes,
+    checkIn, checkOut, nights, platform, revenue: Number(revenue), notes,
     status: daysBetween(checkOut, TODAY) > 0 ? "Checked Out" : daysBetween(TODAY, checkIn) > 0 ? "Upcoming" : "In-House",
     cleans };
 };
 
 const INITIAL_BOOKINGS = [
-  // Real data from May_OpsHub_By_Ian_V7.xlsx — Res & Mid-Stay Cleans sheet
-  // C=Completed, R=Rescheduled, U=Upcoming, T=DueToday, OV=Overdue
-  mkBookingDirect("HMD9DDPMNY","Nomusa Buthelezi","Unit 3 Castella Mare","2026-05-02","2026-06-02","Airbnb",16705.35,["Completed","Completed","Completed","Upcoming"]),
-  mkBookingDirect("HMMM4NRS3D","Lene Van Dyk","Tranquil Garden (10 Duet Cottage)","2026-05-01","2026-05-31","Airbnb",10541.63,["Completed","Completed","Completed","Upcoming"]),
-  mkBookingDirect("HMDSP3XDZD","Abigail Windvogel","35 Uxolo","2026-04-30","2026-05-28","Airbnb",13446.79,["Completed","Completed","Completed"]),
-  mkBookingDirect("HMPPK4ZEN5","Anthony Chijioke","2309 16 on Bree","2026-04-16","2026-05-16","Airbnb",28009.34,["Completed","Completed","Completed","Completed"]),
-  mkBookingDirect("HMZZYR9NP8","Oluwamayowa Fanoiki","2108 The Rubik","2026-04-13","2026-05-14","Airbnb",20117.40,["Completed","Completed","Completed","Completed"]),
-  mkBookingDirect("HMNZ59ABRW","Sylvester Selepe","601 Quayside Apartments","2026-04-24","2026-06-30","Airbnb",52196.41,["Completed","Completed","Completed","Completed","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming"]),
-  mkBookingDirect("HMKMTC9JAQ","Tonye Tariah","1005 Arnhem","2026-04-06","2026-05-08","Airbnb",23030.40,["Completed","Completed","Completed","Completed"]),
-  mkBookingDirect("HMQESEWZMJ","Francisca","Suite 103 Strand Beach","2026-05-01","2026-05-17","Airbnb",0,["Completed","Completed"],"⚠️ Revenue missing"),
-  mkBookingDirect("HMH34D3NEA","Azeez Kehinde","504 Greenmarket","2026-04-30","2026-05-11","Airbnb",7763.89,["Completed"]),
-  mkBookingDirect("HMPRNKZKH4","Abdullah Habeeb","505 Bridgewater","2026-05-03","2026-06-03","Airbnb",24890.01,["Completed","Rescheduled","Due Today","Upcoming"]),
-  mkBookingDirect("HMNRD2RRP9","Maya Dorel","8 Bramber Court","2026-04-11","2026-06-11","Airbnb",67965.89,["Completed","Completed","Completed","Completed","Rescheduled","Overdue","Upcoming","Upcoming"]),
-  mkBookingDirect("HMMN2RHC4P","Serena Dell'Angelo","504 The Centurion","2026-04-23","2026-05-25","Airbnb",22063.97,["Completed","Completed","Completed","Completed"]),
-  mkBookingDirect("HMJHWNNKMB","Milla Sequeira","201 The Suro","2026-05-04","2026-06-04","Airbnb",41017.65,["Completed","Completed","Due Tomorrow","Upcoming"]),
-  mkBookingDirect("HMBRAYFMD2","Ontario","24 Upper Pepper","2026-05-04","2026-05-29","Airbnb",21933.38,["Completed","Completed","Due Tomorrow"]),
-  mkBookingDirect("HMPFX4MBN2","Teresa Forester","The Nest (10 Duet Loft)","2026-05-07","2026-05-19","Airbnb",910.67,["Completed"]),
-  mkBookingDirect("HMC344RY9N","Brian Van Eyssen","Unit 2 - 2 Munnik Laas","2026-05-08","2026-05-31","Airbnb",0,["Rescheduled","Rescheduled","Upcoming"],"⚠️ Revenue missing"),
-  mkBookingDirect("5986083519","Alexis","417 Station House","2026-05-10","2026-08-01","Booking.com",0,["Rescheduled","Due Today","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming"],"⚠️ Revenue missing"),
-  mkBookingDirect("N/A","Guest","601 Station House","2026-05-04","2026-08-01","Direct",0,["Completed","Completed","Due Tomorrow","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming"],"⚠️ Guest name missing; ⚠️ Revenue missing"),
-  mkBookingDirect("HM3TX2FDHZ","Rhianne Tisdale","602 The Suro","2026-05-09","2026-06-14","Airbnb",0,["Rescheduled","Overdue","Upcoming","Upcoming","Upcoming"],"⚠️ Revenue missing"),
-  mkBookingDirect("HMPFX4MBN2-B","Guest","The Nest (10 Duet Loft)","2026-05-09","2026-05-19","Airbnb",0,["Completed"],"⚠️ Guest name missing; ⚠️ Revenue missing"),
-  mkBookingDirect("HMEWYEMCWH","Guest","Unit 1 - 2 Munnik Laas","2026-05-10","2026-06-30","Airbnb",0,["Rescheduled","Due Today","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming"],"⚠️ Guest name missing; ⚠️ Revenue missing"),
-  mkBookingDirect("HMXRKNYWJN","Guest","10 Duet Main House","2026-05-14","2026-05-23","Airbnb",0,["Completed"],"⚠️ Guest name missing; ⚠️ Revenue missing"),
-  mkBookingDirect("4PL7YF","John","314 Station House","2026-05-11","2026-06-11","Direct",0,["Completed","Due Tomorrow","Upcoming","Upcoming"],"⚠️ Revenue missing"),
-  mkBookingDirect("NA-614","Guest","614 Albert","2026-05-14","2026-05-22","Airbnb",0,["Completed"],"⚠️ Guest name missing; ⚠️ Revenue missing"),
-  mkBookingDirect("NA-220","Guest","209 220 on Loop","2026-05-15","2026-06-15","Airbnb",0,["Completed","Upcoming","Upcoming","Upcoming"],"⚠️ Guest name missing; ⚠️ Revenue missing"),
-  mkBookingDirect("NA-126","Guest","602 126 on Main","2026-05-15","2026-05-28","Airbnb",0,["Completed"],"⚠️ Guest name missing; ⚠️ Revenue missing"),
+  mkBooking("HMD9DDPMNY","Nomusa Buthelezi","ZG-015","2026-04-28","2026-05-29","Airbnb",16705.35,
+    [{status:"Completed",completedDate:"2026-05-05",assignedHousekeeper:"Rebecca"},{status:"Completed",completedDate:"2026-05-12",assignedHousekeeper:"Sharon"},{status:"Completed",completedDate:"2026-05-19",assignedHousekeeper:"Rebecca"},{status:"Upcoming"}]),
+  mkBooking("6947727965","Guest","ZG-002","2026-05-01","2026-05-29","Booking.com",22400.00,
+    [{status:"Completed",completedDate:"2026-05-08",assignedHousekeeper:"Sandy"},{status:"Completed",completedDate:"2026-05-15",assignedHousekeeper:"Sandy"},{status:"Upcoming"},{status:"Upcoming"}],"⚠️ Name missing"),
+  mkBooking("6112448606","Sipho Dlamini","ZG-006","2026-05-03","2026-05-24","Booking.com",18900.00,
+    [{status:"Completed",completedDate:"2026-05-10",assignedHousekeeper:"Betty"},{status:"Completed",completedDate:"2026-05-17",assignedHousekeeper:"Betty"}]),
+  mkBooking("5986083519","Amina Mokoena","ZG-019","2026-05-10","2026-05-31","Booking.com",14200.00,
+    [{status:"Completed",completedDate:"2026-05-17",assignedHousekeeper:"Netsai"},{status:"Upcoming"},{status:"Upcoming"}]),
+  mkBooking("AHBD72KP","Fatima Davids","ZG-034","2026-04-14","2026-05-26","Airbnb",31500.00,
+    [{status:"Completed",completedDate:"2026-04-21",assignedHousekeeper:"Kudzai"},{status:"Completed",completedDate:"2026-04-28",assignedHousekeeper:"Kudzai"},{status:"Completed",completedDate:"2026-05-05",assignedHousekeeper:"Kudzai"},{status:"Completed",completedDate:"2026-05-12",assignedHousekeeper:"Kudzai"},{status:"Upcoming"}]),
+  mkBooking("XPQM99AR","Liam van der Berg","ZG-032","2026-05-17","2026-05-31","Direct",12600.00,
+    [{status:"Overdue"},{status:"Upcoming"}]),
+  mkBooking("BC449281","Thabo Sithole","ZG-050","2026-04-20","2026-06-08","Airbnb",58000.00,
+    [{status:"Completed",completedDate:"2026-04-27",assignedHousekeeper:"Tryness"},{status:"Completed",completedDate:"2026-05-04",assignedHousekeeper:"Tryness"},{status:"Completed",completedDate:"2026-05-11",assignedHousekeeper:"Tryness"},{status:"Completed",completedDate:"2026-05-18",assignedHousekeeper:"Merjury"},{status:"Due Tomorrow"},{status:"Upcoming"},{start:"Upcoming"}]),
+  mkBooking("KWR331XZ","Guest","ZG-044","2026-05-07","2026-05-28","Booking.com",0,
+    [{status:"Completed",completedDate:"2026-05-14",assignedHousekeeper:"Sharon"}],"⚠️ Name missing; ⚠️ Revenue missing"),
+  mkBooking("NHQP7761","Zanele Khumalo","ZG-049","2026-05-05","2026-05-26","Airbnb",27800.00,
+    [{status:"Completed",completedDate:"2026-05-12",assignedHousekeeper:"Netsai"},{status:"Completed",completedDate:"2026-05-19",assignedHousekeeper:"Netsai"}]),
+  mkBooking("7839204651","Pieter Joubert","ZG-024","2026-05-01","2026-05-22","Booking.com",19400.00,
+    [{status:"Completed",completedDate:"2026-05-08",assignedHousekeeper:"Betty"},{status:"Completed",completedDate:"2026-05-15",assignedHousekeeper:"Betty"}]),
+  mkBooking("LQZB44MM","Sarah Ntuli","ZG-041","2026-05-08","2026-05-29","Airbnb",23100.00,
+    [{status:"Completed",completedDate:"2026-05-15",assignedHousekeeper:"Rebecca"},{status:"Due Tomorrow"}]),
+  mkBooking("DMHK9913","Guest","ZG-027","2026-05-15","2026-06-05","Direct",0,
+    [{status:"Upcoming"},{status:"Upcoming"}],"⚠️ Name missing; ⚠️ Revenue missing; ⚠️ Platform unconfirmed"),
+  mkBooking("AB88PQRS","Chidi Okonkwo","ZG-009","2026-05-20","2026-05-27","Airbnb",6300.00),
+  mkBooking("NXV221BK","Nia Petersen","ZG-031","2026-05-18","2026-06-08","Booking.com",15800.00,
+    [{status:"Upcoming"},{status:"Upcoming"},{status:"Upcoming"}]),
+  mkBooking("RSTW7823","Musa Hadebe","ZG-045","2026-05-22","2026-05-29","Direct",9800.00),
+  mkBooking("4420881957","Priya Naidoo","ZG-016","2026-05-03","2026-05-24","Booking.com",16200.00,
+    [{status:"Completed",completedDate:"2026-05-10",assignedHousekeeper:"Sandy"},{status:"Completed",completedDate:"2026-05-17",assignedHousekeeper:"Sandy"}]),
+  mkBooking("QPZX9912","Aisha Abrahams","ZG-035","2026-05-25","2026-06-15","Airbnb",18300.00,
+    [{status:"Upcoming"},{status:"Upcoming"}]),
+  mkBooking("JKWP3347","Mohammed Suleiman","ZG-004","2026-05-26","2026-06-02","Direct",7200.00),
+  mkBooking("BQNM5561","Lindiwe Dube","ZG-038","2026-05-10","2026-05-31","Airbnb",13400.00,
+    [{status:"Completed",completedDate:"2026-05-17",assignedHousekeeper:"Kudzai"},{status:"Due Today"},{status:"Upcoming"}]),
+  mkBooking("VXTR8890","Guest","ZG-003","2026-05-24","2026-05-31","Booking.com",5800.00,
+    [],"⚠️ Name missing"),
+  mkBooking("CPMQ6614","Naledi Modise","ZG-033","2026-05-20","2026-05-27","Airbnb",4900.00),
+  mkBooking("7123449820","Khulekani Zulu","ZG-043","2026-04-28","2026-05-19","Booking.com",11700.00,
+    [{status:"Completed",completedDate:"2026-05-05",assignedHousekeeper:"Merjury"},{status:"Completed",completedDate:"2026-05-12",assignedHousekeeper:"Merjury"}]),
+  mkBooking("WXPQ4401","Yusuf Essop","ZG-040","2026-05-26","2026-06-09","Airbnb",14800.00,
+    [{status:"Upcoming"}]),
+  mkBooking("LTBV2219","Thandiwe Cele","ZG-008","2026-05-08","2026-05-29","Direct",12100.00,
+    [{status:"Completed",completedDate:"2026-05-15",assignedHousekeeper:"Tryness"},{status:"Upcoming"}]),
+  mkBooking("RQHM7782","Jessica Fredericks","ZG-010","2026-05-12","2026-05-26","Airbnb",9600.00,
+    [{status:"Completed",completedDate:"2026-05-19",assignedHousekeeper:"Netsai"}]),
+  mkBooking("ZNXB5500","Tebogo Molefe","ZG-021","2026-05-24","2026-06-14","Booking.com",19200.00,
+    [{status:"Upcoming"},{status:"Upcoming"}]),
 ];
 
-// Apply live status calculation
-INITIAL_BOOKINGS.forEach(b => {
-  b.cleans = b.cleans.map(c => {
-    if (["Completed","Rescheduled"].includes(c.status)) return c;
-    return { ...c, status: getCleanStatus(c) };
-  });
-  b.status = daysBetween(TODAY, b.checkIn) > 0 ? "Upcoming" : daysBetween(b.checkOut, TODAY) > 0 ? "Checked Out" : "In-House";
-});
-
-
+// Recalculate statuses
 INITIAL_BOOKINGS.forEach(b => {
   b.cleans = b.cleans.map(c => ({ ...c, status: c.status === "Completed" ? "Completed" : c.status === "Overdue" ? "Overdue" : c.status === "Due Today" ? "Due Today" : c.status === "Due Tomorrow" ? "Due Tomorrow" : getCleanStatus(c) }));
   b.status = daysBetween(TODAY, b.checkIn) > 0 ? "Upcoming" : daysBetween(b.checkOut, TODAY) > 0 ? "Checked Out" : "In-House";
@@ -243,6 +235,12 @@ const INITIAL_INCIDENTS = [
   { id:"INC-003", propertyId:"ZG-004", propertyName:"109 Mouille Grange", date:"2026-05-22", type:"Guest Complaint", description:"Guest reports dirty ceiling fan and snack basket was not replenished as per listing description.", guest:"Uzoamaka", severity:"Low", status:"Open", resolution:"", resolvedDate:null },
 ];
 
+const INITIAL_MAINTENANCE = [
+  { id:"MNT-001", propertyId:"ZG-003", propertyName:"8 Bramber Court", issue:"AC capacitor replacement", vendor:"Andy", raisedDate:"2026-05-14", scheduledDate:"2026-05-15", status:"Completed", cost:850, notes:"Resolved same day." },
+  { id:"MNT-002", propertyId:"ZG-012", propertyName:"10 Duet Main House", issue:"Geyser pressure relief valve leaking", vendor:"Cleanix", raisedDate:"2026-05-20", scheduledDate:"2026-05-27", status:"Scheduled", cost:1200, notes:"Parts on order." },
+  { id:"MNT-003", propertyId:"ZG-044", propertyName:"Beach House 2 Big Bay", issue:"Pool pump not priming", vendor:"Cleanix", raisedDate:"2026-05-22", scheduledDate:"2026-05-28", status:"Scheduled", cost:0, notes:"Awaiting quote." },
+  { id:"MNT-004", propertyId:"ZG-019", propertyName:"201 Atlantic Views", issue:"Dishwasher not draining", vendor:"Andy", raisedDate:"2026-05-23", scheduledDate:"2026-05-25", status:"Pending", cost:0, notes:"Guest reported. Booking active." },
+];
 
 const INITIAL_COMPLAINTS = [
   { id:"CMP-001", propertyId:"ZG-004", propertyName:"109 Mouille Grange", date:"2026-05-22", guestName:"Uzoamaka", type:"Cleanliness", description:"Dirty fan blades. Snack basket empty.", status:"Open", resolvedDate:null },
@@ -310,43 +308,19 @@ const REVENUE_CALENDAR = (() => {
 
 // ─── CONTEXT & REDUCER ────────────────────────────────────────────────────────
 const AppCtx = createContext(null);
-const LS_KEY = "zwart_group_v3"; // bumped version to force fresh load
+const LS_KEY = "zwart_group_v4";
 
 const initialState = {
   properties: PROPERTIES,
   bookings: INITIAL_BOOKINGS,
   incidents: INITIAL_INCIDENTS,
+  maintenance: INITIAL_MAINTENANCE,
   complaints: INITIAL_COMPLAINTS,
   reviews: INITIAL_REVIEWS,
   team: INITIAL_TEAM,
   sops: SOPS,
   templates: TEMPLATES,
   dailyOps: {},
-  housekeeping: [
-    { id:"HK-001", date:"2026-05-04", housekeeper:"Sharon", properties:[
-      { propertyName:"411 72 Kloof", taskType:"Full Turnover", keysCollected:"Done", guestKeys:"Done", electricityUnits:"Not Required", photos:"Issue", keysReturned:"Done", qcRating:5, notes:"" },
-      { propertyName:"526 St Martini Gardens", taskType:"Full Turnover", keysCollected:"Not Required", guestKeys:"Done", electricityUnits:"Not Required", photos:"Issue", keysReturned:"Done", qcRating:4, notes:"" },
-    ]},
-    { id:"HK-002", date:"2026-05-04", housekeeper:"Rebecca", properties:[
-      { propertyName:"59 Elgin", taskType:"Full Turnover", keysCollected:"Done", guestKeys:"Done", electricityUnits:"Not Required", photos:"Issue", keysReturned:"Done", qcRating:5, notes:"" },
-    ]},
-    { id:"HK-003", date:"2026-05-04", housekeeper:"Sandy", properties:[
-      { propertyName:"Unit 4 Villa Palmar", taskType:"Full Turnover", keysCollected:"Done", guestKeys:"Done", electricityUnits:"Not Required", photos:"Done", keysReturned:"Done", qcRating:5, notes:"" },
-      { propertyName:"315 100 on Main", taskType:"Full Turnover", keysCollected:"Not Required", guestKeys:"Done", electricityUnits:"Not Required", photos:"", keysReturned:"Done", qcRating:4, notes:"" },
-    ]},
-    { id:"HK-004", date:"2026-05-05", housekeeper:"Sharon", properties:[
-      { propertyName:"17 Upper Paradise", taskType:"Full Turnover & Mid-Stay", keysCollected:"Not Required", guestKeys:"Done", electricityUnits:"Not Required", photos:"Issue", keysReturned:"Not Required", qcRating:3, notes:"" },
-      { propertyName:"108 343 on B", taskType:"Full Turnover & Mid-Stay", keysCollected:"Done", guestKeys:"Done", electricityUnits:"Not Required", photos:"Issue", keysReturned:"Done", qcRating:3, notes:"" },
-    ]},
-    { id:"HK-005", date:"2026-05-05", housekeeper:"Betty", properties:[
-      { propertyName:"10 Duet Main House", taskType:"Full Turnover", keysCollected:"Not Required", guestKeys:"Done", electricityUnits:"Done", photos:"Done", keysReturned:"Not Required", qcRating:5, notes:"" },
-      { propertyName:"10 Duet Loft", taskType:"Full Turnover", keysCollected:"Not Required", guestKeys:"Done", electricityUnits:"Done", photos:"Issue", keysReturned:"Done", qcRating:4, notes:"" },
-    ]},
-    { id:"HK-006", date:"2026-05-08", housekeeper:"Sandy", properties:[
-      { propertyName:"Suite 103 Strand Beach", taskType:"Mid-Stay Refresh", keysCollected:"Done", guestKeys:"Not Required", electricityUnits:"Not Required", photos:"Not Required", keysReturned:"Done", qcRating:4, notes:"" },
-      { propertyName:"601 Quayside Apartments", taskType:"Mid-Stay Refresh", keysCollected:"Done", guestKeys:"Not Required", electricityUnits:"Not Required", photos:"Not Required", keysReturned:"Done", qcRating:4, notes:"" },
-    ]},
-  ],
   settings: {
     companyName: "Zwart Group",
     managerName: "Operations Manager",
@@ -371,6 +345,8 @@ function reducer(state, action) {
     case "DELETE_BOOKING": return { ...state, bookings: state.bookings.filter(b => b.id !== action.payload) };
     case "ADD_INCIDENT": return { ...state, incidents: [...state.incidents, action.payload] };
     case "UPDATE_INCIDENT": return { ...state, incidents: state.incidents.map(i => i.id === action.payload.id ? { ...i, ...action.payload } : i) };
+    case "ADD_MAINTENANCE": return { ...state, maintenance: [...state.maintenance, action.payload] };
+    case "UPDATE_MAINTENANCE": return { ...state, maintenance: state.maintenance.map(m => m.id === action.payload.id ? { ...m, ...action.payload } : m) };
     case "ADD_COMPLAINT": return { ...state, complaints: [...state.complaints, action.payload] };
     case "UPDATE_COMPLAINT": return { ...state, complaints: state.complaints.map(c => c.id === action.payload.id ? { ...c, ...action.payload } : c) };
     case "ADD_REVIEW": return { ...state, reviews: [...state.reviews, action.payload] };
@@ -379,11 +355,6 @@ function reducer(state, action) {
     case "UPDATE_SETTINGS": return { ...state, settings: { ...state.settings, ...action.payload } };
     case "ADD_PROPERTY": return { ...state, properties: [...state.properties, action.payload] };
     case "UPDATE_PROPERTY": return { ...state, properties: state.properties.map(p => p.id === action.payload.id ? { ...p, ...action.payload } : p) };
-    case "ADD_TEAM_MEMBER": return { ...state, team: [...state.team, action.payload] };
-    case "ADD_HK_SCHEDULE": return { ...state, housekeeping: [...state.housekeeping, action.payload] };
-    case "UPDATE_HK_SCHEDULE": return { ...state, housekeeping: state.housekeeping.map(h => h.id === action.payload.id ? { ...h, ...action.payload } : h) };
-    case "DELETE_HK_SCHEDULE": return { ...state, housekeeping: state.housekeeping.filter(h => h.id !== action.payload) };
-    case "REMOVE_TEAM_MEMBER": return { ...state, team: state.team.filter(m => m.id !== action.payload) };
     default: return state;
   }
 }
@@ -393,9 +364,7 @@ function AppProvider({ children }) {
     try {
       const s = localStorage.getItem(LS_KEY);
       if (!s) return null;
-      const parsed = JSON.parse(s);
-      // Merge with initialState so new keys added in updates are always present
-      return { ...initialState, ...parsed };
+      return { ...initialState, ...JSON.parse(s) };
     } catch { return null; }
   }, []);
   const [state, dispatch] = useReducer(reducer, stored || initialState);
@@ -610,13 +579,13 @@ const NAV = [
   { id:"dashboard",     icon:Home,         label:"Dashboard",          badge:null },
   { id:"cleans",        icon:Calendar,     label:"Res & Cleans",       badge:"cleans" },
   { id:"dailyops",      icon:ClipboardList,label:"Daily Ops",          badge:null },
-  { id:"housekeeping",   icon:Users,        label:"Housekeeping",        badge:null },
   { id:"financials",    icon:DollarSign,   label:"Financials",         badge:null },
   { id:"metrics",       icon:BarChart2,    label:"Advanced Metrics",   badge:null },
   { id:"revenue",       icon:TrendingUp,   label:"Revenue Strategy",   badge:null },
-  { id:"incidents",     icon:AlertTriangle,label:"Incidents & Complaints", badge:"incidents" },
+  { id:"incidents",     icon:AlertTriangle,label:"Incident Register",  badge:"incidents" },
+  { id:"maintenance",   icon:Wrench,       label:"Maintenance",        badge:"maintenance" },
+  { id:"complaints",    icon:MessageSquare,label:"Complaints",         badge:"complaints" },
   { id:"reviews",       icon:Star,         label:"Reviews",            badge:"reviews" },
-  { id:"scorecard",     icon:Target,       label:"Property Scorecard",  badge:null },
   { id:"statements",    icon:FileText,     label:"Owner Statements",   badge:null },
   { id:"team",          icon:Users,        label:"Team & Vendors",     badge:null },
   { id:"sops",          icon:BookOpen,     label:"SOPs",               badge:null },
@@ -631,12 +600,12 @@ function Sidebar({ active, onNav, collapsed, onToggle }) {
   const { state } = useApp();
   const badges = useMemo(() => {
     const openIncidents = state.incidents.filter(i => i.status === "Open").length;
-    const pendingMaint = 0;
+    const pendingMaint = state.maintenance.filter(m => m.status !== "Completed").length;
+    const openComplaints = state.complaints.filter(c => c.status === "Open").length;
     const unrespondedReviews = state.reviews.filter(r => !r.responded).length;
     const urgentCleans = state.bookings.flatMap(b => b.cleans).filter(c =>
       ["Due Today","Due Tomorrow","Overdue"].includes(c.status)).length;
-    const openComplaints = state.complaints.filter(c => c.status === "Open").length;
-    return { incidents: openIncidents + openComplaints, maintenance: 0,
+    return { incidents: openIncidents, maintenance: pendingMaint,
       complaints: openComplaints, reviews: unrespondedReviews, cleans: urgentCleans };
   }, [state]);
 
@@ -703,10 +672,10 @@ function Sidebar({ active, onNav, collapsed, onToggle }) {
       {!collapsed && (
         <div style={{ padding:"12px 16px", borderTop:`1px solid ${C.border}`, fontSize:11, color:C.text3 }}>
           <div style={{ display:"flex", gap:8, marginBottom:6 }}>
-            <span style={{ background:C.tealBg, color:C.teal, padding:"2px 8px", borderRadius:3, fontSize:10, fontWeight:600 }}>P1 ×30</span>
-            <span style={{ background:C.amberBg, color:C.amber, padding:"2px 8px", borderRadius:3, fontSize:10, fontWeight:600 }}>P2 ×22</span>
+            <span style={{ background:C.tealBg, color:C.teal, padding:"2px 8px", borderRadius:3, fontSize:10, fontWeight:600 }}>P1 ×25</span>
+            <span style={{ background:C.amberBg, color:C.amber, padding:"2px 8px", borderRadius:3, fontSize:10, fontWeight:600 }}>P2 ×25</span>
           </div>
-          <div style={{ color:C.text3, fontSize:10 }}>52 Properties · Cape Town</div>
+          <div style={{ color:C.text3, fontSize:10 }}>50 Properties · Cape Town</div>
         </div>
       )}
     </div>
@@ -898,51 +867,6 @@ function Dashboard({ onNav }) {
 }
 
 
-// ─── ROW COLOUR HELPERS ──────────────────────────────────────────────────────
-const getBookingRowColor = (booking) => {
-  const statuses = booking.cleans.map(c => getCleanStatus(c));
-  if (statuses.includes("Overdue"))      return { bg:"rgba(255,59,92,0.12)", border:"rgba(255,59,92,0.35)" };
-  if (statuses.includes("Due Today"))    return { bg:"rgba(245,166,35,0.15)", border:"rgba(245,166,35,0.4)" };
-  if (statuses.includes("Due Tomorrow")) return { bg:"rgba(0,212,184,0.09)", border:"rgba(0,212,184,0.4)" };
-  return { bg:"transparent", border:"transparent" };
-};
-
-// ─── EXCEL IMPORT HELPER ──────────────────────────────────────────────────────
-const parseExcelBookings = (data) => {
-  // data = array of rows from SheetJS
-  const bookings = [];
-  for (let i = 0; i < data.length; i++) {
-    const row = data[i];
-    const id = row[0]; const guest = row[1]; const prop = row[2];
-    const checkIn = row[3]; const checkOut = row[4]; const platform = row[5];
-    const revenue = row[9];
-    if (!id || !prop || !checkIn || !checkOut || String(id).startsWith("REF")) continue;
-    if (String(id).toLowerCase().includes("summary") || !guest) continue;
-    const toISO = (v) => {
-      if (!v) return null;
-      if (v instanceof Date) return v.toISOString().slice(0,10);
-      if (typeof v === "number") {
-        const d = new Date((v - 25569) * 86400 * 1000);
-        return d.toISOString().slice(0,10);
-      }
-      return String(v).slice(0,10);
-    };
-    const ci = toISO(checkIn); const co = toISO(checkOut);
-    if (!ci || !co || ci === co) continue;
-    // Extract clean statuses from columns N onwards (index 13, 15, 17...)
-    const cleanStatuses = [];
-    for (let col = 14; col < row.length; col += 2) {
-      const st = row[col];
-      if (!st) break;
-      if (String(st).includes("Completed")) cleanStatuses.push("Completed");
-      else if (String(st).includes("Rescheduled")) cleanStatuses.push("Rescheduled");
-    }
-    bookings.push(mkBookingDirect(String(id), String(guest), String(prop), ci, co,
-      String(platform||"Airbnb"), Number(revenue)||0, cleanStatuses));
-  }
-  return bookings;
-};
-
 // ─── CLEAN STATUS BADGE ───────────────────────────────────────────────────────
 function CleanStatusBadge({ status }) {
   const icons = { "Completed":<CheckCircle size={11}/>, "Overdue":<XCircle size={11}/>,
@@ -1023,51 +947,6 @@ function CleanDetailDrawer({ booking, cleanIndex, open, onClose }) {
         <Btn variant="ghost" onClick={onClose}>Cancel</Btn>
       </div>
     </Drawer>
-  );
-}
-
-// ─── EXCEL IMPORT BUTTON ─────────────────────────────────────────────────────
-function ExcelImportBtn() {
-  const { dispatch, toast } = useApp();
-  const [importing, setImporting] = useState(false);
-  const fileRef = useRef(null);
-
-  const handleFile = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setImporting(true);
-    try {
-      const XLSX = await import("https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm");
-      const ab = await file.arrayBuffer();
-      const wb = XLSX.read(ab);
-      // Find the Res & Mid-Stay Cleans sheet
-      const sheetName = wb.SheetNames.find(n => n.includes("Cleans") || n.includes("Res")) || wb.SheetNames[0];
-      const ws = wb.Sheets[sheetName];
-      const data = XLSX.utils.sheet_to_json(ws, { header:1, defval:null });
-      // Skip header rows (find first row with a real booking ID)
-      const dataRows = data.filter(row => row[0] && typeof row[0] === "string" &&
-        row[0].length > 3 && !row[0].includes("REF") && !row[0].includes("TOTAL") && !row[0].includes("📅") && !row[0].includes("Log"));
-      const imported = parseExcelBookings(dataRows);
-      if (imported.length === 0) return toast("No bookings found in file", "error");
-      // Clear existing and replace
-      imported.forEach(b => dispatch({ type:"ADD_BOOKING", payload:b }));
-      toast(`✓ Imported ${imported.length} bookings from Excel`);
-    } catch (err) {
-      toast("Import failed: " + err.message, "error");
-    } finally {
-      setImporting(false);
-      e.target.value = "";
-    }
-  };
-
-  return (
-    <>
-      <input ref={fileRef} type="file" accept=".xlsx,.xls" onChange={handleFile}
-        style={{ display:"none" }} />
-      <Btn variant="subtle" icon={Upload} onClick={() => fileRef.current?.click()} disabled={importing}>
-        {importing ? "Importing..." : "Import Excel"}
-      </Btn>
-    </>
   );
 }
 
@@ -1190,65 +1069,6 @@ function ResCleans() {
 
       {tab === "alerts" ? <CleanAlerts bookings={bookings} onEdit={(b,i) => { setSelectedBooking(b); setSelectedClean(i); }} /> : (
         <>
-          {/* Tomorrow's Cleans Banner */}
-          {(() => {
-            const tomorrowCleans = state.bookings.flatMap(b =>
-              b.cleans.map((c, ci) => ({ ...c, booking:b, ci, liveStatus: getCleanStatus(c) }))
-            ).filter(c => c.liveStatus === "Due Tomorrow");
-
-            if (tomorrowCleans.length === 0) return null;
-            return (
-              <div style={{ background:C.bg1, border:`1px solid rgba(0,212,184,0.3)`, borderRadius:10,
-                padding:"16px 20px", marginBottom:20, borderLeft:`4px solid ${C.teal}` }}>
-                <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:14 }}>
-                  <div style={{ width:8, height:8, borderRadius:"50%", background:C.teal,
-                    animation:"pulse 1.5s infinite" }} />
-                  <span style={{ fontFamily:"'Syne',sans-serif", fontSize:14, fontWeight:700, color:C.teal }}>
-                    Tomorrow's Cleans — {tomorrowCleans.length} propert{tomorrowCleans.length===1?"y":"ies"} due
-                  </span>
-                  <span style={{ fontSize:11, color:C.text3, marginLeft:4 }}>{fmtDate(addDays(TODAY, 1))}</span>
-                </div>
-                <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(220px, 1fr))", gap:10 }}>
-                  {tomorrowCleans.map((c, i) => (
-                    <div key={i} style={{ background:C.bg2, borderRadius:8, padding:"12px 14px",
-                      border:`1px solid rgba(0,212,184,0.15)`, cursor:"pointer" }}
-                      onClick={() => { setSelectedBooking(c.booking); setSelectedClean(c.ci); }}>
-                      <div style={{ fontSize:12, fontWeight:600, color:C.text1, marginBottom:4,
-                        overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
-                        {c.booking.propertyName}
-                      </div>
-                      <div style={{ fontSize:11, color:C.text3, marginBottom:6 }}>
-                        {c.booking.guestName} · Clean #{c.cleanNumber}
-                      </div>
-                      <div style={{ display:"flex", gap:6, alignItems:"center", justifyContent:"space-between" }}>
-                        <Badge label={c.booking.platform} size="xs" />
-                        {c.assignedHousekeeper
-                          ? <span style={{ fontSize:11, color:C.teal }}>👤 {c.assignedHousekeeper}</span>
-                          : <span style={{ fontSize:11, color:C.amber }}>⚠️ Unassigned</span>}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            );
-          })()}
-
-          {/* Colour Legend */}
-          <div style={{ display:"flex", gap:12, marginBottom:16, alignItems:"center", flexWrap:"wrap" }}>
-            <span style={{ fontSize:11, color:C.text3, fontWeight:600, textTransform:"uppercase", letterSpacing:"0.06em" }}>Row colour:</span>
-            {[
-              { color:"rgba(255,59,92,0.18)", border:C.crimson, label:"🔴 Overdue" },
-              { color:"rgba(245,166,35,0.2)", border:C.amber, label:"🟡 Due Today" },
-              { color:"rgba(0,212,184,0.12)", border:"rgba(0,212,184,0.5)", label:"🩵 Due Tomorrow" },
-              { color:"transparent", border:C.border, label:"⬜ Upcoming" },
-            ].map(s => (
-              <div key={s.label} style={{ display:"flex", alignItems:"center", gap:6 }}>
-                <div style={{ width:24, height:14, borderRadius:3, background:s.color, border:`1px solid ${s.border}` }} />
-                <span style={{ fontSize:11, color:C.text2 }}>{s.label}</span>
-              </div>
-            ))}
-          </div>
-
           {/* Controls */}
           <div style={{ display:"flex", gap:10, marginBottom:16, flexWrap:"wrap", alignItems:"center" }}>
             <SearchBar value={search} onChange={setSearch} placeholder="Search guest, property, ID..." />
@@ -1260,8 +1080,7 @@ function ResCleans() {
               options={["All","Has Urgent","Has Cleans","No Cleans"]} style={{ width:140 }} />
             <Select value={sortBy} onChange={setSortBy}
               options={[{value:"checkIn",label:"Sort: Check-in"},{value:"checkOut",label:"Sort: Check-out"},{value:"revenue",label:"Sort: Revenue"},{value:"nights",label:"Sort: Nights"}]} style={{ width:160 }} />
-            <div style={{ marginLeft:"auto", display:"flex", gap:8 }}>
-              <ExcelImportBtn />
+            <div style={{ marginLeft:"auto" }}>
               <Btn variant="primary" icon={Plus} onClick={() => setShowAddBooking(true)}>Add Booking</Btn>
             </div>
           </div>
@@ -1284,13 +1103,9 @@ function ResCleans() {
               const urgentClean = b.cleans.some(c => ["Overdue","Due Today"].includes(getCleanStatus(c)));
               return (
                 <div key={b.id}>
-                  {(() => {
-                    const rowColor = getBookingRowColor(b);
-                    return (
                   <div onClick={() => toggleExpand(b.id)} style={{ display:"grid", gridTemplateColumns:"180px 140px 100px 100px 70px 80px 100px 120px 40px",
                     padding:"12px 16px", borderBottom:`1px solid ${C.border}`, cursor:"pointer",
-                    background: rowColor.bg,
-                    borderLeft: rowColor.border !== "transparent" ? `3px solid ${rowColor.border}` : "3px solid transparent",
+                    background: urgentClean ? "rgba(255,59,92,0.04)" : hasFlag ? "rgba(245,166,35,0.03)" : "transparent",
                     transition:"background 0.1s", alignItems:"center" }}>
                     <div>
                       <div style={{ fontSize:13, color:C.text1, fontWeight:500, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{b.propertyName}</div>
@@ -1309,8 +1124,6 @@ function ResCleans() {
                     <Badge label={b.status} size="xs" />
                     <div style={{ color:C.text3 }}>{isExp ? <ChevronUp size={14}/> : <ChevronDown size={14}/>}</div>
                   </div>
-                    );
-                  })()}
 
                   {isExp && (
                     <div style={{ padding:"16px 24px 20px", background:C.bg0, borderBottom:`1px solid ${C.border}` }}>
@@ -1702,16 +1515,14 @@ function RevenueStrategy() {
   );
 }
 
-// ─── INCIDENTS & COMPLAINTS (COMBINED) ───────────────────────────────────────
+// ─── INCIDENT REGISTER ────────────────────────────────────────────────────────
 function IncidentRegister() {
   const { state, dispatch, toast } = useApp();
-  const [tab, setTab] = useState("incidents");
   const [showAdd, setShowAdd] = useState(false);
-  const [showAddComp, setShowAddComp] = useState(false);
+  const [selected, setSelected] = useState(null);
   const [form, setForm] = useState({ propertyId:"", type:"Cleaning Issue", description:"", guest:"", severity:"Medium", date:TODAY });
-  const [compForm, setCompForm] = useState({ propertyId:"", type:"Cleanliness", description:"", guestName:"", date:TODAY });
 
-  const handleAddIncident = () => {
+  const handleAdd = () => {
     if (!form.propertyId || !form.description) return toast("Fill required fields","error");
     const prop = state.properties.find(p => p.id === form.propertyId);
     const id = `INC-${String(state.incidents.length + 1).padStart(3,"0")}`;
@@ -1720,119 +1531,54 @@ function IncidentRegister() {
     setForm({ propertyId:"", type:"Cleaning Issue", description:"", guest:"", severity:"Medium", date:TODAY });
   };
 
-  const handleAddComplaint = () => {
-    if (!compForm.propertyId || !compForm.description) return toast("Fill required fields","error");
-    const prop = state.properties.find(p => p.id === compForm.propertyId);
-    const id = `CMP-${String(state.complaints.length + 1).padStart(3,"0")}`;
-    dispatch({ type:"ADD_COMPLAINT", payload:{ id, propertyName:prop?.name || compForm.propertyId, status:"Open", resolvedDate:null, ...compForm }});
-    toast("Complaint logged"); setShowAddComp(false);
-    setCompForm({ propertyId:"", type:"Cleanliness", description:"", guestName:"", date:TODAY });
-  };
-
-  const resolveIncident = (inc) => {
+  const resolve = (inc) => {
     const resolution = prompt("Enter resolution details:");
     if (!resolution) return;
     dispatch({ type:"UPDATE_INCIDENT", payload:{ id:inc.id, status:"Resolved", resolution, resolvedDate:TODAY }});
     toast("Incident resolved");
   };
 
-  const resolveComplaint = (c) => {
-    dispatch({ type:"UPDATE_COMPLAINT", payload:{ id:c.id, status:"Resolved", resolvedDate:TODAY }});
-    toast("Complaint resolved");
-  };
-
-  const totalOpen = state.incidents.filter(i => i.status==="Open").length + state.complaints.filter(c => c.status==="Open").length;
-
   return (
     <div style={{ animation:"fadeIn 0.25s ease" }}>
-      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:20 }}>
-        <SectionTitle>Incidents & Complaints</SectionTitle>
-        <Btn variant="primary" icon={Plus} onClick={() => tab==="incidents" ? setShowAdd(true) : setShowAddComp(true)}>
-          Log {tab === "incidents" ? "Incident" : "Complaint"}
-        </Btn>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:24 }}>
+        <SectionTitle>Incident Register</SectionTitle>
+        <Btn variant="primary" icon={Plus} onClick={() => setShowAdd(true)}>Log Incident</Btn>
       </div>
-
-      {/* KPI Row */}
       <div style={{ display:"flex", gap:12, marginBottom:20 }}>
-        <KPICard label="Total Open" value={totalOpen} color={totalOpen > 0 ? C.crimson : C.green} icon={AlertCircle} />
-        <KPICard label="Open Incidents" value={state.incidents.filter(i=>i.status==="Open").length} color={C.crimson} />
-        <KPICard label="Open Complaints" value={state.complaints.filter(c=>c.status==="Open").length} color={C.amber} />
-        <KPICard label="Resolved (All)" value={state.incidents.filter(i=>i.status==="Resolved").length + state.complaints.filter(c=>c.status==="Resolved").length} color={C.green} />
-      </div>
-
-      {/* Tabs */}
-      <div style={{ display:"flex", gap:0, marginBottom:20, borderBottom:`1px solid ${C.border}` }}>
-        {[["incidents","Incidents"],["complaints","Complaints"]].map(([id,label]) => (
-          <button key={id} onClick={() => setTab(id)} style={{ padding:"8px 24px", background:"none", border:"none",
-            borderBottom:`2px solid ${tab===id ? C.teal : "transparent"}`, color: tab===id ? C.teal : C.text2,
-            cursor:"pointer", fontSize:13, fontWeight: tab===id ? 600 : 400, transition:"all 0.15s" }}>
-            {label} <span style={{ fontFamily:"'DM Mono',monospace", fontSize:11, marginLeft:4,
-              color: id==="incidents" ? C.crimson : C.amber }}>
-              ({id==="incidents" ? state.incidents.length : state.complaints.length})
-            </span>
-          </button>
+        {["Open","Resolved"].map(s => (
+          <KPICard key={s} label={s} value={state.incidents.filter(i => i.status === s).length} color={s==="Open" ? C.crimson : C.green} />
+        ))}
+        {["High","Medium","Low"].map(s => (
+          <KPICard key={s} label={`${s} Severity`} value={state.incidents.filter(i => i.severity === s).length} color={s==="High" ? C.crimson : s==="Medium" ? C.amber : C.blue} />
         ))}
       </div>
-
-      {/* Incidents Tab */}
-      {tab === "incidents" && (
-        <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
-          {state.incidents.length === 0 && <EmptyState icon={AlertTriangle} title="No incidents logged" />}
-          {state.incidents.map(inc => (
-            <Card key={inc.id} hover>
-              <div style={{ display:"flex", alignItems:"flex-start", gap:16 }}>
-                <div style={{ flex:1 }}>
-                  <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:8, flexWrap:"wrap" }}>
-                    <span style={{ fontFamily:"'DM Mono',monospace", fontSize:11, color:C.text3 }}>{inc.id}</span>
-                    <Badge label={inc.status} />
-                    <span style={{ fontSize:11, padding:"2px 8px", borderRadius:4, fontWeight:600,
-                      background: inc.severity==="High" ? C.crimsonBg : inc.severity==="Medium" ? C.amberBg : C.blueBg,
-                      color: inc.severity==="High" ? C.crimson : inc.severity==="Medium" ? C.amber : C.blue }}>
-                      {inc.severity}
-                    </span>
-                    <span style={{ fontSize:12, color:C.text3 }}>{inc.type}</span>
-                  </div>
-                  <div style={{ fontSize:14, fontWeight:600, color:C.text1, marginBottom:4 }}>{inc.propertyName}</div>
-                  <div style={{ fontSize:13, color:C.text2, marginBottom:6 }}>{inc.description}</div>
-                  <div style={{ display:"flex", gap:16, fontSize:11, color:C.text3 }}>
-                    <span>Guest: {inc.guest || "—"}</span>
-                    <span>Date: {fmtDate(inc.date)}</span>
-                    {inc.resolvedDate && <span>Resolved: {fmtDate(inc.resolvedDate)}</span>}
-                  </div>
-                  {inc.resolution && <div style={{ marginTop:8, fontSize:12, color:C.green, padding:"8px 12px", background:C.greenBg, borderRadius:6 }}>✓ {inc.resolution}</div>}
+      <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+        {state.incidents.map(inc => (
+          <Card key={inc.id} hover>
+            <div style={{ display:"flex", alignItems:"flex-start", gap:16 }}>
+              <div style={{ flex:1 }}>
+                <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:8, flexWrap:"wrap" }}>
+                  <span style={{ fontFamily:"'DM Mono',monospace", fontSize:11, color:C.text3 }}>{inc.id}</span>
+                  <Badge label={inc.status} />
+                  <Badge label={inc.severity === "High" ? "Overdue" : inc.severity === "Medium" ? "Due Today" : "Upcoming"} />
+                  <span style={{ fontSize:12, color:C.text3 }}>{inc.type}</span>
                 </div>
-                {inc.status === "Open" && <Btn size="sm" variant="primary" onClick={() => resolveIncident(inc)}>Resolve</Btn>}
-              </div>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {/* Complaints Tab */}
-      {tab === "complaints" && (
-        <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
-          {state.complaints.length === 0 && <EmptyState icon={MessageSquare} title="No complaints logged" />}
-          {state.complaints.map(c => (
-            <Card key={c.id} hover>
-              <div style={{ display:"flex", alignItems:"flex-start", gap:16 }}>
-                <div style={{ flex:1 }}>
-                  <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:8, flexWrap:"wrap" }}>
-                    <span style={{ fontFamily:"'DM Mono',monospace", fontSize:11, color:C.text3 }}>{c.id}</span>
-                    <Badge label={c.status} />
-                    <span style={{ fontSize:12, color:C.text3 }}>{c.type}</span>
-                  </div>
-                  <div style={{ fontSize:14, fontWeight:600, color:C.text1, marginBottom:4 }}>{c.propertyName}</div>
-                  <div style={{ fontSize:13, color:C.text2, marginBottom:6 }}>{c.description}</div>
-                  <div style={{ fontSize:11, color:C.text3 }}>Guest: {c.guestName || "—"} · {fmtDate(c.date)}</div>
+                <div style={{ fontSize:14, fontWeight:600, color:C.text1, marginBottom:4 }}>{inc.propertyName}</div>
+                <div style={{ fontSize:13, color:C.text2, marginBottom:6 }}>{inc.description}</div>
+                <div style={{ display:"flex", gap:16, fontSize:11, color:C.text3 }}>
+                  <span>Guest: {inc.guest || "—"}</span>
+                  <span>Date: {fmtDate(inc.date)}</span>
+                  {inc.resolvedDate && <span>Resolved: {fmtDate(inc.resolvedDate)}</span>}
                 </div>
-                {c.status === "Open" && <Btn size="sm" variant="primary" onClick={() => resolveComplaint(c)}>Resolve</Btn>}
+                {inc.resolution && <div style={{ marginTop:8, fontSize:12, color:C.green, padding:"8px 12px", background:C.greenBg, borderRadius:6 }}>✓ {inc.resolution}</div>}
               </div>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {/* Add Incident Modal */}
+              <div style={{ display:"flex", gap:8 }}>
+                {inc.status === "Open" && <Btn size="sm" variant="primary" onClick={() => resolve(inc)}>Resolve</Btn>}
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
       <Modal open={showAdd} onClose={() => setShowAdd(false)} title="Log Incident">
         <FormRow label="Property" required>
           <Select value={form.propertyId} onChange={v => setForm(f => ({...f, propertyId:v}))}
@@ -1842,7 +1588,7 @@ function IncidentRegister() {
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
           <FormRow label="Type">
             <Select value={form.type} onChange={v => setForm(f => ({...f, type:v}))}
-              options={["Cleaning Issue","Guest Complaint","Security","Damage","Access Issue","Noise","Other"]} />
+              options={["Cleaning Issue","Maintenance - HVAC","Maintenance - Plumbing","Guest Complaint","Security","Damage","Access Issue","Other"]} />
           </FormRow>
           <FormRow label="Severity">
             <Select value={form.severity} onChange={v => setForm(f => ({...f, severity:v}))} options={["High","Medium","Low"]} />
@@ -1853,369 +1599,182 @@ function IncidentRegister() {
           <textarea value={form.description} onChange={e => setForm(f => ({...f, description:e.target.value}))} rows={3} style={{ ...inputStyle, resize:"vertical" }} />
         </FormRow>
         <div style={{ display:"flex", gap:8 }}>
-          <Btn variant="danger" onClick={handleAddIncident} icon={AlertTriangle}>Log Incident</Btn>
+          <Btn variant="danger" onClick={handleAdd} icon={AlertTriangle}>Log Incident</Btn>
           <Btn variant="ghost" onClick={() => setShowAdd(false)}>Cancel</Btn>
-        </div>
-      </Modal>
-
-      {/* Add Complaint Modal */}
-      <Modal open={showAddComp} onClose={() => setShowAddComp(false)} title="Log Complaint">
-        <FormRow label="Property" required>
-          <Select value={compForm.propertyId} onChange={v => setCompForm(f => ({...f, propertyId:v}))}
-            options={["", ...state.properties.map(p => ({ value:p.id, label:`${p.id} · ${p.name}` }))]} />
-        </FormRow>
-        <FormRow label="Date"><Input type="date" value={compForm.date} onChange={v => setCompForm(f => ({...f, date:v}))} /></FormRow>
-        <FormRow label="Type">
-          <Select value={compForm.type} onChange={v => setCompForm(f => ({...f, type:v}))}
-            options={["Cleanliness","Noise","Amenities","Communication","Damage","Other"]} />
-        </FormRow>
-        <FormRow label="Guest Name"><Input value={compForm.guestName} onChange={v => setCompForm(f => ({...f, guestName:v}))} /></FormRow>
-        <FormRow label="Description" required>
-          <textarea value={compForm.description} onChange={e => setCompForm(f => ({...f, description:e.target.value}))} rows={3} style={{ ...inputStyle, resize:"vertical" }} />
-        </FormRow>
-        <div style={{ display:"flex", gap:8 }}>
-          <Btn variant="amber" onClick={handleAddComplaint} icon={MessageSquare}>Log Complaint</Btn>
-          <Btn variant="ghost" onClick={() => setShowAddComp(false)}>Cancel</Btn>
         </div>
       </Modal>
     </div>
   );
 }
 
+
+// ─── MAINTENANCE ──────────────────────────────────────────────────────────────
+function Maintenance() {
+  const { state, dispatch, toast } = useApp();
+  const [showAdd, setShowAdd] = useState(false);
+  const [form, setForm] = useState({ propertyId:"", issue:"", vendor:"", raisedDate:TODAY, scheduledDate:"", status:"Pending", cost:"", notes:"" });
+
+  const handleAdd = () => {
+    if (!form.propertyId || !form.issue) return toast("Fill required fields","error");
+    const prop = state.properties.find(p => p.id === form.propertyId);
+    const id = `MNT-${String(state.maintenance.length + 1).padStart(3,"0")}`;
+    dispatch({ type:"ADD_MAINTENANCE", payload:{ id, propertyName:prop?.name || form.propertyId, cost:Number(form.cost)||0, ...form }});
+    toast("Maintenance logged"); setShowAdd(false);
+  };
+
+  const updateStatus = (mnt, status) => {
+    dispatch({ type:"UPDATE_MAINTENANCE", payload:{ id:mnt.id, status }});
+    toast(`Maintenance marked ${status}`);
+  };
+
+  return (
+    <div style={{ animation:"fadeIn 0.25s ease" }}>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:24 }}>
+        <SectionTitle>Maintenance</SectionTitle>
+        <Btn variant="primary" icon={Plus} onClick={() => setShowAdd(true)}>Log Issue</Btn>
+      </div>
+      <div style={{ display:"flex", gap:12, marginBottom:20 }}>
+        {["Pending","Scheduled","Completed"].map(s => (
+          <KPICard key={s} label={s} value={state.maintenance.filter(m => m.status === s).length} color={s==="Pending" ? C.amber : s==="Scheduled" ? C.blue : C.green} />
+        ))}
+        <KPICard label="Total Cost" value={`R ${state.maintenance.reduce((s,m) => s + (m.cost||0), 0).toLocaleString()}`} color={C.teal} icon={DollarSign} />
+      </div>
+      <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+        {state.maintenance.map(m => (
+          <Card key={m.id} hover>
+            <div style={{ display:"flex", gap:16, alignItems:"flex-start" }}>
+              <div style={{ flex:1 }}>
+                <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:6, flexWrap:"wrap" }}>
+                  <span style={{ fontFamily:"'DM Mono',monospace", fontSize:11, color:C.text3 }}>{m.id}</span>
+                  <Badge label={m.status} />
+                  {m.cost > 0 && <span style={{ fontSize:11, color:C.amber, fontFamily:"'DM Mono',monospace" }}>R {m.cost.toLocaleString()}</span>}
+                </div>
+                <div style={{ fontSize:14, fontWeight:600, color:C.text1, marginBottom:4 }}>{m.propertyName}</div>
+                <div style={{ fontSize:13, color:C.text2, marginBottom:4 }}>{m.issue}</div>
+                <div style={{ fontSize:11, color:C.text3, display:"flex", gap:16 }}>
+                  <span>Vendor: {m.vendor || "—"}</span>
+                  <span>Raised: {fmtDate(m.raisedDate)}</span>
+                  {m.scheduledDate && <span>Scheduled: {fmtDate(m.scheduledDate)}</span>}
+                </div>
+                {m.notes && <div style={{ marginTop:6, fontSize:12, color:C.text3, fontStyle:"italic" }}>{m.notes}</div>}
+              </div>
+              <div style={{ display:"flex", gap:8 }}>
+                {m.status !== "Completed" && <Btn size="sm" variant="primary" onClick={() => updateStatus(m, "Completed")}>Mark Done</Btn>}
+                {m.status === "Pending" && <Btn size="sm" variant="subtle" onClick={() => updateStatus(m, "Scheduled")}>Schedule</Btn>}
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+      <Modal open={showAdd} onClose={() => setShowAdd(false)} title="Log Maintenance Issue">
+        <FormRow label="Property" required>
+          <Select value={form.propertyId} onChange={v => setForm(f => ({...f, propertyId:v}))}
+            options={["", ...state.properties.map(p => ({ value:p.id, label:`${p.id} · ${p.name}` }))]} />
+        </FormRow>
+        <FormRow label="Issue Description" required>
+          <textarea value={form.issue} onChange={e => setForm(f => ({...f, issue:e.target.value}))} rows={2} style={{ ...inputStyle, resize:"vertical" }} />
+        </FormRow>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+          <FormRow label="Vendor">
+            <Select value={form.vendor} onChange={v => setForm(f => ({...f, vendor:v}))} options={["","Andy","Cleanix","Other"]} />
+          </FormRow>
+          <FormRow label="Status">
+            <Select value={form.status} onChange={v => setForm(f => ({...f, status:v}))} options={["Pending","Scheduled","Completed"]} />
+          </FormRow>
+        </div>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+          <FormRow label="Scheduled Date"><Input type="date" value={form.scheduledDate} onChange={v => setForm(f => ({...f, scheduledDate:v}))} /></FormRow>
+          <FormRow label="Cost (ZAR)"><Input type="number" value={form.cost} onChange={v => setForm(f => ({...f, cost:v}))} placeholder="0" /></FormRow>
+        </div>
+        <FormRow label="Notes"><Input value={form.notes} onChange={v => setForm(f => ({...f, notes:v}))} /></FormRow>
+        <div style={{ display:"flex", gap:8 }}>
+          <Btn variant="primary" onClick={handleAdd} icon={Wrench}>Log Issue</Btn>
+          <Btn variant="ghost" onClick={() => setShowAdd(false)}>Cancel</Btn>
+        </div>
+      </Modal>
+    </div>
+  );
+}
+
+// ─── COMPLAINTS ───────────────────────────────────────────────────────────────
+function Complaints() {
+  const { state, dispatch, toast } = useApp();
+  return (
+    <div style={{ animation:"fadeIn 0.25s ease" }}>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:24 }}>
+        <SectionTitle>Complaints</SectionTitle>
+      </div>
+      <div style={{ display:"flex", gap:12, marginBottom:20 }}>
+        <KPICard label="Open" value={state.complaints.filter(c => c.status === "Open").length} color={C.crimson} />
+        <KPICard label="Resolved" value={state.complaints.filter(c => c.status === "Resolved").length} color={C.green} />
+        <KPICard label="Total" value={state.complaints.length} color={C.teal} />
+      </div>
+      <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+        {state.complaints.map(c => (
+          <Card key={c.id} hover>
+            <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:8 }}>
+              <span style={{ fontFamily:"'DM Mono',monospace", fontSize:11, color:C.text3 }}>{c.id}</span>
+              <Badge label={c.status} />
+              <Badge label={c.type} size="xs" />
+            </div>
+            <div style={{ fontSize:14, fontWeight:600, color:C.text1, marginBottom:4 }}>{c.propertyName}</div>
+            <div style={{ fontSize:13, color:C.text2, marginBottom:4 }}>{c.description}</div>
+            <div style={{ fontSize:11, color:C.text3 }}>Guest: {c.guestName} · {fmtDate(c.date)}</div>
+            {c.status === "Open" && (
+              <div style={{ marginTop:10 }}>
+                <Btn size="sm" variant="primary" onClick={() => {
+                  dispatch({ type:"UPDATE_COMPLAINT", payload:{ id:c.id, status:"Resolved", resolvedDate:TODAY }});
+                  toast("Complaint resolved");
+                }}>Mark Resolved</Btn>
+              </div>
+            )}
+          </Card>
+        ))}
+        {state.complaints.length === 0 && <EmptyState icon={MessageSquare} title="No complaints" sub="All guests are happy!" />}
+      </div>
+    </div>
+  );
+}
 
 // ─── REVIEWS ─────────────────────────────────────────────────────────────────
 function Reviews() {
   const { state, dispatch, toast } = useApp();
-  const [tab, setTab] = useState("pending");
-  const [showAdd, setShowAdd] = useState(false);
-  const [selectedBooking, setSelectedBooking] = useState(null);
-  const [form, setForm] = useState({ rating:5, comment:"", platform:"Airbnb", date:TODAY });
-
-  // All checked-out bookings from Res & Cleans
-  const checkedOut = state.bookings.filter(b => b.status === "Checked Out" || daysBetween(b.checkOut, TODAY) >= 0);
-
-  // Which bookings already have a review
-  const reviewedBookingIds = new Set(state.reviews.map(r => r.bookingId).filter(Boolean));
-
-  // Pending = checked out but no review yet
-  const pending = checkedOut.filter(b => !reviewedBookingIds.has(b.id));
-
-  const avgRating = state.reviews.length
-    ? (state.reviews.reduce((s,r) => s + r.rating, 0) / state.reviews.length).toFixed(1)
-    : "—";
-
-  const openAddReview = (booking) => {
-    setSelectedBooking(booking);
-    setForm({ rating:5, comment:"", platform: booking.platform || "Airbnb", date:TODAY });
-    setShowAdd(true);
-  };
-
-  const handleAdd = () => {
-    if (!selectedBooking) return;
-    const id = `REV-${String(state.reviews.length + 1).padStart(3,"0")}`;
-    dispatch({ type:"ADD_REVIEW", payload:{
-      id, bookingId: selectedBooking.id,
-      propertyId: selectedBooking.propId,
-      propertyName: selectedBooking.propertyName,
-      guestName: selectedBooking.guestName,
-      date: form.date,
-      rating: Number(form.rating),
-      platform: form.platform,
-      comment: form.comment,
-      responded: false,
-    }});
-    toast("Review added");
-    setShowAdd(false);
-    setSelectedBooking(null);
-  };
-
-  const StarRating = ({ value, onChange }) => (
-    <div style={{ display:"flex", gap:6, marginBottom:4 }}>
-      {[1,2,3,4,5].map(n => (
-        <span key={n} onClick={() => onChange(n)} style={{ fontSize:28, cursor:"pointer",
-          color: n <= value ? C.amber : C.border, transition:"color 0.1s" }}>★</span>
-      ))}
-      <span style={{ fontSize:14, color:C.text2, alignSelf:"center", marginLeft:8 }}>{value} / 5</span>
-    </div>
-  );
-
+  const avgRating = (state.reviews.reduce((s,r) => s + r.rating, 0) / state.reviews.length).toFixed(1);
   return (
     <div style={{ animation:"fadeIn 0.25s ease" }}>
       <SectionTitle>Reviews</SectionTitle>
-
-      {/* KPIs */}
       <div style={{ display:"flex", gap:12, marginBottom:20 }}>
-        <KPICard label="Avg Rating" value={state.reviews.length ? `${avgRating} ⭐` : "—"} color={C.amber} />
+        <KPICard label="Avg Rating" value={`${avgRating} ⭐`} color={C.amber} />
         <KPICard label="Total Reviews" value={state.reviews.length} color={C.teal} />
-        <KPICard label="Pending Reviews" value={pending.length} color={pending.length > 0 ? C.crimson : C.green} />
+        <KPICard label="Unresponded" value={state.reviews.filter(r => !r.responded).length} color={C.crimson} />
         <KPICard label="5-Star" value={state.reviews.filter(r => r.rating === 5).length} color={C.green} />
-        <KPICard label="Unresponded" value={state.reviews.filter(r => !r.responded).length} color={C.blue} />
       </div>
-
-      {/* Tabs */}
-      <div style={{ display:"flex", borderBottom:`1px solid ${C.border}`, marginBottom:20 }}>
-        {[["pending","Pending Reviews"],["all","All Reviews"]].map(([id,label]) => (
-          <button key={id} onClick={() => setTab(id)} style={{ padding:"8px 24px", background:"none", border:"none",
-            borderBottom:`2px solid ${tab===id ? C.teal : "transparent"}`, color: tab===id ? C.teal : C.text2,
-            cursor:"pointer", fontSize:13, fontWeight: tab===id ? 600 : 400 }}>
-            {label}
-            <span style={{ fontFamily:"'DM Mono',monospace", fontSize:11, marginLeft:6,
-              color: id==="pending" ? C.crimson : C.text3 }}>
-              ({id==="pending" ? pending.length : state.reviews.length})
-            </span>
-          </button>
+      <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+        {state.reviews.sort((a,b) => b.date.localeCompare(a.date)).map(r => (
+          <Card key={r.id} hover>
+            <div style={{ display:"flex", gap:16, alignItems:"flex-start" }}>
+              <div style={{ flex:1 }}>
+                <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:8, flexWrap:"wrap" }}>
+                  <span style={{ fontSize:16 }}>{"⭐".repeat(r.rating)}</span>
+                  <Badge label={r.platform} size="xs" />
+                  <span style={{ fontSize:11, color:C.text3 }}>{fmtDate(r.date)}</span>
+                  {!r.responded && <Badge label="Overdue" size="xs" />}
+                  {r.responded && <span style={{ fontSize:11, color:C.green }}>✓ Responded</span>}
+                </div>
+                <div style={{ fontSize:14, fontWeight:600, color:C.text1, marginBottom:2 }}>{r.propertyName}</div>
+                <div style={{ fontSize:12, color:C.text3, marginBottom:6 }}>{r.guestName}</div>
+                <div style={{ fontSize:13, color:C.text2, fontStyle:"italic" }}>"{r.comment}"</div>
+              </div>
+              {!r.responded && (
+                <Btn size="sm" variant="subtle" onClick={() => {
+                  dispatch({ type:"UPDATE_REVIEW", payload:{ id:r.id, responded:true }});
+                  toast("Marked as responded");
+                }}>Mark Responded</Btn>
+              )}
+            </div>
+          </Card>
         ))}
       </div>
-
-      {/* Pending Tab — auto-populated from Res & Cleans */}
-      {tab === "pending" && (
-        <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-          {pending.length === 0 && <EmptyState icon={Star} title="All caught up!" sub="No pending reviews — every checkout has been reviewed." />}
-          {pending.map(b => (
-            <Card key={b.id} hover>
-              <div style={{ display:"flex", alignItems:"center", gap:16 }}>
-                <div style={{ flex:1 }}>
-                  <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:6, flexWrap:"wrap" }}>
-                    <Badge label={b.platform} size="xs" />
-                    <span style={{ fontSize:11, color:C.text3, fontFamily:"'DM Mono',monospace" }}>{b.id}</span>
-                    <span style={{ fontSize:11, color:C.text3 }}>Checked out {fmtDate(b.checkOut)}</span>
-                  </div>
-                  <div style={{ fontSize:14, fontWeight:600, color:C.text1 }}>{b.propertyName}</div>
-                  <div style={{ fontSize:12, color:C.text3, marginTop:2 }}>{b.guestName} · {b.nights} nights</div>
-                </div>
-                <div style={{ display:"flex", gap:8, alignItems:"center" }}>
-                  <span style={{ fontSize:11, color:C.amber }}>⭐ Awaiting review</span>
-                  <Btn variant="primary" size="sm" icon={Plus} onClick={() => openAddReview(b)}>Add Review</Btn>
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {/* All Reviews Tab */}
-      {tab === "all" && (
-        <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-          {state.reviews.length === 0 && <EmptyState icon={Star} title="No reviews yet" sub="Reviews will appear here once added." />}
-          {[...state.reviews].sort((a,b) => b.date.localeCompare(a.date)).map(r => (
-            <Card key={r.id} hover>
-              <div style={{ display:"flex", gap:16, alignItems:"flex-start" }}>
-                <div style={{ flex:1 }}>
-                  <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:8, flexWrap:"wrap" }}>
-                    <span style={{ fontSize:18, letterSpacing:2 }}>{"★".repeat(r.rating)}{"☆".repeat(5-r.rating)}</span>
-                    <span style={{ fontFamily:"'DM Mono',monospace", fontSize:13, color:C.amber, fontWeight:600 }}>{r.rating}/5</span>
-                    <Badge label={r.platform} size="xs" />
-                    <span style={{ fontSize:11, color:C.text3 }}>{fmtDate(r.date)}</span>
-                    {!r.responded && <Badge label="Overdue" size="xs" />}
-                    {r.responded && <span style={{ fontSize:11, color:C.green }}>✓ Responded</span>}
-                  </div>
-                  <div style={{ fontSize:14, fontWeight:600, color:C.text1, marginBottom:2 }}>{r.propertyName}</div>
-                  <div style={{ fontSize:12, color:C.text3, marginBottom:6 }}>{r.guestName}</div>
-                  {r.comment && <div style={{ fontSize:13, color:C.text2, fontStyle:"italic", padding:"8px 12px", background:C.bg2, borderRadius:6 }}>"{r.comment}"</div>}
-                </div>
-                {!r.responded && (
-                  <Btn size="sm" variant="subtle" onClick={() => {
-                    dispatch({ type:"UPDATE_REVIEW", payload:{ id:r.id, responded:true }});
-                    toast("Marked as responded");
-                  }}>Mark Responded</Btn>
-                )}
-              </div>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {/* Add Review Modal */}
-      <Modal open={showAdd} onClose={() => setShowAdd(false)} title="Add Guest Review" width={500}>
-        {selectedBooking && (
-          <div style={{ background:C.bg2, borderRadius:8, padding:"12px 16px", marginBottom:20 }}>
-            <div style={{ fontSize:13, fontWeight:600, color:C.text1 }}>{selectedBooking.propertyName}</div>
-            <div style={{ fontSize:12, color:C.text3, marginTop:2 }}>{selectedBooking.guestName} · {fmtDate(selectedBooking.checkIn)} → {fmtDate(selectedBooking.checkOut)}</div>
-          </div>
-        )}
-        <FormRow label="Guest Star Rating" required>
-          <div style={{ display:"flex", gap:6, marginBottom:4 }}>
-            {[1,2,3,4,5].map(n => (
-              <span key={n} onClick={() => setForm(f => ({...f, rating:n}))}
-                style={{ fontSize:32, cursor:"pointer", color: n <= form.rating ? C.amber : C.border, transition:"color 0.1s" }}>★</span>
-            ))}
-            <span style={{ fontSize:14, color:C.text2, alignSelf:"center", marginLeft:8 }}>{form.rating} / 5</span>
-          </div>
-        </FormRow>
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
-          <FormRow label="Platform">
-            <Select value={form.platform} onChange={v => setForm(f => ({...f, platform:v}))}
-              options={["Airbnb","Booking.com","Direct","Google"]} />
-          </FormRow>
-          <FormRow label="Review Date">
-            <Input type="date" value={form.date} onChange={v => setForm(f => ({...f, date:v}))} />
-          </FormRow>
-        </div>
-        <FormRow label="Guest Comment (optional)">
-          <textarea value={form.comment} onChange={e => setForm(f => ({...f, comment:e.target.value}))}
-            placeholder="Paste the guest's review comment here..." rows={4}
-            style={{ ...inputStyle, resize:"vertical" }} />
-        </FormRow>
-        <div style={{ display:"flex", gap:8 }}>
-          <Btn variant="primary" icon={Star} onClick={handleAdd}>Save Review</Btn>
-          <Btn variant="ghost" onClick={() => setShowAdd(false)}>Cancel</Btn>
-        </div>
-      </Modal>
-    </div>
-  );
-}
-
-// ─── PROPERTY SCORECARD ───────────────────────────────────────────────────────
-function PropertyScorecard() {
-  const { state } = useApp();
-  const [sortBy, setSortBy] = useState("rating");
-  const [areaFilter, setAreaFilter] = useState("All");
-
-  // Build scorecard per property
-  const scorecards = state.properties.map(prop => {
-    const propReviews = state.reviews.filter(r => r.propertyName === prop.name || r.propertyId === prop.id);
-    const propBookings = state.bookings.filter(b => b.propertyName === prop.name || b.propId === prop.id);
-    const avgRating = propReviews.length
-      ? (propReviews.reduce((s,r) => s + r.rating, 0) / propReviews.length)
-      : null;
-    const revenue = propBookings.reduce((s,b) => s + b.revenue, 0);
-    const fiveStars = propReviews.filter(r => r.rating === 5).length;
-    const lowRatings = propReviews.filter(r => r.rating <= 3).length;
-    return { prop, reviews: propReviews, bookings: propBookings, avgRating, revenue, fiveStars, lowRatings };
-  }).filter(s => s.reviews.length > 0 || s.bookings.length > 0);
-
-  const areas = ["All", ...new Set(state.properties.map(p => p.area).filter(Boolean))];
-
-  const filtered = scorecards
-    .filter(s => areaFilter === "All" || s.prop.area === areaFilter)
-    .sort((a,b) => {
-      if (sortBy === "rating") return (b.avgRating||0) - (a.avgRating||0);
-      if (sortBy === "reviews") return b.reviews.length - a.reviews.length;
-      if (sortBy === "revenue") return b.revenue - a.revenue;
-      return 0;
-    });
-
-  const totalAvg = state.reviews.length
-    ? (state.reviews.reduce((s,r) => s + r.rating, 0) / state.reviews.length).toFixed(2)
-    : "—";
-
-  const getRatingColor = (r) => {
-    if (!r) return C.text3;
-    if (r >= 4.5) return C.green;
-    if (r >= 4.0) return C.teal;
-    if (r >= 3.5) return C.amber;
-    return C.crimson;
-  };
-
-  const getRatingLabel = (r) => {
-    if (!r) return "No reviews";
-    if (r >= 4.8) return "Exceptional";
-    if (r >= 4.5) return "Excellent";
-    if (r >= 4.0) return "Good";
-    if (r >= 3.5) return "Average";
-    return "Needs Attention";
-  };
-
-  return (
-    <div style={{ animation:"fadeIn 0.25s ease" }}>
-      <SectionTitle>Property Scorecard</SectionTitle>
-
-      {/* Portfolio KPIs */}
-      <div style={{ display:"flex", gap:12, marginBottom:24 }}>
-        <KPICard label="Portfolio Avg Rating" value={`${totalAvg} ⭐`} color={C.amber} />
-        <KPICard label="Properties Reviewed" value={scorecards.filter(s => s.reviews.length > 0).length} color={C.teal} />
-        <KPICard label="5-Star Reviews" value={state.reviews.filter(r => r.rating===5).length} color={C.green} />
-        <KPICard label="Needs Attention" value={scorecards.filter(s => s.avgRating && s.avgRating < 4.0).length} color={C.crimson} />
-      </div>
-
-      {/* Filters */}
-      <div style={{ display:"flex", gap:10, marginBottom:20, alignItems:"center" }}>
-        <Select value={areaFilter} onChange={setAreaFilter}
-          options={areas} style={{ width:160 }} />
-        <Select value={sortBy} onChange={setSortBy}
-          options={[{value:"rating",label:"Sort: Rating"},{value:"reviews",label:"Sort: Reviews"},{value:"revenue",label:"Sort: Revenue"}]}
-          style={{ width:180 }} />
-        <span style={{ fontSize:12, color:C.text3, marginLeft:8 }}>Showing {filtered.length} properties</span>
-      </div>
-
-      {/* Scorecard Grid */}
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(280px, 1fr))", gap:14 }}>
-        {filtered.map(({ prop, reviews, bookings, avgRating, revenue, fiveStars, lowRatings }) => {
-          const ratingColor = getRatingColor(avgRating);
-          const ratingLabel = getRatingLabel(avgRating);
-          return (
-            <div key={prop.id} style={{ background:C.bg1, border:`1px solid ${C.border}`, borderRadius:10,
-              padding:16, borderTop:`3px solid ${ratingColor}` }}>
-              {/* Header */}
-              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:12 }}>
-                <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontSize:10, color:C.text3, fontFamily:"'DM Mono',monospace", marginBottom:2 }}>{prop.id}</div>
-                  <div style={{ fontSize:13, fontWeight:600, color:C.text1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{prop.name}</div>
-                  <div style={{ fontSize:11, color:C.text3 }}>{prop.area} · {prop.type}</div>
-                </div>
-                <div style={{ textAlign:"right", flexShrink:0, marginLeft:8 }}>
-                  <div style={{ fontSize:22, fontWeight:700, color:ratingColor, fontFamily:"'DM Mono',monospace", lineHeight:1 }}>
-                    {avgRating ? avgRating.toFixed(1) : "—"}
-                  </div>
-                  <div style={{ fontSize:10, color:ratingColor, fontWeight:600 }}>{ratingLabel}</div>
-                </div>
-              </div>
-
-              {/* Star bar */}
-              {avgRating && (
-                <div style={{ marginBottom:12 }}>
-                  <div style={{ display:"flex", gap:2, marginBottom:4 }}>
-                    {[1,2,3,4,5].map(n => (
-                      <div key={n} style={{ flex:1, height:4, borderRadius:2,
-                        background: n <= Math.round(avgRating) ? ratingColor : C.border }} />
-                    ))}
-                  </div>
-                  <div style={{ fontSize:11, color:C.text3 }}>{avgRating.toFixed(2)} average from {reviews.length} review{reviews.length!==1?"s":""}</div>
-                </div>
-              )}
-
-              {/* Stats row */}
-              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8 }}>
-                {[
-                  { label:"Reviews", value: reviews.length, color:C.text2 },
-                  { label:"5-Star", value: fiveStars, color:C.green },
-                  { label:"≤3 Star", value: lowRatings, color: lowRatings > 0 ? C.crimson : C.text3 },
-                ].map(s => (
-                  <div key={s.label} style={{ background:C.bg2, borderRadius:6, padding:"8px 10px", textAlign:"center" }}>
-                    <div style={{ fontSize:16, fontWeight:700, color:s.color, fontFamily:"'DM Mono',monospace" }}>{s.value}</div>
-                    <div style={{ fontSize:10, color:C.text3 }}>{s.label}</div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Revenue */}
-              {revenue > 0 && (
-                <div style={{ marginTop:10, paddingTop:10, borderTop:`1px solid ${C.border}20`,
-                  display:"flex", justifyContent:"space-between", fontSize:11 }}>
-                  <span style={{ color:C.text3 }}>Revenue</span>
-                  <span style={{ fontFamily:"'DM Mono',monospace", color:C.teal }}>{fmtCurr(revenue)}</span>
-                </div>
-              )}
-
-              {/* Recent reviews */}
-              {reviews.slice(0,2).map(r => (
-                <div key={r.id} style={{ marginTop:8, padding:"6px 10px", background:C.bg2, borderRadius:6,
-                  borderLeft:`2px solid ${getRatingColor(r.rating)}` }}>
-                  <div style={{ display:"flex", justifyContent:"space-between", marginBottom:2 }}>
-                    <span style={{ fontSize:11, color:C.text3 }}>{r.guestName}</span>
-                    <span style={{ fontSize:11, color:getRatingColor(r.rating), fontWeight:600 }}>{"★".repeat(r.rating)}</span>
-                  </div>
-                  {r.comment && <div style={{ fontSize:11, color:C.text2, fontStyle:"italic", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>"{r.comment}"</div>}
-                </div>
-              ))}
-            </div>
-          );
-        })}
-      </div>
-
-      {filtered.length === 0 && (
-        <EmptyState icon={Star} title="No scorecards yet" sub="Add reviews from the Reviews page to see property performance here." />
-      )}
     </div>
   );
 }
@@ -2290,52 +1849,10 @@ function OwnerStatements() {
 
 // ─── TEAM & VENDORS ───────────────────────────────────────────────────────────
 function TeamVendors() {
-  const { state, dispatch, toast } = useApp();
-  const [showAdd, setShowAdd] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(null);
-  const [form, setForm] = useState({ name:"", role:"Housekeeper", phone:"", notes:"", portfolio:["1","2"] });
-
-  const handleAdd = () => {
-    if (!form.name || !form.role) return toast("Name and role are required", "error");
-    const id = `T${String(state.team.length + 1).padStart(3,"0")}`;
-    dispatch({ type:"ADD_TEAM_MEMBER", payload:{
-      id, name: form.name, role: form.role, phone: form.phone,
-      notes: form.notes, portfolio: form.portfolio.map(Number),
-      rating: 0, completedCleans: 0, active: true,
-    }});
-    toast(`${form.name} added to team`);
-    setShowAdd(false);
-    setForm({ name:"", role:"Housekeeper", phone:"", notes:"", portfolio:["1","2"] });
-  };
-
-  const handleDelete = (member) => {
-    dispatch({ type:"REMOVE_TEAM_MEMBER", payload: member.id });
-    toast(`${member.name} removed`);
-    setConfirmDelete(null);
-  };
-
-  const togglePortfolio = (p) => {
-    setForm(f => ({
-      ...f,
-      portfolio: f.portfolio.includes(p)
-        ? f.portfolio.filter(x => x !== p)
-        : [...f.portfolio, p]
-    }));
-  };
-
+  const { state } = useApp();
   return (
     <div style={{ animation:"fadeIn 0.25s ease" }}>
-      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:24 }}>
-        <SectionTitle>Team & Vendors</SectionTitle>
-        <Btn variant="primary" icon={Plus} onClick={() => setShowAdd(true)}>Add Member</Btn>
-      </div>
-
-      <div style={{ display:"flex", gap:12, marginBottom:20 }}>
-        <KPICard label="Total Members" value={state.team.length} color={C.teal} icon={Users} />
-        <KPICard label="Housekeepers" value={state.team.filter(m => m.role==="Housekeeper" || m.role==="Senior Housekeeper").length} color={C.blue} />
-        <KPICard label="Vendors" value={state.team.filter(m => m.role==="Maintenance Contractor" || m.role==="Internet & Tech").length} color={C.amber} />
-      </div>
-
+      <SectionTitle>Team & Vendors</SectionTitle>
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
         {state.team.map(m => (
           <Card key={m.id} hover>
@@ -2345,86 +1862,25 @@ function TeamVendors() {
                 {m.name.slice(0,2).toUpperCase()}
               </div>
               <div style={{ flex:1 }}>
-                <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:4, justifyContent:"space-between" }}>
-                  <div style={{ display:"flex", gap:8, alignItems:"center" }}>
-                    <span style={{ fontSize:14, fontWeight:700, color:C.text1 }}>{m.name}</span>
-                    <Badge label="Active" size="xs" />
-                  </div>
-                  <button onClick={() => setConfirmDelete(m)}
-                    style={{ background:"none", border:`1px solid ${C.border}`, borderRadius:5,
-                      padding:"3px 7px", cursor:"pointer", color:C.crimson, display:"flex", alignItems:"center" }}>
-                    <Trash2 size={12} />
-                  </button>
+                <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:4 }}>
+                  <span style={{ fontSize:14, fontWeight:700, color:C.text1 }}>{m.name}</span>
+                  <Badge label="Active" size="xs" />
                 </div>
                 <div style={{ fontSize:12, color:C.text3, marginBottom:8 }}>{m.role}</div>
-                <div style={{ display:"flex", gap:16, fontSize:11, color:C.text2, flexWrap:"wrap" }}>
-                  {m.phone && <span style={{ display:"flex", alignItems:"center", gap:4 }}><Phone size={11}/>{m.phone}</span>}
+                <div style={{ display:"flex", gap:16, fontSize:11, color:C.text2 }}>
+                  <span style={{ display:"flex", alignItems:"center", gap:4 }}><Phone size={11}/>{m.phone}</span>
                   {m.rating > 0 && <span>⭐ {m.rating}</span>}
                   {m.completedCleans > 0 && <span>{m.completedCleans} cleans</span>}
                 </div>
                 {m.notes && <div style={{ marginTop:6, fontSize:11, color:C.text3 }}>{m.notes}</div>}
                 <div style={{ marginTop:6, fontSize:11, color:C.text3 }}>
-                  Portfolio: {m.portfolio?.includes(1) && m.portfolio?.includes(2) ? "P1 + P2" : m.portfolio?.includes(1) ? "P1 only" : "P2 only"}
+                  Portfolio: {m.portfolio.includes(1) && m.portfolio.includes(2) ? "P1 + P2" : m.portfolio.includes(1) ? "P1 only" : "P2 only"}
                 </div>
               </div>
             </div>
           </Card>
         ))}
       </div>
-
-      {/* Add Member Modal */}
-      <Modal open={showAdd} onClose={() => setShowAdd(false)} title="Add Team Member / Vendor">
-        <FormRow label="Full Name" required>
-          <Input value={form.name} onChange={v => setForm(f => ({...f, name:v}))} placeholder="e.g. Thandiwe Mokoena" />
-        </FormRow>
-        <FormRow label="Role" required>
-          <Select value={form.role} onChange={v => setForm(f => ({...f, role:v}))}
-            options={["Housekeeper","Senior Housekeeper","Maintenance Contractor","Internet & Tech","Plumber","Electrician","Pool Service","Garden Service","Other"]} />
-        </FormRow>
-        <FormRow label="Phone Number">
-          <Input value={form.phone} onChange={v => setForm(f => ({...f, phone:v}))} placeholder="+27 82 000 0000" />
-        </FormRow>
-        <FormRow label="Notes">
-          <Input value={form.notes} onChange={v => setForm(f => ({...f, notes:v}))} placeholder="Speciality, availability, etc." />
-        </FormRow>
-        <FormRow label="Portfolio Assignment">
-          <div style={{ display:"flex", gap:10 }}>
-            {["1","2"].map(p => (
-              <div key={p} onClick={() => togglePortfolio(p)}
-                style={{ padding:"8px 20px", borderRadius:6, cursor:"pointer", fontSize:13, fontWeight:500,
-                  background: form.portfolio.includes(p) ? C.tealBg : C.bg2,
-                  border: `1px solid ${form.portfolio.includes(p) ? C.teal : C.border}`,
-                  color: form.portfolio.includes(p) ? C.teal : C.text2, transition:"all 0.15s" }}>
-                Portfolio {p}
-              </div>
-            ))}
-          </div>
-        </FormRow>
-        <div style={{ display:"flex", gap:8 }}>
-          <Btn variant="primary" icon={Plus} onClick={handleAdd}>Add Member</Btn>
-          <Btn variant="ghost" onClick={() => setShowAdd(false)}>Cancel</Btn>
-        </div>
-      </Modal>
-
-      {/* Confirm Delete Modal */}
-      <Modal open={!!confirmDelete} onClose={() => setConfirmDelete(null)} title="Remove Team Member" width={400}>
-        <div style={{ textAlign:"center", padding:"10px 0 20px" }}>
-          <div style={{ width:52, height:52, borderRadius:"50%", background:C.crimsonBg, display:"flex",
-            alignItems:"center", justifyContent:"center", margin:"0 auto 16px" }}>
-            <Trash2 size={22} color={C.crimson} />
-          </div>
-          <div style={{ fontSize:15, fontWeight:600, color:C.text1, marginBottom:8 }}>
-            Remove {confirmDelete?.name}?
-          </div>
-          <div style={{ fontSize:13, color:C.text3, marginBottom:24 }}>
-            This will permanently remove them from the team list.
-          </div>
-          <div style={{ display:"flex", gap:8, justifyContent:"center" }}>
-            <Btn variant="danger" icon={Trash2} onClick={() => handleDelete(confirmDelete)}>Yes, Remove</Btn>
-            <Btn variant="ghost" onClick={() => setConfirmDelete(null)}>Cancel</Btn>
-          </div>
-        </div>
-      </Modal>
     </div>
   );
 }
@@ -2527,30 +1983,10 @@ function GuestTemplates() {
 
 // ─── PROPERTIES ───────────────────────────────────────────────────────────────
 function PropertiesModule() {
-  const { state, dispatch, toast } = useApp();
+  const { state } = useApp();
   const [search, setSearch] = useState("");
   const [portFilter, setPortFilter] = useState("All");
   const [selected, setSelected] = useState(null);
-  const [showAdd, setShowAdd] = useState(false);
-  const [form, setForm] = useState({ id:"", name:"", address:"", area:"", type:"Apartment", portfolio:"1" });
-
-  const handleAdd = () => {
-    if (!form.id || !form.name) return toast("Property ID and Name are required", "error");
-    if (state.properties.find(p => p.id === form.id)) return toast("Property ID already exists", "error");
-    dispatch({ type:"ADD_PROPERTY", payload:{
-      id: form.id.toUpperCase(),
-      name: form.name,
-      address: form.address,
-      area: form.area,
-      type: form.type,
-      portfolio: Number(form.portfolio),
-      flag: null,
-      status: "Active",
-    }});
-    toast("Property added successfully");
-    setShowAdd(false);
-    setForm({ id:"", name:"", address:"", area:"", type:"Apartment", portfolio:"1" });
-  };
 
   const filtered = state.properties.filter(p => {
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.id.toLowerCase().includes(search.toLowerCase()) || p.area.toLowerCase().includes(search.toLowerCase());
@@ -2568,11 +2004,10 @@ function PropertiesModule() {
         <div style={{ display:"flex", gap:8 }}>
           <SearchBar value={search} onChange={setSearch} placeholder="Search property..." />
           <Select value={portFilter} onChange={setPortFilter} options={["All","1","2"]} style={{ width:120 }} />
-          <Btn variant="primary" icon={Plus} onClick={() => setShowAdd(true)}>Add Property</Btn>
         </div>
       </div>
       <div style={{ display:"flex", gap:12, marginBottom:20 }}>
-        <KPICard label="Total Properties" value={state.properties.length} color={C.teal} />
+        <KPICard label="Total Properties" value={50} color={C.teal} />
         <KPICard label="Portfolio 1" value={state.properties.filter(p => p.portfolio===1).length} color={C.blue} />
         <KPICard label="Portfolio 2" value={state.properties.filter(p => p.portfolio===2).length} color={C.amber} />
         <KPICard label="Flags" value={state.properties.filter(p => p.flag).length} color={C.crimson} />
@@ -2597,7 +2032,7 @@ function PropertiesModule() {
                     {currentBooking && <Badge label="In-House" size="xs" />}
                   </div>
                   <div style={{ fontSize:13, fontWeight:600, color:C.text1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{p.name}</div>
-                  <div style={{ fontSize:11, color:C.text3, marginTop:2 }}>{p.area} · {p.type}</div>
+                  <div style={{ fontSize:11, color:C.text3, marginTop:2 }}>{p.area} · {p.beds}BR {p.baths}BA</div>
                   <div style={{ display:"flex", gap:12, marginTop:6, fontSize:11, color:C.text2 }}>
                     <span>{propBookings.length} bookings</span>
                     <span style={{ color:C.teal, fontFamily:"'DM Mono',monospace" }}>R {(propRevenue/1000).toFixed(1)}k</span>
@@ -2608,36 +2043,6 @@ function PropertiesModule() {
           );
         })}
       </div>
-
-      {/* Add Property Modal */}
-      <Modal open={showAdd} onClose={() => setShowAdd(false)} title="Add New Property" width={520}>
-        <FormRow label="Property ID (e.g. ZG-053)" required>
-          <Input value={form.id} onChange={v => setForm(f => ({...f, id:v}))} placeholder="ZG-053" />
-        </FormRow>
-        <FormRow label="Property Name" required>
-          <Input value={form.name} onChange={v => setForm(f => ({...f, name:v}))} placeholder="e.g. 201 The Suro" />
-        </FormRow>
-        <FormRow label="Full Address">
-          <Input value={form.address} onChange={v => setForm(f => ({...f, address:v}))} placeholder="e.g. Holmfirth Road, Cape Town, 8060" />
-        </FormRow>
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
-          <FormRow label="Area">
-            <Input value={form.area} onChange={v => setForm(f => ({...f, area:v}))} placeholder="e.g. Sea Point" />
-          </FormRow>
-          <FormRow label="Type">
-            <Select value={form.type} onChange={v => setForm(f => ({...f, type:v}))}
-              options={["Apartment","House","Cottage","Villa","Studio"]} />
-          </FormRow>
-        </div>
-        <FormRow label="Portfolio">
-          <Select value={form.portfolio} onChange={v => setForm(f => ({...f, portfolio:v}))}
-            options={[{value:"1",label:"Portfolio 1"},{value:"2",label:"Portfolio 2"}]} />
-        </FormRow>
-        <div style={{ display:"flex", gap:8 }}>
-          <Btn variant="primary" icon={Plus} onClick={handleAdd}>Add Property</Btn>
-          <Btn variant="ghost" onClick={() => setShowAdd(false)}>Cancel</Btn>
-        </div>
-      </Modal>
 
       {/* Property Detail Modal */}
       <Modal open={!!selected} onClose={() => setSelected(null)} title={selected?.name || ""} width={600}>
@@ -2874,394 +2279,19 @@ function SettingsModule() {
   );
 }
 
-
-// ─── HOUSEKEEPING SCHEDULER & QUALITY CONTROL ────────────────────────────────
-const HK_TASK_TYPES = ["Full Turnover","Mid-Stay Refresh","Full Turnover & Mid-Stay","Guest Extended","Other"];
-const HK_QC_FIELDS = [
-  { key:"keysCollected",    label:"Keys Collected" },
-  { key:"guestKeys",        label:"Guest Keys" },
-  { key:"electricityUnits", label:"Electricity Units" },
-  { key:"photos",           label:"Photos Submitted" },
-  { key:"keysReturned",     label:"Keys Returned" },
-];
-const HK_STATUS_OPTIONS = ["","Done","Not Required","Issue"];
-
-function hkQcColor(v) {
-  if (v === "Done") return C.green;
-  if (v === "Issue") return C.crimson;
-  return C.text3;
-}
-
-function hkQcBg(v) {
-  if (v === "Done") return C.greenBg;
-  if (v === "Issue") return C.crimsonBg;
-  return C.bg2;
-}
-
-function HKStars({ value, onChange }) {
-  return (
-    <div style={{ display:"flex", gap:3 }}>
-      {[1,2,3,4,5].map(n => (
-        <span key={n} onClick={() => onChange && onChange(n)}
-          style={{ fontSize:18, cursor: onChange ? "pointer" : "default",
-            color: n <= (value || 0) ? C.amber : C.border }}>★</span>
-      ))}
-    </div>
-  );
-}
-
-function HKStatusBtn({ value, onChange }) {
-  const next = { "":"Done", "Done":"Not Required", "Not Required":"Issue", "Issue":"" };
-  return (
-    <button onClick={() => onChange && onChange(next[value || ""] || "Done")}
-      style={{ padding:"4px 10px", borderRadius:5, fontSize:11, fontWeight:600,
-        cursor:"pointer", border:"1px solid transparent",
-        background: hkQcBg(value), color: hkQcColor(value),
-        fontFamily:"'DM Mono',monospace", minWidth:100 }}>
-      {value || "—"}
-    </button>
-  );
-}
-
-function blankHKProp() {
-  return { propertyName:"", taskType:"Full Turnover",
-    keysCollected:"", guestKeys:"", electricityUnits:"",
-    photos:"", keysReturned:"", qcRating:0, notes:"" };
-}
-
-function HousekeepingScheduler() {
-  const { state, dispatch, toast } = useApp();
-  const [tab, setTab] = useState("schedule");
-  const [viewDate, setViewDate] = useState(addDays(TODAY, 1));
-  const [historyDate, setHistoryDate] = useState(TODAY);
-  const [showAdd, setShowAdd] = useState(false);
-  const [editEntry, setEditEntry] = useState(null);
-  const [form, setForm] = useState({ date:addDays(TODAY,1), housekeeper:"", properties:[blankHKProp(), blankHKProp()] });
-
-  const hkRecords = Array.isArray(state.housekeeping) ? state.housekeeping : [];
-  const teamNames = (state.team || []).map(m => m.name);
-  const propertyNames = (state.properties || []).map(p => p.name);
-
-  const scheduleEntries = hkRecords.filter(h => h.date === viewDate);
-  const historyEntries = hkRecords.filter(h => h.date === historyDate);
-
-  const resetForm = () => setForm({ date:addDays(TODAY,1), housekeeper:"", properties:[blankHKProp(), blankHKProp()] });
-
-  const handleSave = () => {
-    if (!form.housekeeper) return toast("Select a housekeeper", "error");
-    const filledProps = form.properties.filter(p => p.propertyName && p.propertyName !== "--");
-    if (filledProps.length === 0) return toast("Add at least one property", "error");
-    const id = editEntry ? editEntry.id : "HK-" + String(hkRecords.length + 1).padStart(3, "0");
-    dispatch({ type: editEntry ? "UPDATE_HK_SCHEDULE" : "ADD_HK_SCHEDULE",
-      payload: { id, date:form.date, housekeeper:form.housekeeper, properties:filledProps }});
-    toast(editEntry ? "Schedule updated" : "Schedule saved");
-    setShowAdd(false); setEditEntry(null); resetForm();
-  };
-
-  const openEdit = (entry) => {
-    const props = [...entry.properties];
-    while (props.length < 2) props.push(blankHKProp());
-    setForm({ date:entry.date, housekeeper:entry.housekeeper, properties:props });
-    setEditEntry(entry); setShowAdd(true);
-  };
-
-  const updateQC = (entryId, propIdx, field, value) => {
-    const entry = hkRecords.find(h => h.id === entryId);
-    if (!entry) return;
-    const props = entry.properties.map((p, i) => i === propIdx ? { ...p, [field]:value } : p);
-    dispatch({ type:"UPDATE_HK_SCHEDULE", payload:{ id:entryId, properties:props }});
-  };
-
-  const deleteEntry = (id) => {
-    if (!window.confirm("Delete this schedule entry?")) return;
-    dispatch({ type:"DELETE_HK_SCHEDULE", payload:id });
-    toast("Entry deleted");
-  };
-
-  const issueCount = hkRecords.flatMap(h => h.properties)
-    .flatMap(p => HK_QC_FIELDS.map(f => p[f.key])).filter(v => v === "Issue").length;
-
-  const ratedProps = hkRecords.flatMap(h => h.properties).filter(p => p.qcRating > 0);
-  const avgQC = ratedProps.length
-    ? (ratedProps.reduce((s,p) => s + p.qcRating, 0) / ratedProps.length).toFixed(1) : "—";
-
-  return (
-    <div style={{ animation:"fadeIn 0.25s ease" }}>
-      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:20 }}>
-        <SectionTitle>Housekeeping Scheduler & QC</SectionTitle>
-        <Btn variant="primary" icon={Plus} onClick={() => { setEditEntry(null); resetForm(); setShowAdd(true); }}>
-          Add Schedule
-        </Btn>
-      </div>
-
-      <div style={{ display:"flex", gap:12, marginBottom:20 }}>
-        <KPICard label="Total Records" value={hkRecords.length} color={C.teal} />
-        <KPICard label="Tomorrow" value={hkRecords.filter(h => h.date === addDays(TODAY,1)).length} color={C.blue} />
-        <KPICard label="Avg QC Rating" value={avgQC === "—" ? "—" : avgQC + " ⭐"} color={C.amber} />
-        <KPICard label="QC Issues" value={issueCount} color={issueCount > 0 ? C.crimson : C.green} />
-      </div>
-
-      <div style={{ display:"flex", borderBottom:`1px solid ${C.border}`, marginBottom:20 }}>
-        {[["schedule","Schedule"],["qc","Quality Control"],["history","History"]].map(([id,label]) => (
-          <button key={id} onClick={() => setTab(id)}
-            style={{ padding:"8px 24px", background:"none", border:"none",
-              borderBottom:`2px solid ${tab===id ? C.teal : "transparent"}`,
-              color: tab===id ? C.teal : C.text2, cursor:"pointer",
-              fontSize:13, fontWeight: tab===id ? 600 : 400 }}>
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {/* SCHEDULE TAB */}
-      {tab === "schedule" && (
-        <div>
-          <div style={{ display:"flex", gap:10, alignItems:"center", marginBottom:16 }}>
-            <span style={{ fontSize:13, color:C.text2 }}>Date:</span>
-            <Input type="date" value={viewDate} onChange={setViewDate} style={{ width:180 }} />
-            <Btn size="sm" variant="subtle" onClick={() => setViewDate(addDays(TODAY,1))}>Tomorrow</Btn>
-            <Btn size="sm" variant="subtle" onClick={() => setViewDate(TODAY)}>Today</Btn>
-          </div>
-
-          {scheduleEntries.length === 0
-            ? <EmptyState icon={Users} title={"No schedule for " + fmtDate(viewDate)} sub="Click 'Add Schedule' to assign housekeepers." />
-            : scheduleEntries.map(entry => (
-              <Card key={entry.id} style={{ marginBottom:12 }}>
-                <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:14 }}>
-                  <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-                    <div style={{ width:40, height:40, borderRadius:"50%", background:C.tealBg,
-                      display:"flex", alignItems:"center", justifyContent:"center",
-                      fontSize:14, fontWeight:700, color:C.teal }}>
-                      {(entry.housekeeper || "?").slice(0,2).toUpperCase()}
-                    </div>
-                    <div>
-                      <div style={{ fontSize:14, fontWeight:700, color:C.text1 }}>{entry.housekeeper}</div>
-                      <div style={{ fontSize:11, color:C.text3 }}>{fmtDate(entry.date)} · {entry.properties.length} propert{entry.properties.length === 1 ? "y" : "ies"}</div>
-                    </div>
-                  </div>
-                  <div style={{ display:"flex", gap:8 }}>
-                    <Btn size="sm" variant="subtle" icon={Edit} onClick={() => openEdit(entry)}>Edit</Btn>
-                    <Btn size="sm" variant="ghost" onClick={() => deleteEntry(entry.id)}><Trash2 size={12} color={C.crimson}/></Btn>
-                  </div>
-                </div>
-                <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(260px,1fr))", gap:10 }}>
-                  {entry.properties.map((p, pi) => (
-                    <div key={pi} style={{ background:C.bg2, borderRadius:8, padding:"12px 14px", borderLeft:`3px solid ${C.teal}` }}>
-                      <div style={{ fontSize:13, fontWeight:600, color:C.text1, marginBottom:4 }}>{p.propertyName}</div>
-                      <div style={{ marginBottom:10 }}>
-                        <span style={{ fontSize:11, background:C.amberBg, color:C.amber, padding:"2px 8px", borderRadius:4, fontWeight:600 }}>{p.taskType}</span>
-                      </div>
-                      {HK_QC_FIELDS.map(f => (
-                        <div key={f.key} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:6 }}>
-                          <span style={{ fontSize:11, color:C.text3 }}>{f.label}</span>
-                          <HKStatusBtn value={p[f.key]} onChange={v => updateQC(entry.id, pi, f.key, v)} />
-                        </div>
-                      ))}
-                      <div style={{ marginTop:8, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                        <span style={{ fontSize:11, color:C.text3 }}>QC Rating</span>
-                        <HKStars value={p.qcRating} onChange={v => updateQC(entry.id, pi, "qcRating", v)} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            ))
-          }
-        </div>
-      )}
-
-      {/* QC TAB */}
-      {tab === "qc" && (
-        <div>
-          {hkRecords.length === 0
-            ? <EmptyState icon={CheckCircle} title="No records yet" sub="Add schedules to start tracking quality." />
-            : Object.entries(
-                hkRecords.reduce((acc, h) => {
-                  if (!acc[h.housekeeper]) acc[h.housekeeper] = [];
-                  acc[h.housekeeper].push(h);
-                  return acc;
-                }, {})
-              ).map(([hk, entries]) => {
-                const hkIssues = entries.flatMap(h => h.properties)
-                  .flatMap(p => HK_QC_FIELDS.map(f => p[f.key])).filter(v => v === "Issue").length;
-                const hkRated = entries.flatMap(h => h.properties).filter(p => p.qcRating > 0);
-                const hkAvg = hkRated.length
-                  ? (hkRated.reduce((s,p) => s + p.qcRating, 0) / hkRated.length).toFixed(1) : "—";
-                return (
-                  <div key={hk} style={{ marginBottom:24 }}>
-                    <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:12,
-                      padding:"10px 16px", background:C.bg1, borderRadius:8, border:`1px solid ${C.border}` }}>
-                      <div style={{ width:36, height:36, borderRadius:"50%", background:C.tealBg,
-                        display:"flex", alignItems:"center", justifyContent:"center",
-                        fontSize:13, fontWeight:700, color:C.teal }}>
-                        {hk.slice(0,2).toUpperCase()}
-                      </div>
-                      <div style={{ flex:1 }}>
-                        <div style={{ fontSize:14, fontWeight:700, color:C.text1 }}>{hk}</div>
-                        <div style={{ fontSize:11, color:C.text3 }}>{entries.length} session{entries.length !== 1 ? "s" : ""}</div>
-                      </div>
-                      <div style={{ display:"flex", gap:16, fontSize:12 }}>
-                        <span style={{ color: hkIssues > 0 ? C.crimson : C.green }}>
-                          {hkIssues > 0 ? "⚠️ " + hkIssues + " issues" : "✓ No issues"}
-                        </span>
-                        <span style={{ color:C.amber }}>⭐ {hkAvg}</span>
-                      </div>
-                    </div>
-                    {entries.sort((a,b) => b.date.localeCompare(a.date)).flatMap((entry, ei) =>
-                      entry.properties.map((p, pi) => {
-                        const propIssues = HK_QC_FIELDS.filter(f => p[f.key] === "Issue").length;
-                        return (
-                          <div key={entry.id + "-" + pi} style={{ background:C.bg1, borderRadius:8, padding:"12px 16px", marginBottom:8, marginLeft:12,
-                            border:`1px solid ${propIssues > 0 ? C.crimson + "40" : C.border}`,
-                            borderLeft:`3px solid ${propIssues > 0 ? C.crimson : C.green}` }}>
-                            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
-                              <div>
-                                <div style={{ fontSize:13, fontWeight:600, color:C.text1 }}>{p.propertyName}</div>
-                                <div style={{ fontSize:11, color:C.text3 }}>{fmtDate(entry.date)} · {p.taskType}</div>
-                              </div>
-                              <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                                {propIssues > 0 && <span style={{ fontSize:11, color:C.crimson, fontWeight:600 }}>⚠️ {propIssues} issue{propIssues !== 1 ? "s" : ""}</span>}
-                                <HKStars value={p.qcRating} onChange={v => updateQC(entry.id, pi, "qcRating", v)} />
-                              </div>
-                            </div>
-                            <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(160px,1fr))", gap:8 }}>
-                              {HK_QC_FIELDS.map(f => (
-                                <div key={f.key}>
-                                  <div style={{ fontSize:10, color:C.text3, marginBottom:4, textTransform:"uppercase", letterSpacing:"0.05em" }}>{f.label}</div>
-                                  <HKStatusBtn value={p[f.key]} onChange={v => updateQC(entry.id, pi, f.key, v)} />
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
-                );
-              })
-          }
-        </div>
-      )}
-
-      {/* HISTORY TAB */}
-      {tab === "history" && (
-        <div>
-          <div style={{ display:"flex", gap:10, alignItems:"center", marginBottom:16 }}>
-            <span style={{ fontSize:13, color:C.text2 }}>Date:</span>
-            <Input type="date" value={historyDate} onChange={setHistoryDate} style={{ width:180 }} />
-          </div>
-          {historyEntries.length === 0
-            ? <EmptyState icon={BookMarked} title={"No records for " + fmtDate(historyDate)} />
-            : historyEntries.map(entry => (
-              <Card key={entry.id} style={{ marginBottom:12 }}>
-                <div style={{ display:"flex", gap:10, alignItems:"center", marginBottom:12 }}>
-                  <div style={{ width:36, height:36, borderRadius:"50%", background:C.tealBg,
-                    display:"flex", alignItems:"center", justifyContent:"center",
-                    fontSize:13, fontWeight:700, color:C.teal }}>
-                    {entry.housekeeper.slice(0,2).toUpperCase()}
-                  </div>
-                  <div>
-                    <div style={{ fontSize:13, fontWeight:600, color:C.text1 }}>{entry.housekeeper}</div>
-                    <div style={{ fontSize:11, color:C.text3 }}>{fmtDate(entry.date)}</div>
-                  </div>
-                </div>
-                <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(240px,1fr))", gap:10 }}>
-                  {entry.properties.map((p, pi) => (
-                    <div key={pi} style={{ background:C.bg2, borderRadius:8, padding:"10px 14px" }}>
-                      <div style={{ fontSize:13, fontWeight:600, color:C.text1, marginBottom:4 }}>{p.propertyName}</div>
-                      <div style={{ fontSize:11, color:C.amber, marginBottom:8 }}>{p.taskType}</div>
-                      {HK_QC_FIELDS.map(f => (
-                        <div key={f.key} style={{ display:"flex", justifyContent:"space-between", fontSize:11, marginBottom:4 }}>
-                          <span style={{ color:C.text3 }}>{f.label}</span>
-                          <span style={{ color:hkQcColor(p[f.key]), fontWeight:600 }}>{p[f.key] || "—"}</span>
-                        </div>
-                      ))}
-                      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginTop:8, paddingTop:8, borderTop:`1px solid ${C.border}20` }}>
-                        <span style={{ fontSize:11, color:C.text3 }}>QC Rating</span>
-                        <HKStars value={p.qcRating} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            ))
-          }
-        </div>
-      )}
-
-      {/* ADD / EDIT MODAL */}
-      <Modal open={showAdd} onClose={() => { setShowAdd(false); setEditEntry(null); }}
-        title={editEntry ? "Edit Schedule" : "Add Housekeeping Schedule"} width={580}>
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:4 }}>
-          <FormRow label="Date" required>
-            <Input type="date" value={form.date} onChange={v => setForm(f => ({...f, date:v}))} />
-          </FormRow>
-          <FormRow label="Housekeeper" required>
-            <Select value={form.housekeeper} onChange={v => setForm(f => ({...f, housekeeper:v}))}
-              options={["", ...teamNames]} />
-          </FormRow>
-        </div>
-
-        {[0, 1].map(pi => (
-          <div key={pi} style={{ background:C.bg2, borderRadius:8, padding:"14px 16px", marginBottom:12 }}>
-            <div style={{ fontSize:12, fontWeight:700, color:C.text2, marginBottom:10 }}>
-              Property {pi + 1} {pi === 1 && <span style={{ color:C.text3, fontWeight:400 }}>(optional)</span>}
-            </div>
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:10 }}>
-              <FormRow label="Property">
-                <Select value={form.properties[pi] ? form.properties[pi].propertyName : ""}
-                  onChange={v => setForm(f => ({ ...f, properties: f.properties.map((p,i) => i===pi ? {...p, propertyName:v} : p)}))}
-                  options={["--", ...propertyNames]} />
-              </FormRow>
-              <FormRow label="Task Type">
-                <Select value={form.properties[pi] ? form.properties[pi].taskType : "Full Turnover"}
-                  onChange={v => setForm(f => ({ ...f, properties: f.properties.map((p,i) => i===pi ? {...p, taskType:v} : p)}))}
-                  options={HK_TASK_TYPES} />
-              </FormRow>
-            </div>
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:8 }}>
-              {HK_QC_FIELDS.map(field => (
-                <div key={field.key}>
-                  <div style={{ fontSize:11, color:C.text3, marginBottom:4 }}>{field.label}</div>
-                  <Select value={form.properties[pi] ? form.properties[pi][field.key] : ""}
-                    onChange={v => setForm(f => ({ ...f, properties: f.properties.map((p,i) => i===pi ? {...p, [field.key]:v} : p)}))}
-                    options={HK_STATUS_OPTIONS} />
-                </div>
-              ))}
-            </div>
-            <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-              <span style={{ fontSize:11, color:C.text3 }}>QC Rating:</span>
-              <HKStars value={form.properties[pi] ? form.properties[pi].qcRating : 0}
-                onChange={v => setForm(f => ({ ...f, properties: f.properties.map((p,i) => i===pi ? {...p, qcRating:v} : p)}))} />
-            </div>
-          </div>
-        ))}
-
-        <div style={{ display:"flex", gap:8 }}>
-          <Btn variant="primary" icon={Save} onClick={handleSave}>
-            {editEntry ? "Update Schedule" : "Save Schedule"}
-          </Btn>
-          <Btn variant="ghost" onClick={() => { setShowAdd(false); setEditEntry(null); }}>Cancel</Btn>
-        </div>
-      </Modal>
-    </div>
-  );
-}
-
-
 // ─── MODULE ROUTER ────────────────────────────────────────────────────────────
 function ModuleContent({ active, onNav }) {
   const map = {
     dashboard:   <Dashboard onNav={onNav} />,
     cleans:      <ResCleans />,
     dailyops:    <DailyOps />,
-    housekeeping: <HousekeepingScheduler />,
     financials:  <Financials />,
     metrics:     <AdvancedMetrics />,
     revenue:     <RevenueStrategy />,
     incidents:   <IncidentRegister />,
+    maintenance: <Maintenance />,
+    complaints:  <Complaints />,
     reviews:     <Reviews />,
-    scorecard:   <PropertyScorecard />,
     statements:  <OwnerStatements />,
     team:        <TeamVendors />,
     sops:        <SOPs />,
