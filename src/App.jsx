@@ -2868,57 +2868,6 @@ function SettingsModule() {
   );
 }
 
-// ─── MODULE ROUTER ────────────────────────────────────────────────────────────
-function ModuleContent({ active, onNav }) {
-  const map = {
-    dashboard:   <Dashboard onNav={onNav} />,
-    cleans:      <ResCleans />,
-    dailyops:    <DailyOps />,
-    housekeeping: <HousekeepingScheduler />,
-    financials:  <Financials />,
-    metrics:     <AdvancedMetrics />,
-    revenue:     <RevenueStrategy />,
-    incidents:   <IncidentRegister />,
-    reviews:     <Reviews />,
-    scorecard:   <PropertyScorecard />,
-    statements:  <OwnerStatements />,
-    team:        <TeamVendors />,
-    sops:        <SOPs />,
-    templates:   <GuestTemplates />,
-    properties:  <PropertiesModule />,
-    history:     <DailyHistory />,
-    settings:    <SettingsModule />,
-  };
-  return map[active] || <EmptyState icon={Layers} title="Module not found" />;
-}
-
-// ─── APP ROOT ─────────────────────────────────────────────────────────────────
-function AppInner() {
-  const [active, setActive] = useState("dashboard");
-  const [collapsed, setCollapsed] = useState(false);
-
-  return (
-    <div style={{ display:"flex", height:"100vh", overflow:"hidden", background:C.bg0, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
-      <Sidebar active={active} onNav={setActive} collapsed={collapsed} onToggle={() => setCollapsed(c => !c)} />
-      <div style={{ flex:1, display:"flex", flexDirection:"column", overflow:"hidden" }}>
-        <TopBar module={active} />
-        <main style={{ flex:1, overflowY:"auto", padding:24 }}>
-          <ModuleContent active={active} onNav={setActive} />
-        </main>
-      </div>
-      <Toast />
-    </div>
-  );
-}
-
-export default function App() {
-  return (
-    <AppProvider>
-      <AppInner />
-    </AppProvider>
-  );
-}
-
 
 // ─── HOUSEKEEPING SCHEDULER & QUALITY CONTROL ─────────────────────────────────
 const TASK_TYPES = ["Full Turnover","Mid-Stay Refresh","Full Turnover & Mid-Stay","Guest Extended","Other"];
@@ -3306,5 +3255,56 @@ function HousekeepingScheduler() {
         </div>
       </Modal>
     </div>
+  );
+}
+
+// ─── MODULE ROUTER ────────────────────────────────────────────────────────────
+function ModuleContent({ active, onNav }) {
+  const map = {
+    dashboard:   <Dashboard onNav={onNav} />,
+    cleans:      <ResCleans />,
+    dailyops:    <DailyOps />,
+    housekeeping: <HousekeepingScheduler />,
+    financials:  <Financials />,
+    metrics:     <AdvancedMetrics />,
+    revenue:     <RevenueStrategy />,
+    incidents:   <IncidentRegister />,
+    reviews:     <Reviews />,
+    scorecard:   <PropertyScorecard />,
+    statements:  <OwnerStatements />,
+    team:        <TeamVendors />,
+    sops:        <SOPs />,
+    templates:   <GuestTemplates />,
+    properties:  <PropertiesModule />,
+    history:     <DailyHistory />,
+    settings:    <SettingsModule />,
+  };
+  return map[active] || <EmptyState icon={Layers} title="Module not found" />;
+}
+
+// ─── APP ROOT ─────────────────────────────────────────────────────────────────
+function AppInner() {
+  const [active, setActive] = useState("dashboard");
+  const [collapsed, setCollapsed] = useState(false);
+
+  return (
+    <div style={{ display:"flex", height:"100vh", overflow:"hidden", background:C.bg0, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
+      <Sidebar active={active} onNav={setActive} collapsed={collapsed} onToggle={() => setCollapsed(c => !c)} />
+      <div style={{ flex:1, display:"flex", flexDirection:"column", overflow:"hidden" }}>
+        <TopBar module={active} />
+        <main style={{ flex:1, overflowY:"auto", padding:24 }}>
+          <ModuleContent active={active} onNav={setActive} />
+        </main>
+      </div>
+      <Toast />
+    </div>
+  );
+}
+
+export default function App() {
+  return (
+    <AppProvider>
+      <AppInner />
+    </AppProvider>
   );
 }
