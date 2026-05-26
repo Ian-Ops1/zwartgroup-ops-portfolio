@@ -310,7 +310,7 @@ const REVENUE_CALENDAR = (() => {
 
 // ─── CONTEXT & REDUCER ────────────────────────────────────────────────────────
 const AppCtx = createContext(null);
-const LS_KEY = "zwart_group_v1";
+const LS_KEY = "zwart_group_v3"; // bumped version to force fresh load
 
 const initialState = {
   properties: PROPERTIES,
@@ -2875,42 +2875,58 @@ function SettingsModule() {
 }
 
 
-// ─── HOUSEKEEPING SCHEDULER & QUALITY CONTROL ─────────────────────────────────
-const TASK_TYPES = ["Full Turnover","Mid-Stay Refresh","Full Turnover & Mid-Stay","Guest Extended","Other"];
-const QC_FIELDS = [
+// ─── HOUSEKEEPING SCHEDULER & QUALITY CONTROL ────────────────────────────────
+const HK_TASK_TYPES = ["Full Turnover","Mid-Stay Refresh","Full Turnover & Mid-Stay","Guest Extended","Other"];
+const HK_QC_FIELDS = [
   { key:"keysCollected",    label:"Keys Collected" },
   { key:"guestKeys",        label:"Guest Keys" },
   { key:"electricityUnits", label:"Electricity Units" },
   { key:"photos",           label:"Photos Submitted" },
   { key:"keysReturned",     label:"Keys Returned" },
 ];
-const QC_OPTIONS = ["Done","Not Required","Issue"];
+const HK_STATUS_OPTIONS = ["","Done","Not Required","Issue"];
 
-const qcColor = (v) => v === "Done" ? C.green : v === "Issue" ? C.crimson : C.text3;
-const qcBg   = (v) => v === "Done" ? C.greenBg : v === "Issue" ? C.crimsonBg : C.bg2;
+function hkQcColor(v) {
+  if (v === "Done") return C.green;
+  if (v === "Issue") return C.crimson;
+  return C.text3;
+}
 
-function StarQC({ value, onChange }) {
+function hkQcBg(v) {
+  if (v === "Done") return C.greenBg;
+  if (v === "Issue") return C.crimsonBg;
+  return C.bg2;
+}
+
+function HKStars({ value, onChange }) {
   return (
     <div style={{ display:"flex", gap:3 }}>
       {[1,2,3,4,5].map(n => (
         <span key={n} onClick={() => onChange && onChange(n)}
           style={{ fontSize:18, cursor: onChange ? "pointer" : "default",
-            color: n <= (value||0) ? C.amber : C.border, transition:"color 0.1s" }}>★</span>
+            color: n <= (value || 0) ? C.amber : C.border }}>★</span>
       ))}
     </div>
   );
 }
 
-function QCStatusBtn({ value, onChange }) {
-  const cycle = { "Done":"Issue", "Issue":"Not Required", "Not Required":"Done", "":  "Done" };
+function HKStatusBtn({ value, onChange }) {
+  const next = { "":"Done", "Done":"Not Required", "Not Required":"Issue", "Issue":"" };
   return (
-    <button onClick={() => onChange && onChange(cycle[value||""] || "Done")}
-      style={{ padding:"4px 10px", borderRadius:5, fontSize:11, fontWeight:600, cursor:"pointer",
-        border:`1px solid ${qcColor(value)}30`, background:qcBg(value), color:qcColor(value),
-        fontFamily:"'DM Mono',monospace", minWidth:100, transition:"all 0.15s" }}>
+    <button onClick={() => onChange && onChange(next[value || ""] || "Done")}
+      style={{ padding:"4px 10px", borderRadius:5, fontSize:11, fontWeight:600,
+        cursor:"pointer", border:"1px solid transparent",
+        background: hkQcBg(value), color: hkQcColor(value),
+        fontFamily:"'DM Mono',monospace", minWidth:100 }}>
       {value || "—"}
     </button>
   );
+}
+
+function blankHKProp() {
+  return { propertyName:"", taskType:"Full Turnover",
+    keysCollected:"", guestKeys:"", electricityUnits:"",
+    photos:"", keysReturned:"", qcRating:0, notes:"" };
 }
 
 function HousekeepingScheduler() {
@@ -2920,85 +2936,78 @@ function HousekeepingScheduler() {
   const [historyDate, setHistoryDate] = useState(TODAY);
   const [showAdd, setShowAdd] = useState(false);
   const [editEntry, setEditEntry] = useState(null);
+  const [form, setForm] = useState({ date:addDays(TODAY,1), housekeeper:"", properties:[blankHKProp(), blankHKProp()] });
 
-  const blankProp = () => ({ propertyName:"", taskType:"Full Turnover", keysCollected:"", guestKeys:"",
-    electricityUnits:"", photos:"", keysReturned:"", qcRating:0, notes:"" });
+  const hkRecords = Array.isArray(state.housekeeping) ? state.housekeeping : [];
+  const teamNames = (state.team || []).map(m => m.name);
+  const propertyNames = (state.properties || []).map(p => p.name);
 
-  const [form, setForm] = useState({
-    date: addDays(TODAY, 1), housekeeper:"", properties:[blankProp(), blankProp()]
-  });
+  const scheduleEntries = hkRecords.filter(h => h.date === viewDate);
+  const historyEntries = hkRecords.filter(h => h.date === historyDate);
 
-  const teamNames = state.team.map(m => m.name);
-  const propertyNames = state.properties.map(p => p.name);
-
-  // Entries for the selected date
-  const scheduleEntries = state.housekeeping.filter(h => h.date === viewDate);
-  const historyEntries  = state.housekeeping.filter(h => h.date === historyDate);
+  const resetForm = () => setForm({ date:addDays(TODAY,1), housekeeper:"", properties:[blankHKProp(), blankHKProp()] });
 
   const handleSave = () => {
-    if (!form.housekeeper) return toast("Select a housekeeper","error");
-    const filledProps = form.properties.filter(p => p.propertyName);
-    if (filledProps.length === 0) return toast("Add at least one property","error");
-    const id = editEntry ? editEntry.id : `HK-${String(state.housekeeping.length + 1).padStart(3,"0")}`;
-    const entry = { id, date:form.date, housekeeper:form.housekeeper, properties:filledProps };
-    dispatch({ type: editEntry ? "UPDATE_HK_SCHEDULE" : "ADD_HK_SCHEDULE", payload:entry });
+    if (!form.housekeeper) return toast("Select a housekeeper", "error");
+    const filledProps = form.properties.filter(p => p.propertyName && p.propertyName !== "--");
+    if (filledProps.length === 0) return toast("Add at least one property", "error");
+    const id = editEntry ? editEntry.id : "HK-" + String(hkRecords.length + 1).padStart(3, "0");
+    dispatch({ type: editEntry ? "UPDATE_HK_SCHEDULE" : "ADD_HK_SCHEDULE",
+      payload: { id, date:form.date, housekeeper:form.housekeeper, properties:filledProps }});
     toast(editEntry ? "Schedule updated" : "Schedule saved");
-    setShowAdd(false); setEditEntry(null);
-    setForm({ date:addDays(TODAY,1), housekeeper:"", properties:[blankProp(), blankProp()] });
+    setShowAdd(false); setEditEntry(null); resetForm();
   };
 
   const openEdit = (entry) => {
     const props = [...entry.properties];
-    while (props.length < 2) props.push(blankProp());
+    while (props.length < 2) props.push(blankHKProp());
     setForm({ date:entry.date, housekeeper:entry.housekeeper, properties:props });
-    setEditEntry(entry);
-    setShowAdd(true);
+    setEditEntry(entry); setShowAdd(true);
   };
 
   const updateQC = (entryId, propIdx, field, value) => {
-    const entry = state.housekeeping.find(h => h.id === entryId);
+    const entry = hkRecords.find(h => h.id === entryId);
     if (!entry) return;
     const props = entry.properties.map((p, i) => i === propIdx ? { ...p, [field]:value } : p);
     dispatch({ type:"UPDATE_HK_SCHEDULE", payload:{ id:entryId, properties:props }});
   };
 
   const deleteEntry = (id) => {
+    if (!window.confirm("Delete this schedule entry?")) return;
     dispatch({ type:"DELETE_HK_SCHEDULE", payload:id });
     toast("Entry deleted");
   };
 
-  // Stats
-  const allEntries = state.housekeeping;
-  const issueCount = allEntries.flatMap(h => h.properties).flatMap(p =>
-    QC_FIELDS.map(f => p[f.key])).filter(v => v === "Issue").length;
-  const avgQC = (() => {
-    const rated = allEntries.flatMap(h => h.properties).filter(p => p.qcRating > 0);
-    return rated.length ? (rated.reduce((s,p) => s + p.qcRating, 0) / rated.length).toFixed(1) : "—";
-  })();
+  const issueCount = hkRecords.flatMap(h => h.properties)
+    .flatMap(p => HK_QC_FIELDS.map(f => p[f.key])).filter(v => v === "Issue").length;
+
+  const ratedProps = hkRecords.flatMap(h => h.properties).filter(p => p.qcRating > 0);
+  const avgQC = ratedProps.length
+    ? (ratedProps.reduce((s,p) => s + p.qcRating, 0) / ratedProps.length).toFixed(1) : "—";
 
   return (
     <div style={{ animation:"fadeIn 0.25s ease" }}>
       <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:20 }}>
         <SectionTitle>Housekeeping Scheduler & QC</SectionTitle>
-        <Btn variant="primary" icon={Plus} onClick={() => { setEditEntry(null); setShowAdd(true); }}>
+        <Btn variant="primary" icon={Plus} onClick={() => { setEditEntry(null); resetForm(); setShowAdd(true); }}>
           Add Schedule
         </Btn>
       </div>
 
-      {/* KPIs */}
       <div style={{ display:"flex", gap:12, marginBottom:20 }}>
-        <KPICard label="Total Records" value={allEntries.length} color={C.teal} />
-        <KPICard label="Scheduled Tomorrow" value={state.housekeeping.filter(h => h.date === addDays(TODAY,1)).length} color={C.blue} />
-        <KPICard label="Avg QC Rating" value={avgQC === "—" ? "—" : `${avgQC} ⭐`} color={C.amber} />
+        <KPICard label="Total Records" value={hkRecords.length} color={C.teal} />
+        <KPICard label="Tomorrow" value={hkRecords.filter(h => h.date === addDays(TODAY,1)).length} color={C.blue} />
+        <KPICard label="Avg QC Rating" value={avgQC === "—" ? "—" : avgQC + " ⭐"} color={C.amber} />
         <KPICard label="QC Issues" value={issueCount} color={issueCount > 0 ? C.crimson : C.green} />
       </div>
 
-      {/* Tabs */}
       <div style={{ display:"flex", borderBottom:`1px solid ${C.border}`, marginBottom:20 }}>
         {[["schedule","Schedule"],["qc","Quality Control"],["history","History"]].map(([id,label]) => (
-          <button key={id} onClick={() => setTab(id)} style={{ padding:"8px 24px", background:"none", border:"none",
-            borderBottom:`2px solid ${tab===id ? C.teal : "transparent"}`, color: tab===id ? C.teal : C.text2,
-            cursor:"pointer", fontSize:13, fontWeight: tab===id ? 600 : 400, transition:"all 0.15s" }}>
+          <button key={id} onClick={() => setTab(id)}
+            style={{ padding:"8px 24px", background:"none", border:"none",
+              borderBottom:`2px solid ${tab===id ? C.teal : "transparent"}`,
+              color: tab===id ? C.teal : C.text2, cursor:"pointer",
+              fontSize:13, fontWeight: tab===id ? 600 : 400 }}>
             {label}
           </button>
         ))}
@@ -3007,173 +3016,153 @@ function HousekeepingScheduler() {
       {/* SCHEDULE TAB */}
       {tab === "schedule" && (
         <div>
-          <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:16 }}>
-            <span style={{ fontSize:13, color:C.text2, fontWeight:500 }}>Viewing date:</span>
+          <div style={{ display:"flex", gap:10, alignItems:"center", marginBottom:16 }}>
+            <span style={{ fontSize:13, color:C.text2 }}>Date:</span>
             <Input type="date" value={viewDate} onChange={setViewDate} style={{ width:180 }} />
             <Btn size="sm" variant="subtle" onClick={() => setViewDate(addDays(TODAY,1))}>Tomorrow</Btn>
             <Btn size="sm" variant="subtle" onClick={() => setViewDate(TODAY)}>Today</Btn>
           </div>
 
-          {scheduleEntries.length === 0 ? (
-            <EmptyState icon={Users} title={`No schedule for ${fmtDate(viewDate)}`}
-              sub="Click 'Add Schedule' to assign housekeepers for this date." />
-          ) : (
-            <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
-              {scheduleEntries.map(entry => (
-                <Card key={entry.id}>
-                  <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:14 }}>
-                    <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-                      <div style={{ width:40, height:40, borderRadius:"50%", background:C.tealBg,
-                        display:"flex", alignItems:"center", justifyContent:"center",
-                        fontSize:14, fontWeight:700, color:C.teal }}>
-                        {entry.housekeeper.slice(0,2).toUpperCase()}
-                      </div>
-                      <div>
-                        <div style={{ fontSize:14, fontWeight:700, color:C.text1 }}>{entry.housekeeper}</div>
-                        <div style={{ fontSize:11, color:C.text3 }}>{fmtDate(entry.date)} · {entry.properties.length} propert{entry.properties.length===1?"y":"ies"}</div>
-                      </div>
+          {scheduleEntries.length === 0
+            ? <EmptyState icon={Users} title={"No schedule for " + fmtDate(viewDate)} sub="Click 'Add Schedule' to assign housekeepers." />
+            : scheduleEntries.map(entry => (
+              <Card key={entry.id} style={{ marginBottom:12 }}>
+                <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:14 }}>
+                  <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+                    <div style={{ width:40, height:40, borderRadius:"50%", background:C.tealBg,
+                      display:"flex", alignItems:"center", justifyContent:"center",
+                      fontSize:14, fontWeight:700, color:C.teal }}>
+                      {(entry.housekeeper || "?").slice(0,2).toUpperCase()}
                     </div>
-                    <div style={{ display:"flex", gap:8 }}>
-                      <Btn size="sm" variant="subtle" icon={Edit} onClick={() => openEdit(entry)}>Edit</Btn>
-                      <Btn size="sm" variant="ghost" onClick={() => deleteEntry(entry.id)}><Trash2 size={12} color={C.crimson}/></Btn>
+                    <div>
+                      <div style={{ fontSize:14, fontWeight:700, color:C.text1 }}>{entry.housekeeper}</div>
+                      <div style={{ fontSize:11, color:C.text3 }}>{fmtDate(entry.date)} · {entry.properties.length} propert{entry.properties.length === 1 ? "y" : "ies"}</div>
                     </div>
                   </div>
-
-                  <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(280px,1fr))", gap:10 }}>
-                    {entry.properties.map((p, pi) => (
-                      <div key={pi} style={{ background:C.bg2, borderRadius:8, padding:"12px 14px",
-                        borderLeft:`3px solid ${C.teal}` }}>
-                        <div style={{ fontSize:13, fontWeight:600, color:C.text1, marginBottom:4 }}>{p.propertyName}</div>
-                        <div style={{ marginBottom:8 }}>
-                          <span style={{ fontSize:11, background:C.amberBg, color:C.amber, padding:"2px 8px",
-                            borderRadius:4, fontWeight:600 }}>{p.taskType}</span>
-                        </div>
-                        {/* QC Checklist */}
-                        <div style={{ display:"flex", flexDirection:"column", gap:5 }}>
-                          {QC_FIELDS.map(f => (
-                            <div key={f.key} style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                              <span style={{ fontSize:11, color:C.text3 }}>{f.label}</span>
-                              <QCStatusBtn value={p[f.key]} onChange={v => updateQC(entry.id, pi, f.key, v)} />
-                            </div>
-                          ))}
-                        </div>
-                        <div style={{ marginTop:10, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                          <span style={{ fontSize:11, color:C.text3 }}>QC Rating</span>
-                          <StarQC value={p.qcRating} onChange={v => updateQC(entry.id, pi, "qcRating", v)} />
-                        </div>
-                        {p.notes && <div style={{ marginTop:8, fontSize:11, color:C.text3, fontStyle:"italic" }}>{p.notes}</div>}
-                      </div>
-                    ))}
+                  <div style={{ display:"flex", gap:8 }}>
+                    <Btn size="sm" variant="subtle" icon={Edit} onClick={() => openEdit(entry)}>Edit</Btn>
+                    <Btn size="sm" variant="ghost" onClick={() => deleteEntry(entry.id)}><Trash2 size={12} color={C.crimson}/></Btn>
                   </div>
-                </Card>
-              ))}
-            </div>
-          )}
+                </div>
+                <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(260px,1fr))", gap:10 }}>
+                  {entry.properties.map((p, pi) => (
+                    <div key={pi} style={{ background:C.bg2, borderRadius:8, padding:"12px 14px", borderLeft:`3px solid ${C.teal}` }}>
+                      <div style={{ fontSize:13, fontWeight:600, color:C.text1, marginBottom:4 }}>{p.propertyName}</div>
+                      <div style={{ marginBottom:10 }}>
+                        <span style={{ fontSize:11, background:C.amberBg, color:C.amber, padding:"2px 8px", borderRadius:4, fontWeight:600 }}>{p.taskType}</span>
+                      </div>
+                      {HK_QC_FIELDS.map(f => (
+                        <div key={f.key} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:6 }}>
+                          <span style={{ fontSize:11, color:C.text3 }}>{f.label}</span>
+                          <HKStatusBtn value={p[f.key]} onChange={v => updateQC(entry.id, pi, f.key, v)} />
+                        </div>
+                      ))}
+                      <div style={{ marginTop:8, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                        <span style={{ fontSize:11, color:C.text3 }}>QC Rating</span>
+                        <HKStars value={p.qcRating} onChange={v => updateQC(entry.id, pi, "qcRating", v)} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            ))
+          }
         </div>
       )}
 
-      {/* QC TAB — all entries with issues highlighted */}
+      {/* QC TAB */}
       {tab === "qc" && (
         <div>
-          <div style={{ marginBottom:16, padding:"12px 16px", background:C.amberBg,
-            border:`1px solid ${C.amber}30`, borderRadius:8, fontSize:12, color:C.amber }}>
-            💡 Click any QC status button to cycle: <strong>Done → Issue → Not Required</strong>. Click stars to rate.
-          </div>
-
-          {/* Group by housekeeper */}
-          {Object.entries(
-            state.housekeeping.reduce((acc, h) => {
-              if (!acc[h.housekeeper]) acc[h.housekeeper] = [];
-              acc[h.housekeeper].push(h);
-              return acc;
-            }, {})
-          ).map(([hk, entries]) => {
-            const hkIssues = entries.flatMap(h => h.properties)
-              .flatMap(p => QC_FIELDS.map(f => p[f.key])).filter(v => v === "Issue").length;
-            const hkAvg = (() => {
-              const rated = entries.flatMap(h => h.properties).filter(p => p.qcRating > 0);
-              return rated.length ? (rated.reduce((s,p) => s + p.qcRating, 0) / rated.length).toFixed(1) : "—";
-            })();
-            return (
-              <div key={hk} style={{ marginBottom:24 }}>
-                <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:12,
-                  padding:"10px 16px", background:C.bg1, borderRadius:8, border:`1px solid ${C.border}` }}>
-                  <div style={{ width:36, height:36, borderRadius:"50%", background:C.tealBg,
-                    display:"flex", alignItems:"center", justifyContent:"center",
-                    fontSize:13, fontWeight:700, color:C.teal }}>
-                    {hk.slice(0,2).toUpperCase()}
-                  </div>
-                  <div style={{ flex:1 }}>
-                    <div style={{ fontSize:14, fontWeight:700, color:C.text1 }}>{hk}</div>
-                    <div style={{ fontSize:11, color:C.text3 }}>{entries.length} session{entries.length!==1?"s":""} · {entries.flatMap(h=>h.properties).length} properties</div>
-                  </div>
-                  <div style={{ display:"flex", gap:16, fontSize:12 }}>
-                    <span style={{ color: hkIssues > 0 ? C.crimson : C.green }}>
-                      {hkIssues > 0 ? `⚠️ ${hkIssues} issues` : "✓ No issues"}
-                    </span>
-                    <span style={{ color:C.amber }}>⭐ {hkAvg}</span>
-                  </div>
-                </div>
-
-                <div style={{ display:"flex", flexDirection:"column", gap:8, paddingLeft:12 }}>
-                  {entries.sort((a,b) => b.date.localeCompare(a.date)).map(entry =>
-                    entry.properties.map((p, pi) => {
-                      const propIssues = QC_FIELDS.filter(f => p[f.key] === "Issue").length;
-                      return (
-                        <div key={`${entry.id}-${pi}`} style={{ background:C.bg1, borderRadius:8, padding:"12px 16px",
-                          border:`1px solid ${propIssues > 0 ? C.crimson+"40" : C.border}`,
-                          borderLeft:`3px solid ${propIssues > 0 ? C.crimson : C.green}` }}>
-                          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
-                            <div>
-                              <div style={{ fontSize:13, fontWeight:600, color:C.text1 }}>{p.propertyName}</div>
-                              <div style={{ fontSize:11, color:C.text3 }}>{fmtDate(entry.date)} · {p.taskType}</div>
-                            </div>
-                            <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                              {propIssues > 0 && <span style={{ fontSize:11, color:C.crimson, fontWeight:600 }}>⚠️ {propIssues} issue{propIssues!==1?"s":""}</span>}
-                              <StarQC value={p.qcRating} onChange={v => updateQC(entry.id, pi, "qcRating", v)} />
-                            </div>
-                          </div>
-                          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(160px,1fr))", gap:8 }}>
-                            {QC_FIELDS.map(f => (
-                              <div key={f.key} style={{ display:"flex", flexDirection:"column", gap:4 }}>
-                                <span style={{ fontSize:10, color:C.text3, textTransform:"uppercase", letterSpacing:"0.06em" }}>{f.label}</span>
-                                <QCStatusBtn value={p[f.key]} onChange={v => updateQC(entry.id, pi, f.key, v)} />
+          {hkRecords.length === 0
+            ? <EmptyState icon={CheckCircle} title="No records yet" sub="Add schedules to start tracking quality." />
+            : Object.entries(
+                hkRecords.reduce((acc, h) => {
+                  if (!acc[h.housekeeper]) acc[h.housekeeper] = [];
+                  acc[h.housekeeper].push(h);
+                  return acc;
+                }, {})
+              ).map(([hk, entries]) => {
+                const hkIssues = entries.flatMap(h => h.properties)
+                  .flatMap(p => HK_QC_FIELDS.map(f => p[f.key])).filter(v => v === "Issue").length;
+                const hkRated = entries.flatMap(h => h.properties).filter(p => p.qcRating > 0);
+                const hkAvg = hkRated.length
+                  ? (hkRated.reduce((s,p) => s + p.qcRating, 0) / hkRated.length).toFixed(1) : "—";
+                return (
+                  <div key={hk} style={{ marginBottom:24 }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:12,
+                      padding:"10px 16px", background:C.bg1, borderRadius:8, border:`1px solid ${C.border}` }}>
+                      <div style={{ width:36, height:36, borderRadius:"50%", background:C.tealBg,
+                        display:"flex", alignItems:"center", justifyContent:"center",
+                        fontSize:13, fontWeight:700, color:C.teal }}>
+                        {hk.slice(0,2).toUpperCase()}
+                      </div>
+                      <div style={{ flex:1 }}>
+                        <div style={{ fontSize:14, fontWeight:700, color:C.text1 }}>{hk}</div>
+                        <div style={{ fontSize:11, color:C.text3 }}>{entries.length} session{entries.length !== 1 ? "s" : ""}</div>
+                      </div>
+                      <div style={{ display:"flex", gap:16, fontSize:12 }}>
+                        <span style={{ color: hkIssues > 0 ? C.crimson : C.green }}>
+                          {hkIssues > 0 ? "⚠️ " + hkIssues + " issues" : "✓ No issues"}
+                        </span>
+                        <span style={{ color:C.amber }}>⭐ {hkAvg}</span>
+                      </div>
+                    </div>
+                    {entries.sort((a,b) => b.date.localeCompare(a.date)).flatMap((entry, ei) =>
+                      entry.properties.map((p, pi) => {
+                        const propIssues = HK_QC_FIELDS.filter(f => p[f.key] === "Issue").length;
+                        return (
+                          <div key={entry.id + "-" + pi} style={{ background:C.bg1, borderRadius:8, padding:"12px 16px", marginBottom:8, marginLeft:12,
+                            border:`1px solid ${propIssues > 0 ? C.crimson + "40" : C.border}`,
+                            borderLeft:`3px solid ${propIssues > 0 ? C.crimson : C.green}` }}>
+                            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
+                              <div>
+                                <div style={{ fontSize:13, fontWeight:600, color:C.text1 }}>{p.propertyName}</div>
+                                <div style={{ fontSize:11, color:C.text3 }}>{fmtDate(entry.date)} · {p.taskType}</div>
                               </div>
-                            ))}
+                              <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                                {propIssues > 0 && <span style={{ fontSize:11, color:C.crimson, fontWeight:600 }}>⚠️ {propIssues} issue{propIssues !== 1 ? "s" : ""}</span>}
+                                <HKStars value={p.qcRating} onChange={v => updateQC(entry.id, pi, "qcRating", v)} />
+                              </div>
+                            </div>
+                            <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(160px,1fr))", gap:8 }}>
+                              {HK_QC_FIELDS.map(f => (
+                                <div key={f.key}>
+                                  <div style={{ fontSize:10, color:C.text3, marginBottom:4, textTransform:"uppercase", letterSpacing:"0.05em" }}>{f.label}</div>
+                                  <HKStatusBtn value={p[f.key]} onChange={v => updateQC(entry.id, pi, f.key, v)} />
+                                </div>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
-            );
-          })}
-          {state.housekeeping.length === 0 && <EmptyState icon={CheckCircle} title="No QC records yet" sub="Add schedules to start tracking quality." />}
+                        );
+                      })
+                    )}
+                  </div>
+                );
+              })
+          }
         </div>
       )}
 
       {/* HISTORY TAB */}
       {tab === "history" && (
         <div>
-          <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:16 }}>
-            <span style={{ fontSize:13, color:C.text2 }}>Select date:</span>
+          <div style={{ display:"flex", gap:10, alignItems:"center", marginBottom:16 }}>
+            <span style={{ fontSize:13, color:C.text2 }}>Date:</span>
             <Input type="date" value={historyDate} onChange={setHistoryDate} style={{ width:180 }} />
           </div>
           {historyEntries.length === 0
-            ? <EmptyState icon={BookMarked} title={`No records for ${fmtDate(historyDate)}`} />
+            ? <EmptyState icon={BookMarked} title={"No records for " + fmtDate(historyDate)} />
             : historyEntries.map(entry => (
               <Card key={entry.id} style={{ marginBottom:12 }}>
-                <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
-                  <div style={{ display:"flex", gap:10, alignItems:"center" }}>
-                    <div style={{ width:36, height:36, borderRadius:"50%", background:C.tealBg,
-                      display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, fontWeight:700, color:C.teal }}>
-                      {entry.housekeeper.slice(0,2).toUpperCase()}
-                    </div>
-                    <div>
-                      <div style={{ fontSize:13, fontWeight:600, color:C.text1 }}>{entry.housekeeper}</div>
-                      <div style={{ fontSize:11, color:C.text3 }}>{fmtDate(entry.date)}</div>
-                    </div>
+                <div style={{ display:"flex", gap:10, alignItems:"center", marginBottom:12 }}>
+                  <div style={{ width:36, height:36, borderRadius:"50%", background:C.tealBg,
+                    display:"flex", alignItems:"center", justifyContent:"center",
+                    fontSize:13, fontWeight:700, color:C.teal }}>
+                    {entry.housekeeper.slice(0,2).toUpperCase()}
+                  </div>
+                  <div>
+                    <div style={{ fontSize:13, fontWeight:600, color:C.text1 }}>{entry.housekeeper}</div>
+                    <div style={{ fontSize:11, color:C.text3 }}>{fmtDate(entry.date)}</div>
                   </div>
                 </div>
                 <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(240px,1fr))", gap:10 }}>
@@ -3181,15 +3170,15 @@ function HousekeepingScheduler() {
                     <div key={pi} style={{ background:C.bg2, borderRadius:8, padding:"10px 14px" }}>
                       <div style={{ fontSize:13, fontWeight:600, color:C.text1, marginBottom:4 }}>{p.propertyName}</div>
                       <div style={{ fontSize:11, color:C.amber, marginBottom:8 }}>{p.taskType}</div>
-                      {QC_FIELDS.map(f => (
+                      {HK_QC_FIELDS.map(f => (
                         <div key={f.key} style={{ display:"flex", justifyContent:"space-between", fontSize:11, marginBottom:4 }}>
                           <span style={{ color:C.text3 }}>{f.label}</span>
-                          <span style={{ color:qcColor(p[f.key]), fontWeight:600 }}>{p[f.key] || "—"}</span>
+                          <span style={{ color:hkQcColor(p[f.key]), fontWeight:600 }}>{p[f.key] || "—"}</span>
                         </div>
                       ))}
                       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginTop:8, paddingTop:8, borderTop:`1px solid ${C.border}20` }}>
                         <span style={{ fontSize:11, color:C.text3 }}>QC Rating</span>
-                        <StarQC value={p.qcRating} />
+                        <HKStars value={p.qcRating} />
                       </div>
                     </div>
                   ))}
@@ -3201,7 +3190,8 @@ function HousekeepingScheduler() {
       )}
 
       {/* ADD / EDIT MODAL */}
-      <Modal open={showAdd} onClose={() => { setShowAdd(false); setEditEntry(null); }} title={editEntry ? "Edit Schedule" : "Add Housekeeping Schedule"} width={580}>
+      <Modal open={showAdd} onClose={() => { setShowAdd(false); setEditEntry(null); }}
+        title={editEntry ? "Edit Schedule" : "Add Housekeeping Schedule"} width={580}>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:4 }}>
           <FormRow label="Date" required>
             <Input type="date" value={form.date} onChange={v => setForm(f => ({...f, date:v}))} />
@@ -3212,43 +3202,37 @@ function HousekeepingScheduler() {
           </FormRow>
         </div>
 
-        {[0,1].map(pi => (
+        {[0, 1].map(pi => (
           <div key={pi} style={{ background:C.bg2, borderRadius:8, padding:"14px 16px", marginBottom:12 }}>
             <div style={{ fontSize:12, fontWeight:700, color:C.text2, marginBottom:10 }}>
-              Property {pi+1} {pi === 1 && <span style={{ color:C.text3, fontWeight:400 }}>(optional)</span>}
+              Property {pi + 1} {pi === 1 && <span style={{ color:C.text3, fontWeight:400 }}>(optional)</span>}
             </div>
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:10 }}>
-              <FormRow label="Property Name">
-                <Select value={form.properties[pi]?.propertyName || ""}
+              <FormRow label="Property">
+                <Select value={form.properties[pi] ? form.properties[pi].propertyName : ""}
                   onChange={v => setForm(f => ({ ...f, properties: f.properties.map((p,i) => i===pi ? {...p, propertyName:v} : p)}))}
                   options={["--", ...propertyNames]} />
               </FormRow>
               <FormRow label="Task Type">
-                <Select value={form.properties[pi]?.taskType || "Full Turnover"}
+                <Select value={form.properties[pi] ? form.properties[pi].taskType : "Full Turnover"}
                   onChange={v => setForm(f => ({ ...f, properties: f.properties.map((p,i) => i===pi ? {...p, taskType:v} : p)}))}
-                  options={TASK_TYPES} />
+                  options={HK_TASK_TYPES} />
               </FormRow>
             </div>
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
-              {QC_FIELDS.map(field => (
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:8 }}>
+              {HK_QC_FIELDS.map(field => (
                 <div key={field.key}>
                   <div style={{ fontSize:11, color:C.text3, marginBottom:4 }}>{field.label}</div>
-                  <Select value={form.properties[pi]?.[field.key] || ""}
+                  <Select value={form.properties[pi] ? form.properties[pi][field.key] : ""}
                     onChange={v => setForm(f => ({ ...f, properties: f.properties.map((p,i) => i===pi ? {...p, [field.key]:v} : p)}))}
-                    options={["", ...QC_OPTIONS]} />
+                    options={HK_STATUS_OPTIONS} />
                 </div>
               ))}
-              <div>
-                <div style={{ fontSize:11, color:C.text3, marginBottom:4 }}>QC Rating</div>
-                <StarQC value={form.properties[pi]?.qcRating || 0}
-                  onChange={v => setForm(f => ({ ...f, properties: f.properties.map((p,i) => i===pi ? {...p, qcRating:v} : p)}))} />
-              </div>
             </div>
-            <div style={{ marginTop:8 }}>
-              <div style={{ fontSize:11, color:C.text3, marginBottom:4 }}>Notes</div>
-              <Input value={form.properties[pi]?.notes || ""}
-                onChange={v => setForm(f => ({ ...f, properties: f.properties.map((p,i) => i===pi ? {...p, notes:v} : p)}))}
-                placeholder="Any notes..." />
+            <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+              <span style={{ fontSize:11, color:C.text3 }}>QC Rating:</span>
+              <HKStars value={form.properties[pi] ? form.properties[pi].qcRating : 0}
+                onChange={v => setForm(f => ({ ...f, properties: f.properties.map((p,i) => i===pi ? {...p, qcRating:v} : p)}))} />
             </div>
           </div>
         ))}
@@ -3263,6 +3247,7 @@ function HousekeepingScheduler() {
     </div>
   );
 }
+
 
 // ─── MODULE ROUTER ────────────────────────────────────────────────────────────
 function ModuleContent({ active, onNav }) {
