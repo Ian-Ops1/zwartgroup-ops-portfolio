@@ -354,6 +354,8 @@ function reducer(state, action) {
     case "UPDATE_SETTINGS": return { ...state, settings: { ...state.settings, ...action.payload } };
     case "ADD_PROPERTY": return { ...state, properties: [...state.properties, action.payload] };
     case "UPDATE_PROPERTY": return { ...state, properties: state.properties.map(p => p.id === action.payload.id ? { ...p, ...action.payload } : p) };
+    case "ADD_TEAM_MEMBER": return { ...state, team: [...state.team, action.payload] };
+    case "REMOVE_TEAM_MEMBER": return { ...state, team: state.team.filter(m => m.id !== action.payload) };
     default: return state;
   }
 }
@@ -2253,10 +2255,52 @@ function OwnerStatements() {
 
 // ─── TEAM & VENDORS ───────────────────────────────────────────────────────────
 function TeamVendors() {
-  const { state } = useApp();
+  const { state, dispatch, toast } = useApp();
+  const [showAdd, setShowAdd] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(null);
+  const [form, setForm] = useState({ name:"", role:"Housekeeper", phone:"", notes:"", portfolio:["1","2"] });
+
+  const handleAdd = () => {
+    if (!form.name || !form.role) return toast("Name and role are required", "error");
+    const id = `T${String(state.team.length + 1).padStart(3,"0")}`;
+    dispatch({ type:"ADD_TEAM_MEMBER", payload:{
+      id, name: form.name, role: form.role, phone: form.phone,
+      notes: form.notes, portfolio: form.portfolio.map(Number),
+      rating: 0, completedCleans: 0, active: true,
+    }});
+    toast(`${form.name} added to team`);
+    setShowAdd(false);
+    setForm({ name:"", role:"Housekeeper", phone:"", notes:"", portfolio:["1","2"] });
+  };
+
+  const handleDelete = (member) => {
+    dispatch({ type:"REMOVE_TEAM_MEMBER", payload: member.id });
+    toast(`${member.name} removed`);
+    setConfirmDelete(null);
+  };
+
+  const togglePortfolio = (p) => {
+    setForm(f => ({
+      ...f,
+      portfolio: f.portfolio.includes(p)
+        ? f.portfolio.filter(x => x !== p)
+        : [...f.portfolio, p]
+    }));
+  };
+
   return (
     <div style={{ animation:"fadeIn 0.25s ease" }}>
-      <SectionTitle>Team & Vendors</SectionTitle>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:24 }}>
+        <SectionTitle>Team & Vendors</SectionTitle>
+        <Btn variant="primary" icon={Plus} onClick={() => setShowAdd(true)}>Add Member</Btn>
+      </div>
+
+      <div style={{ display:"flex", gap:12, marginBottom:20 }}>
+        <KPICard label="Total Members" value={state.team.length} color={C.teal} icon={Users} />
+        <KPICard label="Housekeepers" value={state.team.filter(m => m.role==="Housekeeper" || m.role==="Senior Housekeeper").length} color={C.blue} />
+        <KPICard label="Vendors" value={state.team.filter(m => m.role==="Maintenance Contractor" || m.role==="Internet & Tech").length} color={C.amber} />
+      </div>
+
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
         {state.team.map(m => (
           <Card key={m.id} hover>
@@ -2266,25 +2310,86 @@ function TeamVendors() {
                 {m.name.slice(0,2).toUpperCase()}
               </div>
               <div style={{ flex:1 }}>
-                <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:4 }}>
-                  <span style={{ fontSize:14, fontWeight:700, color:C.text1 }}>{m.name}</span>
-                  <Badge label="Active" size="xs" />
+                <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:4, justifyContent:"space-between" }}>
+                  <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+                    <span style={{ fontSize:14, fontWeight:700, color:C.text1 }}>{m.name}</span>
+                    <Badge label="Active" size="xs" />
+                  </div>
+                  <button onClick={() => setConfirmDelete(m)}
+                    style={{ background:"none", border:`1px solid ${C.border}`, borderRadius:5,
+                      padding:"3px 7px", cursor:"pointer", color:C.crimson, display:"flex", alignItems:"center" }}>
+                    <Trash2 size={12} />
+                  </button>
                 </div>
                 <div style={{ fontSize:12, color:C.text3, marginBottom:8 }}>{m.role}</div>
-                <div style={{ display:"flex", gap:16, fontSize:11, color:C.text2 }}>
-                  <span style={{ display:"flex", alignItems:"center", gap:4 }}><Phone size={11}/>{m.phone}</span>
+                <div style={{ display:"flex", gap:16, fontSize:11, color:C.text2, flexWrap:"wrap" }}>
+                  {m.phone && <span style={{ display:"flex", alignItems:"center", gap:4 }}><Phone size={11}/>{m.phone}</span>}
                   {m.rating > 0 && <span>⭐ {m.rating}</span>}
                   {m.completedCleans > 0 && <span>{m.completedCleans} cleans</span>}
                 </div>
                 {m.notes && <div style={{ marginTop:6, fontSize:11, color:C.text3 }}>{m.notes}</div>}
                 <div style={{ marginTop:6, fontSize:11, color:C.text3 }}>
-                  Portfolio: {m.portfolio.includes(1) && m.portfolio.includes(2) ? "P1 + P2" : m.portfolio.includes(1) ? "P1 only" : "P2 only"}
+                  Portfolio: {m.portfolio?.includes(1) && m.portfolio?.includes(2) ? "P1 + P2" : m.portfolio?.includes(1) ? "P1 only" : "P2 only"}
                 </div>
               </div>
             </div>
           </Card>
         ))}
       </div>
+
+      {/* Add Member Modal */}
+      <Modal open={showAdd} onClose={() => setShowAdd(false)} title="Add Team Member / Vendor">
+        <FormRow label="Full Name" required>
+          <Input value={form.name} onChange={v => setForm(f => ({...f, name:v}))} placeholder="e.g. Thandiwe Mokoena" />
+        </FormRow>
+        <FormRow label="Role" required>
+          <Select value={form.role} onChange={v => setForm(f => ({...f, role:v}))}
+            options={["Housekeeper","Senior Housekeeper","Maintenance Contractor","Internet & Tech","Plumber","Electrician","Pool Service","Garden Service","Other"]} />
+        </FormRow>
+        <FormRow label="Phone Number">
+          <Input value={form.phone} onChange={v => setForm(f => ({...f, phone:v}))} placeholder="+27 82 000 0000" />
+        </FormRow>
+        <FormRow label="Notes">
+          <Input value={form.notes} onChange={v => setForm(f => ({...f, notes:v}))} placeholder="Speciality, availability, etc." />
+        </FormRow>
+        <FormRow label="Portfolio Assignment">
+          <div style={{ display:"flex", gap:10 }}>
+            {["1","2"].map(p => (
+              <div key={p} onClick={() => togglePortfolio(p)}
+                style={{ padding:"8px 20px", borderRadius:6, cursor:"pointer", fontSize:13, fontWeight:500,
+                  background: form.portfolio.includes(p) ? C.tealBg : C.bg2,
+                  border: `1px solid ${form.portfolio.includes(p) ? C.teal : C.border}`,
+                  color: form.portfolio.includes(p) ? C.teal : C.text2, transition:"all 0.15s" }}>
+                Portfolio {p}
+              </div>
+            ))}
+          </div>
+        </FormRow>
+        <div style={{ display:"flex", gap:8 }}>
+          <Btn variant="primary" icon={Plus} onClick={handleAdd}>Add Member</Btn>
+          <Btn variant="ghost" onClick={() => setShowAdd(false)}>Cancel</Btn>
+        </div>
+      </Modal>
+
+      {/* Confirm Delete Modal */}
+      <Modal open={!!confirmDelete} onClose={() => setConfirmDelete(null)} title="Remove Team Member" width={400}>
+        <div style={{ textAlign:"center", padding:"10px 0 20px" }}>
+          <div style={{ width:52, height:52, borderRadius:"50%", background:C.crimsonBg, display:"flex",
+            alignItems:"center", justifyContent:"center", margin:"0 auto 16px" }}>
+            <Trash2 size={22} color={C.crimson} />
+          </div>
+          <div style={{ fontSize:15, fontWeight:600, color:C.text1, marginBottom:8 }}>
+            Remove {confirmDelete?.name}?
+          </div>
+          <div style={{ fontSize:13, color:C.text3, marginBottom:24 }}>
+            This will permanently remove them from the team list.
+          </div>
+          <div style={{ display:"flex", gap:8, justifyContent:"center" }}>
+            <Btn variant="danger" icon={Trash2} onClick={() => handleDelete(confirmDelete)}>Yes, Remove</Btn>
+            <Btn variant="ghost" onClick={() => setConfirmDelete(null)}>Cancel</Btn>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
