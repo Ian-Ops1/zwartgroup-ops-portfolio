@@ -2874,6 +2874,7 @@ function ModuleContent({ active, onNav }) {
     dashboard:   <Dashboard onNav={onNav} />,
     cleans:      <ResCleans />,
     dailyops:    <DailyOps />,
+    housekeeping: <HousekeepingScheduler />,
     financials:  <Financials />,
     metrics:     <AdvancedMetrics />,
     revenue:     <RevenueStrategy />,
