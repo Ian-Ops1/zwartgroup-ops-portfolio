@@ -390,7 +390,13 @@ function reducer(state, action) {
 
 function AppProvider({ children }) {
   const stored = useMemo(() => {
-    try { const s = localStorage.getItem(LS_KEY); return s ? JSON.parse(s) : null; } catch { return null; }
+    try {
+      const s = localStorage.getItem(LS_KEY);
+      if (!s) return null;
+      const parsed = JSON.parse(s);
+      // Merge with initialState so new keys added in updates are always present
+      return { ...initialState, ...parsed };
+    } catch { return null; }
   }, []);
   const [state, dispatch] = useReducer(reducer, stored || initialState);
   useEffect(() => { try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch {} }, [state]);
