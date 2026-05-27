@@ -101,65 +101,66 @@ const getCleanStatus = (clean) => {
 // ─── STATIC DATA ──────────────────────────────────────────────────────────────
 // [id, name, address, area, type]
 const PROP_RAW = [
-  ["ZG-001","605 The Tokyo","87 Loop Street, Cape Town, 8000","CBD","Apartment"],
-  ["ZG-002","109 Station House","Station House Sea Point, 8060","Sea Point","Apartment"],
-  ["ZG-003","602 The Suro","The Suro, Holmfirth Road, 8060","Sea Point","Apartment"],
-  ["ZG-004","Suite 103 Strand Beach","243 High Level Road, 8005","Sea Point","Apartment"],
-  ["ZG-005","1322 16 on Bree","1322 Bree Street, Cape Town, 8000","CBD","Apartment"],
-  ["ZG-006","2309 16 on Bree","1322 Bree Street, Cape Town, 8000","CBD","Apartment"],
-  ["ZG-007","201 The Sage","Arthurs Road, Cape Town, 8060","Sea Point","Apartment"],
-  ["ZG-008","504 The Centurion","1 Frere Road, Cape Town, 8005","Sea Point","Apartment"],
-  ["ZG-009","314 Station House","Station House Sea Point, 8060","Sea Point","Apartment"],
-  ["ZG-010","10 Duet Loft","10 Duet Close, Durbanville, 7550","Durbanville","Cottage"],
-  ["ZG-011","10 Duet Cottage","10 Duet Close, Durbanville, 7550","Durbanville","Cottage"],
-  ["ZG-012","10 Duet Main House","10 Duet Close, Durbanville, 7550","Durbanville","House"],
-  ["ZG-013","5 Sunglint","24 Dudley Road, Sea Point, 8060","Sea Point","Apartment"],
-  ["ZG-014","201 The Suro","The Suro, Holmfirth Road, 8060","Sea Point","Apartment"],
-  ["ZG-015","Unit 3 Castella Mare","47 Coral Road, Table View, 7439","Table View","Apartment"],
-  ["ZG-016","417 Station House","Station House Sea Point, 8060","Sea Point","Apartment"],
-  ["ZG-017","605 The Tokyo","87 Loop Street, Cape Town, 8000","CBD","Apartment"],
-  ["ZG-018","35 Uxolo","Uxolo Apartments, Cape Town, 8001","CBD","Apartment"],
-  ["ZG-019","601 Station House","Station House Sea Point, 8060","Sea Point","Apartment"],
-  ["ZG-020","209 220 on Loop","220 Loop Street, Cape Town, 8000","CBD","Apartment"],
-  ["ZG-021","411 72 Kloof","72 Kloof, 1 Nicol Street, 8001","Gardens","Apartment"],
+  ["ZG-001","605 The Tokyo","87 Loop Street, Cape Town, Western Cape, 8000, ZA","CBD","Apartment"],
+  ["ZG-002","109 Station House","Station House Sea Point, Cape Town, Western Cape, 8060, ZA","Sea Point","Apartment"],
+  ["ZG-003","602 The Suro","The Suro, Holmfirth Road, Cape Town, Western Cape, 8060, ZA","Sea Point","Apartment"],
+  ["ZG-004","Suite 103 Strand Beach","243 High Level Road, Cape Town, Western Cape, 8005, ZA","Sea Point","Apartment"],
+  ["ZG-005","1322 16 on Bree","1322 Bree Street, Cape Town, Western Cape, 8000, ZA","CBD","Apartment"],
+  ["ZG-006","2309 16 on Bree","1322 Bree Street, Cape Town, Western Cape, 8000, ZA","CBD","Apartment"],
+  ["ZG-007","201 The Sage","Arthurs Road, Cape Town, Western Cape, 8060, ZA","Sea Point","Apartment"],
+  ["ZG-008","504 The Centurion","The Centurion, 1 Frere Road, Cape Town, Western Cape, 8005, ZA","Sea Point","Apartment"],
+  ["ZG-009","314 Station House","Station House Sea Point, Cape Town, Western Cape, 8060, ZA","Sea Point","Apartment"],
+  ["ZG-010","10 Duet Loft","10 Duet Close, Cape Town, Western Cape, 7550, ZA","Durbanville","Cottage"],
+  ["ZG-011","10 Duet Cottage","10 Duet Close, Cape Town, Western Cape, 7550, ZA","Durbanville","Cottage"],
+  ["ZG-012","10 Duet Main House","10 Duet Close, Cape Town, Western Cape, 7550, ZA","Durbanville","House"],
+  ["ZG-013","5 Sunglint","1 Sunglint, 24 Dudley Road cnr. Oldfield Sea Point, Cape Town, 8060","Sea Point","Apartment"],
+  ["ZG-014","201 The Suro","The Suro, Holmfirth Road, Cape Town, Western Cape, 8060, ZA","Sea Point","Apartment"],
+  ["ZG-015","Unit 3 Castella Mare","47 Coral Road, Cape Town, Western Cape, 7439, ZA","Table View","Apartment"],
+  ["ZG-016","417 Station House","Station House Sea Point, Cape Town, Western Cape, 8060, ZA","Sea Point","Apartment"],
+  ["ZG-017","605 The Tokyo","87 Loop Street, Cape Town, Western Cape, 8000, ZA","CBD","Apartment"],
+  ["ZG-018","35 Uxolo","Uxolo Apartments, Cape Town, Western Cape, 8001, ZA","CBD","Apartment"],
+  ["ZG-019","601 Station House","Station House Sea Point, Cape Town, Western Cape, 8060, ZA","Sea Point","Apartment"],
+  ["ZG-020","209 220 on Loop","220 Loop Street, Cape Town, Western Cape, 8000, ZA","CBD","Apartment"],
+  ["ZG-021","411 72 Kloof","72 Kloof, 1 Nicol Street, Cape Town, Western Cape, 8001, ZA","Gardens","Apartment"],
   ["ZG-022","21 Bungalow","Clifton Beach","Clifton","House"],
   ["ZG-023","Bungalow 25","Clifton Beach","Clifton","House"],
-  ["ZG-024","504 Greenmarket","Shortmarket Street, Cape Town, 8000","CBD","Apartment"],
-  ["ZG-025","601 Quayside Apartments","34 Prestwich Street, Cape Town, 8001","DWK","Apartment"],
-  ["ZG-026","110 220 on Loop","220 Loop Street, Cape Town, 8000","CBD","Apartment"],
-  ["ZG-027","108 343 on B","343 Main Road, Cape Town, 8005","CBD","Apartment"],
-  ["ZG-028","1008 The Tokyo","87 Loop Street, Cape Town, 8000","CBD","Apartment"],
-  ["ZG-029","602 The Tokyo","87 Loop Street, Cape Town, 8000","CBD","Apartment"],
-  ["ZG-030","Unit 4 Villa Palmar","Upper Portswood Road, Green Point, 8051","Green Point","Apartment"],
-  ["ZG-031","8 Bramber Court","12 Ravenscraig Road, Sea Point, 8005","Sea Point","Apartment"],
-  ["ZG-032","506 Greenmarket","Shortmarket Street, Cape Town, 8000","CBD","Apartment"],
-  ["ZG-033","24 Upper Pepper","24 Upper Pepper Street, Bo-Kaap, 8001","Bo-Kaap","House"],
-  ["ZG-034","109 Doric","Doric Court, York Road, Green Point, 8051","Green Point","Apartment"],
-  ["ZG-035","315 100 on Main","100 Main Road, Cape Town, 8005","CBD","Apartment"],
-  ["ZG-036","109 Mouille Grange","11 Beach Road, Mouille Point, 8005","Mouille Point","Apartment"],
-  ["ZG-037","2108 The Rubik","Loop Street, Cape Town, 8000","CBD","Apartment"],
-  ["ZG-038","602 126 on Main","126 Main Road, Cape Town, 8060","CBD","Apartment"],
+  ["ZG-024","504 Greenmarket","Shortmarket Street, Cape Town, Western Cape, 8000, ZA","CBD","Apartment"],
+  ["ZG-025","601 Quayside Apartments","34 Prestwich Street, Cape Town, Western Cape, 8001, ZA","DWK","Apartment"],
+  ["ZG-026","110 220 on Loop","220 Loop Street, Cape Town, Western Cape, 8000, ZA","CBD","Apartment"],
+  ["ZG-027","108 343 on B","THREE43 on B, 343 Main Road, Cape Town, Western Cape, 8005, ZA","CBD","Apartment"],
+  ["ZG-028","1008 The Tokyo","87 Loop Street, Cape Town, Western Cape, 8000, ZA","CBD","Apartment"],
+  ["ZG-029","602 The Tokyo","87 Loop Street, Cape Town, Western Cape, 8000, ZA","CBD","Apartment"],
+  ["ZG-030","Unit 4 Villa Palmar","Unit 4, Upper Portswood Road, Cape Town, Western Cape, 8051, ZA","Green Point","Apartment"],
+  ["ZG-031","8 Bramber Court","12 Ravenscraig Road, Cape Town, Western Cape, 8005, ZA","Sea Point","Apartment"],
+  ["ZG-032","506 Greenmarket","Shortmarket Street, Cape Town, Western Cape, 8000, ZA","CBD","Apartment"],
+  ["ZG-033","24 Upper Pepper","24 Upper Pepper Street, Cape Town, Western Cape, 8001, ZA","Bo-Kaap","House"],
+  ["ZG-034","109 Doric","Doric Court, York Road, Cape Town, Western Cape, 8051, ZA","Green Point","Apartment"],
+  ["ZG-035","315 100 on Main","Unit 315, 100 Main Road, Cape Town, Western Cape, 8005, ZA","CBD","Apartment"],
+  ["ZG-036","109 Mouille Grange","11 Beach Road, Cape Town, Western Cape, 8005, ZA","Mouille Point","Apartment"],
+  ["ZG-037","2108 The Rubik","2108 Rubik, Loop Street, Cape Town, Western Cape, 8000, ZA","CBD","Apartment"],
+  ["ZG-038","602 126 on Main","126 Main Road, Cape Town, Western Cape, 8060, ZA","CBD","Apartment"],
   ["ZG-039","92 Highstrand","Green Point, Cape Town","Green Point","Apartment"],
-  ["ZG-040","526 St Martini Gardens","Queen Victoria Street, Cape Town, 8000","CBD","Apartment"],
-  ["ZG-041","1005 Arnhem","6 Loxton Road, Milnerton, 7441","Milnerton","Apartment"],
-  ["ZG-042","57 North Walk","57 North Walk, Pinelands, 7405","Pinelands","House"],
-  ["ZG-043","505 Bridgewater","Conference Lane, Century City, 7441","Century City","Apartment"],
-  ["ZG-044","17 Upper Paradise","17 Upper Paradise Road, Newlands, 7700","Newlands","Cottage"],
-  ["ZG-045","35A Constantia Road","35A Constantia Road, Gardens, 8001","Gardens","Apartment"],
-  ["ZG-046","10 Duet Main House","10 Duet Close, Durbanville, 7550","Durbanville","House"],
-  ["ZG-047","59 Elgin","59 Elgin Road, Rondebosch, 7700","Rondebosch","House"],
-  ["ZG-048","78 Bryant Street","78 Bryant Street, Bo-Kaap","Bo-Kaap","House"],
-  ["ZG-049","614 Albert","1a Albert Road, Woodstock, 8001","Woodstock","Apartment"],
-  ["ZG-050","Unit 1, 2 Munnik Laas","2 Munnik Laas Street, N1 City, 7500","N1 City","House"],
-  ["ZG-051","Unit 2, 2 Munnik Laas","2 Munnik Laas Street, N1 City, 7500","N1 City","House"],
-  ["ZG-052","Unit 3, 2 Munnik Laas","2 Munnik Laas Street, N1 City, 7500","N1 City","House"],
+  ["ZG-040","526 St Martini Gardens","Queen Victoria Street, Cape Town, Western Cape, 8000, ZA","CBD","Apartment"],
+  ["ZG-041","1005 Arnhem","6 Loxton Road, Cape Town, Western Cape, 7441, ZA","Milnerton","Apartment"],
+  ["ZG-042","57 North Walk","57 North Walk, Cape Town, Western Cape, 7405, ZA","Pinelands","House"],
+  ["ZG-043","505 Bridgewater","505 Conference Lane, Cape Town, Western Cape, 7441, ZA","Century City","Apartment"],
+  ["ZG-044","17 Upper Paradise","17 Upper Paradise Road, Cape Town, Western Cape, 7700, ZA","Newlands","Cottage"],
+  ["ZG-045","35A Constantia Road","35A Constantia Road, Cape Town, Western Cape, 8001, ZA","Gardens","Apartment"],
+  ["ZG-046","10 Duet Main House","10 Duet Close, Cape Town, Western Cape, 7550, ZA","Durbanville","House"],
+  ["ZG-047","59 Elgin","59 Elgin Road, Cape Town, Western Cape, 7700, ZA","Rondebosch","House"],
+  ["ZG-048","78 Bryant Street","78 Bryant Street, Cape Town","Bo-Kaap","House"],
+  ["ZG-049","614 Albert","1a Albert Road, Cape Town, Western Cape, 8001, ZA","Woodstock","Apartment"],
+  ["ZG-050","Unit 1, 2 Munnik Laas","2 Munnik Laas Street, Cape Town, Western Cape, 7500, ZA","N1 City","House"],
+  ["ZG-051","Unit 2, 2 Munnik Laas","2 Munnik Laas Street, Cape Town, Western Cape, 7500, ZA","N1 City","House"],
+  ["ZG-052","Unit 3, 2 Munnik Laas","2 Munnik Laas Street, Cape Town, Western Cape, 7500, ZA","N1 City","House"],
 ];
 const PROPERTIES = PROP_RAW.map(([id,name,address,area,type]) => ({
   id, name, address, area, type,
-  flag: id==="ZG-046" ? "Duplicate of ZG-012" : id==="ZG-017" ? "Duplicate of ZG-001" : null,
-  portfolio: parseInt(id.replace("ZG-","")) <= 30 ? 1 : 2,
-  status: "Active",
+  flag: id==="ZG-046"?"Duplicate of ZG-012":id==="ZG-017"?"Duplicate of ZG-001":null,
+  portfolio: parseInt(id.replace("ZG-",""))<=30?1:2,
+  status:"Active",
 }));
+
 
 const mkBooking = (id, guestName, propId, checkIn, checkOut, platform, revenue, extraCleans=[], notes="") => {
   const prop = PROPERTIES.find(p => p.id === propId);
@@ -1970,21 +1971,56 @@ function GuestTemplates() {
 }
 
 
-// ─── PROPERTIES ───────────────────────────────────────────────────────────────
+// ─── PROPERTIES ──────────────────────────────────────────────────────────────
 function PropertiesModule() {
-  const { state } = useApp();
+  const { state, dispatch, toast } = useApp();
   const [search, setSearch] = useState("");
   const [portFilter, setPortFilter] = useState("All");
+  const [statusFilter, setStatusFilter] = useState("Active");
   const [selected, setSelected] = useState(null);
+  const [showAdd, setShowAdd] = useState(false);
+  const [showOffboard, setShowOffboard] = useState(null);
+  const [form, setForm] = useState({ id:"", name:"", address:"", area:"", type:"Apartment", portfolio:"1" });
+
+  const handleAdd = () => {
+    if (!form.id || !form.name) return toast("Property ID and Name are required","error");
+    if (state.properties.find(p => p.id === form.id.toUpperCase())) return toast("Property ID already exists","error");
+    dispatch({ type:"ADD_PROPERTY", payload:{
+      id:form.id.toUpperCase(), name:form.name, address:form.address,
+      area:form.area, type:form.type, portfolio:Number(form.portfolio),
+      flag:null, status:"Active",
+    }});
+    toast("Property added");
+    setShowAdd(false);
+    setForm({ id:"", name:"", address:"", area:"", type:"Apartment", portfolio:"1" });
+  };
+
+  const handleOffboard = (prop) => {
+    dispatch({ type:"UPDATE_PROPERTY", payload:{ id:prop.id, status:"Offboarded" }});
+    toast(prop.name + " offboarded");
+    setShowOffboard(null);
+    setSelected(null);
+  };
+
+  const handleReactivate = (prop) => {
+    dispatch({ type:"UPDATE_PROPERTY", payload:{ id:prop.id, status:"Active" }});
+    toast(prop.name + " reactivated");
+  };
 
   const filtered = state.properties.filter(p => {
-    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.id.toLowerCase().includes(search.toLowerCase()) || p.area.toLowerCase().includes(search.toLowerCase());
-    const matchPort = portFilter === "All" || p.portfolio === Number(portFilter);
-    return matchSearch && matchPort;
+    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) ||
+      p.id.toLowerCase().includes(search.toLowerCase()) ||
+      (p.area||"").toLowerCase().includes(search.toLowerCase());
+    const matchPort = portFilter==="All" || p.portfolio===Number(portFilter);
+    const matchStatus = statusFilter==="All" || p.status===statusFilter;
+    return matchSearch && matchPort && matchStatus;
   });
 
-  const getPropBookings = (id) => state.bookings.filter(b => b.propId === id);
-  const getPropRevenue = (id) => getPropBookings(id).reduce((s,b) => s + b.revenue, 0);
+  const getPropBookings = (id, name) => state.bookings.filter(b => b.propId===id || b.propertyName===name);
+  const getPropRevenue = (id, name) => getPropBookings(id,name).reduce((s,b)=>s+b.revenue,0);
+
+  const active = state.properties.filter(p=>p.status==="Active").length;
+  const offboarded = state.properties.filter(p=>p.status==="Offboarded").length;
 
   return (
     <div style={{ animation:"fadeIn 0.25s ease" }}>
@@ -1992,88 +2028,345 @@ function PropertiesModule() {
         <SectionTitle>Properties</SectionTitle>
         <div style={{ display:"flex", gap:8 }}>
           <SearchBar value={search} onChange={setSearch} placeholder="Search property..." />
-          <Select value={portFilter} onChange={setPortFilter} options={["All","1","2"]} style={{ width:120 }} />
+          <Select value={portFilter} onChange={setPortFilter} options={["All","1","2"]} style={{ width:110 }} />
+          <Select value={statusFilter} onChange={setStatusFilter} options={["Active","Offboarded","All"]} style={{ width:130 }} />
+          <Btn variant="primary" icon={Plus} onClick={()=>setShowAdd(true)}>Add Property</Btn>
         </div>
       </div>
+
       <div style={{ display:"flex", gap:12, marginBottom:20 }}>
         <KPICard label="Total Properties" value={state.properties.length} color={C.teal} />
-        <KPICard label="Portfolio 1" value={state.properties.filter(p => p.portfolio===1).length} color={C.blue} />
-        <KPICard label="Portfolio 2" value={state.properties.filter(p => p.portfolio===2).length} color={C.amber} />
-        <KPICard label="Flags" value={state.properties.filter(p => p.flag).length} color={C.crimson} />
+        <KPICard label="Active" value={active} color={C.green} />
+        <KPICard label="Offboarded" value={offboarded} color={offboarded>0?C.crimson:C.text3} />
+        <KPICard label="Portfolio 1" value={state.properties.filter(p=>p.portfolio===1&&p.status==="Active").length} color={C.blue} />
+        <KPICard label="Portfolio 2" value={state.properties.filter(p=>p.portfolio===2&&p.status==="Active").length} color={C.amber} />
       </div>
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(300px, 1fr))", gap:12 }}>
+
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))", gap:12 }}>
         {filtered.map(p => {
-          const propBookings = getPropBookings(p.id);
-          const propRevenue = getPropRevenue(p.id);
-          const currentBooking = state.bookings.find(b => b.propId === p.id && b.status === "In-House");
+          const propBookings = getPropBookings(p.id, p.name);
+          const propRevenue = getPropRevenue(p.id, p.name);
+          const currentBooking = state.bookings.find(b => (b.propId===p.id||b.propertyName===p.name) && b.status==="In-House");
+          const isOffboarded = p.status==="Offboarded";
           return (
-            <Card key={p.id} hover onClick={() => setSelected(p)} style={{ cursor:"pointer" }}>
+            <div key={p.id} onClick={()=>setSelected(p)}
+              style={{ background:C.bg1, border:`1px solid ${isOffboarded?C.crimson+"30":C.border}`,
+                borderRadius:10, padding:16, cursor:"pointer", opacity:isOffboarded?0.65:1,
+                transition:"border-color 0.15s" }}>
               <div style={{ display:"flex", gap:12, alignItems:"flex-start" }}>
-                <div style={{ width:36, height:36, borderRadius:8, background: p.portfolio === 1 ? C.tealBg : C.amberBg,
-                  display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-                  <Building size={16} color={p.portfolio === 1 ? C.teal : C.amber} />
+                <div style={{ width:36, height:36, borderRadius:8, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center",
+                  background:isOffboarded?C.crimsonBg:p.portfolio===1?C.tealBg:C.amberBg }}>
+                  <Building size={16} color={isOffboarded?C.crimson:p.portfolio===1?C.teal:C.amber} />
                 </div>
                 <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ display:"flex", gap:6, alignItems:"center", marginBottom:4 }}>
+                  <div style={{ display:"flex", gap:6, alignItems:"center", marginBottom:3, flexWrap:"wrap" }}>
                     <span style={{ fontFamily:"'DM Mono',monospace", fontSize:10, color:C.text3 }}>{p.id}</span>
-                    <span style={{ fontSize:10, color: p.portfolio===1 ? C.teal : C.amber, background: p.portfolio===1 ? C.tealBg : C.amberBg, padding:"1px 5px", borderRadius:3, fontWeight:600 }}>P{p.portfolio}</span>
-                    {p.flag && <span style={{ fontSize:10, color:C.amber }}>⚠️</span>}
+                    <span style={{ fontSize:10, padding:"1px 5px", borderRadius:3, fontWeight:600,
+                      background:p.portfolio===1?C.tealBg:C.amberBg,
+                      color:p.portfolio===1?C.teal:C.amber }}>P{p.portfolio}</span>
                     {currentBooking && <Badge label="In-House" size="xs" />}
+                    {isOffboarded && <Badge label="Overdue" size="xs" />}
                   </div>
                   <div style={{ fontSize:13, fontWeight:600, color:C.text1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{p.name}</div>
                   <div style={{ fontSize:11, color:C.text3, marginTop:2 }}>{p.area} · {p.type}</div>
-                  <div style={{ display:"flex", gap:12, marginTop:6, fontSize:11, color:C.text2 }}>
-                    <span>{propBookings.length} bookings</span>
+                  <div style={{ display:"flex", gap:12, marginTop:6, fontSize:11 }}>
+                    <span style={{ color:C.text2 }}>{propBookings.length} bookings</span>
                     <span style={{ color:C.teal, fontFamily:"'DM Mono',monospace" }}>R {(propRevenue/1000).toFixed(1)}k</span>
                   </div>
                 </div>
               </div>
-            </Card>
+            </div>
           );
         })}
       </div>
 
+      {filtered.length===0 && <EmptyState icon={Building} title="No properties found" sub="Try adjusting your filters." />}
+
       {/* Property Detail Modal */}
-      <Modal open={!!selected} onClose={() => setSelected(null)} title={selected?.name || ""} width={600}>
+      <Modal open={!!selected} onClose={()=>setSelected(null)} title={selected?.name||""} width={580}>
         {selected && (() => {
-          const propBs = getPropBookings(selected.id);
-          const propRev = getPropRevenue(selected.id);
-          const curr = propBs.find(b => b.status === "In-House");
+          const propBs = getPropBookings(selected.id, selected.name);
+          const propRev = getPropRevenue(selected.id, selected.name);
+          const curr = propBs.find(b=>b.status==="In-House");
+          const isOff = selected.status==="Offboarded";
           return (
             <div>
               {selected.flag && <div style={{ background:C.amberBg, border:`1px solid ${C.amber}30`, borderRadius:6, padding:"8px 12px", marginBottom:16, fontSize:12, color:C.amber }}>{selected.flag}</div>}
-              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:12, marginBottom:20 }}>
-                {[["Property ID",selected.id],["Area",selected.area],["Portfolio",`Portfolio ${selected.portfolio}`],
-                  ["Bedrooms",`${selected.beds} bedroom${selected.beds>1?"s":""}`],["Bathrooms",`${selected.baths} bathroom${selected.baths>1?"s":""}`],
-                  ["Total Revenue",`R ${(propRev/1000).toFixed(1)}k`]].map(([k,v]) => (
+              {isOff && <div style={{ background:C.crimsonBg, border:`1px solid ${C.crimson}30`, borderRadius:6, padding:"8px 12px", marginBottom:16, fontSize:12, color:C.crimson }}>⚠️ This property is offboarded</div>}
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:10, marginBottom:16 }}>
+                {[["ID",selected.id],["Area",selected.area],["Portfolio","Portfolio "+selected.portfolio],
+                  ["Type",selected.type],["Status",selected.status],["Revenue","R "+(propRev/1000).toFixed(1)+"k"]].map(([k,v])=>(
                   <div key={k} style={{ background:C.bg2, borderRadius:6, padding:"10px 12px" }}>
-                    <div style={{ fontSize:10, color:C.text3, marginBottom:3 }}>{k}</div>
-                    <div style={{ fontSize:13, color:C.text1, fontWeight:500, fontFamily: k.includes("ID") || k.includes("Revenue") ? "'DM Mono',monospace" : "inherit" }}>{v}</div>
+                    <div style={{ fontSize:10, color:C.text3, marginBottom:2 }}>{k}</div>
+                    <div style={{ fontSize:13, color:C.text1, fontWeight:500 }}>{v}</div>
                   </div>
                 ))}
               </div>
+              {selected.address && <div style={{ fontSize:12, color:C.text3, marginBottom:16 }}>{selected.address}</div>}
               {curr && (
-                <div style={{ background:C.tealBg, border:`1px solid ${C.teal}30`, borderRadius:8, padding:"12px 16px", marginBottom:16 }}>
-                  <div style={{ fontSize:11, color:C.teal, fontWeight:600, marginBottom:6 }}>CURRENTLY IN-HOUSE</div>
+                <div style={{ background:C.tealBg, border:`1px solid ${C.teal}30`, borderRadius:8, padding:"10px 14px", marginBottom:16 }}>
+                  <div style={{ fontSize:11, color:C.teal, fontWeight:600, marginBottom:4 }}>CURRENTLY IN-HOUSE</div>
                   <div style={{ fontSize:13, color:C.text1 }}>{curr.guestName} · {curr.nights} nights · {fmtDate(curr.checkIn)} → {fmtDate(curr.checkOut)}</div>
                 </div>
               )}
-              <div style={{ fontSize:12, fontWeight:600, color:C.text2, marginBottom:10 }}>All Bookings ({propBs.length})</div>
-              {propBs.slice(0,6).map(b => (
-                <div key={b.id} style={{ display:"flex", gap:10, alignItems:"center", padding:"8px 0", borderBottom:`1px solid ${C.border}20`, fontSize:12 }}>
+              <div style={{ fontSize:12, fontWeight:600, color:C.text2, marginBottom:8 }}>Recent Bookings ({propBs.length})</div>
+              {propBs.slice(0,5).map(b=>(
+                <div key={b.id} style={{ display:"flex", gap:10, alignItems:"center", padding:"6px 0", borderBottom:`1px solid ${C.border}20`, fontSize:12 }}>
                   <span style={{ flex:1, color:C.text1 }}>{b.guestName}</span>
                   <span style={{ color:C.text3, fontFamily:"'DM Mono',monospace" }}>{fmtShort(b.checkIn)} → {fmtShort(b.checkOut)}</span>
                   <Badge label={b.status} size="xs" />
-                  <span style={{ color:C.teal, fontFamily:"'DM Mono',monospace" }}>R {(b.revenue/1000).toFixed(1)}k</span>
                 </div>
               ))}
+              <div style={{ display:"flex", gap:8, marginTop:20 }}>
+                {isOff
+                  ? <Btn variant="primary" icon={CheckCircle} onClick={()=>handleReactivate(selected)}>Reactivate Property</Btn>
+                  : <Btn variant="danger" icon={XCircle} onClick={()=>setShowOffboard(selected)}>Offboard Property</Btn>
+                }
+                <Btn variant="ghost" onClick={()=>setSelected(null)}>Close</Btn>
+              </div>
             </div>
           );
         })()}
       </Modal>
+
+      {/* Add Property Modal */}
+      <Modal open={showAdd} onClose={()=>setShowAdd(false)} title="Add New Property" width={500}>
+        <FormRow label="Property ID (e.g. ZG-053)" required>
+          <Input value={form.id} onChange={v=>setForm(f=>({...f,id:v}))} placeholder="ZG-053" />
+        </FormRow>
+        <FormRow label="Property Name" required>
+          <Input value={form.name} onChange={v=>setForm(f=>({...f,name:v}))} placeholder="e.g. 201 The Suro" />
+        </FormRow>
+        <FormRow label="Full Address">
+          <Input value={form.address} onChange={v=>setForm(f=>({...f,address:v}))} placeholder="Street, Cape Town, 8000" />
+        </FormRow>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+          <FormRow label="Area">
+            <Input value={form.area} onChange={v=>setForm(f=>({...f,area:v}))} placeholder="e.g. Sea Point" />
+          </FormRow>
+          <FormRow label="Type">
+            <Select value={form.type} onChange={v=>setForm(f=>({...f,type:v}))}
+              options={["Apartment","House","Cottage","Villa","Studio"]} />
+          </FormRow>
+        </div>
+        <FormRow label="Portfolio">
+          <Select value={form.portfolio} onChange={v=>setForm(f=>({...f,portfolio:v}))}
+            options={[{value:"1",label:"Portfolio 1"},{value:"2",label:"Portfolio 2"}]} />
+        </FormRow>
+        <div style={{ display:"flex", gap:8 }}>
+          <Btn variant="primary" icon={Plus} onClick={handleAdd}>Add Property</Btn>
+          <Btn variant="ghost" onClick={()=>setShowAdd(false)}>Cancel</Btn>
+        </div>
+      </Modal>
+
+      {/* Offboard Confirmation Modal */}
+      <Modal open={!!showOffboard} onClose={()=>setShowOffboard(null)} title="Offboard Property" width={420}>
+        {showOffboard && (
+          <div style={{ textAlign:"center", padding:"10px 0 20px" }}>
+            <div style={{ width:52, height:52, borderRadius:"50%", background:C.crimsonBg, display:"flex",
+              alignItems:"center", justifyContent:"center", margin:"0 auto 16px" }}>
+              <XCircle size={24} color={C.crimson} />
+            </div>
+            <div style={{ fontSize:15, fontWeight:600, color:C.text1, marginBottom:8 }}>Offboard {showOffboard.name}?</div>
+            <div style={{ fontSize:13, color:C.text3, marginBottom:24, lineHeight:1.6 }}>
+              This will mark the property as offboarded. It will no longer appear in active listings
+              but all historical data will be kept. You can reactivate it at any time.
+            </div>
+            <div style={{ display:"flex", gap:8, justifyContent:"center" }}>
+              <Btn variant="danger" icon={XCircle} onClick={()=>handleOffboard(showOffboard)}>Yes, Offboard</Btn>
+              <Btn variant="ghost" onClick={()=>setShowOffboard(null)}>Cancel</Btn>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }
+
+// ─── PROPERTY SCORECARD ──────────────────────────────────────────────────────
+function PropertyScorecard() {
+  const { state } = useApp();
+  const [sortBy, setSortBy] = useState("rating");
+  const [areaFilter, setAreaFilter] = useState("All");
+
+  const scorecards = state.properties.map(prop => {
+    const propReviews = state.reviews.filter(r => r.propertyName === prop.name || r.propertyId === prop.id);
+    const propBookings = state.bookings.filter(b => b.propertyName === prop.name || b.propId === prop.id);
+    const avgRating = propReviews.length
+      ? (propReviews.reduce((s,r) => s + r.rating, 0) / propReviews.length) : null;
+    const revenue = propBookings.reduce((s,b) => s + b.revenue, 0);
+    const fiveStars = propReviews.filter(r => r.rating === 5).length;
+    const lowRatings = propReviews.filter(r => r.rating <= 3).length;
+    return { prop, reviews: propReviews, bookings: propBookings, avgRating, revenue, fiveStars, lowRatings };
+  }).filter(s => s.reviews.length > 0 || s.bookings.length > 0);
+
+  const areas = ["All", ...new Set(state.properties.map(p => p.area).filter(Boolean))];
+  const filtered = scorecards
+    .filter(s => areaFilter === "All" || s.prop.area === areaFilter)
+    .sort((a,b) => sortBy==="rating" ? (b.avgRating||0)-(a.avgRating||0)
+      : sortBy==="reviews" ? b.reviews.length-a.reviews.length : b.revenue-a.revenue);
+
+  const totalAvg = state.reviews.length
+    ? (state.reviews.reduce((s,r) => s+r.rating, 0)/state.reviews.length).toFixed(2) : "—";
+
+  const rColor = (r) => !r?C.text3:r>=4.5?C.green:r>=4.0?C.teal:r>=3.5?C.amber:C.crimson;
+  const rLabel = (r) => !r?"No reviews":r>=4.8?"Exceptional":r>=4.5?"Excellent":r>=4.0?"Good":r>=3.5?"Average":"Needs Attention";
+
+  return (
+    <div style={{ animation:"fadeIn 0.25s ease" }}>
+      <SectionTitle>Property Scorecard</SectionTitle>
+      <div style={{ display:"flex", gap:12, marginBottom:20 }}>
+        <KPICard label="Portfolio Avg" value={totalAvg==="—"?"—":totalAvg+" ⭐"} color={C.amber} />
+        <KPICard label="Properties Reviewed" value={scorecards.filter(s=>s.reviews.length>0).length} color={C.teal} />
+        <KPICard label="5-Star Reviews" value={state.reviews.filter(r=>r.rating===5).length} color={C.green} />
+        <KPICard label="Needs Attention" value={scorecards.filter(s=>s.avgRating&&s.avgRating<4.0).length} color={C.crimson} />
+      </div>
+      <div style={{ display:"flex", gap:10, marginBottom:20 }}>
+        <Select value={areaFilter} onChange={setAreaFilter} options={areas} style={{ width:160 }} />
+        <Select value={sortBy} onChange={setSortBy}
+          options={[{value:"rating",label:"Sort: Rating"},{value:"reviews",label:"Sort: Reviews"},{value:"revenue",label:"Sort: Revenue"}]}
+          style={{ width:180 }} />
+      </div>
+      {filtered.length === 0
+        ? <EmptyState icon={Star} title="No scorecards yet" sub="Add reviews from the Reviews page to see property performance here." />
+        : <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))", gap:14 }}>
+          {filtered.map(({ prop, reviews, avgRating, revenue, fiveStars, lowRatings }) => (
+            <div key={prop.id} style={{ background:C.bg1, border:`1px solid ${C.border}`, borderRadius:10, padding:16, borderTop:`3px solid ${rColor(avgRating)}` }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:10 }}>
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ fontSize:10, color:C.text3, fontFamily:"'DM Mono',monospace" }}>{prop.id}</div>
+                  <div style={{ fontSize:13, fontWeight:600, color:C.text1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{prop.name}</div>
+                  <div style={{ fontSize:11, color:C.text3 }}>{prop.area} · {prop.type}</div>
+                </div>
+                <div style={{ textAlign:"right", flexShrink:0, marginLeft:8 }}>
+                  <div style={{ fontSize:22, fontWeight:700, color:rColor(avgRating), fontFamily:"'DM Mono',monospace" }}>{avgRating?avgRating.toFixed(1):"—"}</div>
+                  <div style={{ fontSize:10, color:rColor(avgRating), fontWeight:600 }}>{rLabel(avgRating)}</div>
+                </div>
+              </div>
+              {avgRating && (
+                <div style={{ marginBottom:10 }}>
+                  <div style={{ display:"flex", gap:2, marginBottom:4 }}>
+                    {[1,2,3,4,5].map(n => <div key={n} style={{ flex:1, height:4, borderRadius:2, background:n<=Math.round(avgRating)?rColor(avgRating):C.border }} />)}
+                  </div>
+                  <div style={{ fontSize:11, color:C.text3 }}>{avgRating.toFixed(2)} avg · {reviews.length} review{reviews.length!==1?"s":""}</div>
+                </div>
+              )}
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8, marginBottom:10 }}>
+                {[{label:"Reviews",value:reviews.length,color:C.text2},{label:"5-Star",value:fiveStars,color:C.green},{label:"Low",value:lowRatings,color:lowRatings>0?C.crimson:C.text3}].map(s => (
+                  <div key={s.label} style={{ background:C.bg2, borderRadius:6, padding:"8px 10px", textAlign:"center" }}>
+                    <div style={{ fontSize:16, fontWeight:700, color:s.color, fontFamily:"'DM Mono',monospace" }}>{s.value}</div>
+                    <div style={{ fontSize:10, color:C.text3 }}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
+              {revenue>0 && (
+                <div style={{ display:"flex", justifyContent:"space-between", fontSize:11, paddingTop:8, borderTop:`1px solid ${C.border}20` }}>
+                  <span style={{ color:C.text3 }}>Revenue</span>
+                  <span style={{ fontFamily:"'DM Mono',monospace", color:C.teal }}>{fmtCurr(revenue)}</span>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      }
+    </div>
+  );
+}
+
+// ─── HOUSEKEEPING SCHEDULER ──────────────────────────────────────────────────
+const HK_TASK_TYPES = ["Full Turnover","Mid-Stay Refresh","Full Turnover & Mid-Stay","Guest Extended","Other"];
+const HK_QC_FIELDS = [
+  { key:"keysCollected", label:"Keys Collected" },
+  { key:"guestKeys", label:"Guest Keys" },
+  { key:"electricityUnits", label:"Electricity Units" },
+  { key:"photos", label:"Photos Submitted" },
+  { key:"keysReturned", label:"Keys Returned" },
+];
+function hkColor(v){return v==="Done"?C.green:v==="Issue"?C.crimson:C.text3;}
+function hkBg(v){return v==="Done"?C.greenBg:v==="Issue"?C.crimsonBg:C.bg2;}
+function blankProp(){return{propertyName:"",taskType:"Full Turnover",keysCollected:"",guestKeys:"",electricityUnits:"",photos:"",keysReturned:"",qcRating:0,notes:""};}
+function HKStars({value,onChange}){
+  return(<div style={{display:"flex",gap:3}}>{[1,2,3,4,5].map(n=>(<span key={n} onClick={()=>onChange&&onChange(n)} style={{fontSize:18,cursor:onChange?"pointer":"default",color:n<=(value||0)?C.amber:C.border}}>★</span>))}</div>);
+}
+function HKBtn({value,onChange}){
+  const cycle={"":"Done","Done":"Not Required","Not Required":"Issue","Issue":""};
+  return(<button onClick={()=>onChange&&onChange(cycle[value||""]||"Done")} style={{padding:"3px 8px",borderRadius:4,fontSize:11,fontWeight:600,cursor:"pointer",border:"none",background:hkBg(value),color:hkColor(value),fontFamily:"'DM Mono',monospace",minWidth:90}}>{value||"—"}</button>);
+}
+function HousekeepingScheduler(){
+  const{state,dispatch,toast}=useApp();
+  const[tab,setTab]=useState("schedule");
+  const[viewDate,setViewDate]=useState(addDays(TODAY,1));
+  const[histDate,setHistDate]=useState(TODAY);
+  const[showAdd,setShowAdd]=useState(false);
+  const[editId,setEditId]=useState(null);
+  const[form,setForm]=useState({date:addDays(TODAY,1),housekeeper:"",properties:[blankProp(),blankProp()]});
+  const records=Array.isArray(state.housekeeping)?state.housekeeping:[];
+  const teamNames=(state.team||[]).map(m=>m.name);
+  const propNames=(state.properties||[]).filter(p=>p.status==="Active").map(p=>p.name);
+  const save=()=>{
+    if(!form.housekeeper)return toast("Select housekeeper","error");
+    const filled=form.properties.filter(p=>p.propertyName&&p.propertyName!=="--");
+    if(!filled.length)return toast("Add at least one property","error");
+    const id=editId||("HK-"+String(records.length+1).padStart(3,"0"));
+    dispatch({type:editId?"UPDATE_HK_SCHEDULE":"ADD_HK_SCHEDULE",payload:{id,date:form.date,housekeeper:form.housekeeper,properties:filled}});
+    toast("Saved");setShowAdd(false);setEditId(null);
+    setForm({date:addDays(TODAY,1),housekeeper:"",properties:[blankProp(),blankProp()]});
+  };
+  const startEdit=(e)=>{const props=[...e.properties];while(props.length<2)props.push(blankProp());setForm({date:e.date,housekeeper:e.housekeeper,properties:props});setEditId(e.id);setShowAdd(true);};
+  const updateQC=(entryId,pi,field,val)=>{const e=records.find(r=>r.id===entryId);if(!e)return;dispatch({type:"UPDATE_HK_SCHEDULE",payload:{id:entryId,properties:e.properties.map((p,i)=>i===pi?{...p,[field]:val}:p)}});};
+  const del=(id)=>{if(window.confirm("Delete?"))dispatch({type:"DELETE_HK_SCHEDULE",payload:id});};
+  const todayE=records.filter(r=>r.date===viewDate);
+  const histE=records.filter(r=>r.date===histDate);
+  const issues=records.flatMap(r=>r.properties).flatMap(p=>HK_QC_FIELDS.map(f=>p[f.key])).filter(v=>v==="Issue").length;
+  const rated=records.flatMap(r=>r.properties).filter(p=>p.qcRating>0);
+  const avgQC=rated.length?(rated.reduce((s,p)=>s+p.qcRating,0)/rated.length).toFixed(1):"—";
+  const PropCard=({entry,p,pi,editable})=>(<div style={{background:C.bg2,borderRadius:8,padding:"12px 14px",borderLeft:`3px solid ${C.teal}`}}><div style={{fontSize:13,fontWeight:600,color:C.text1,marginBottom:4}}>{p.propertyName}</div><span style={{fontSize:11,background:C.amberBg,color:C.amber,padding:"2px 8px",borderRadius:4,fontWeight:600,display:"inline-block",marginBottom:8}}>{p.taskType}</span>{HK_QC_FIELDS.map(f=>(<div key={f.key} style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}><span style={{fontSize:11,color:C.text3}}>{f.label}</span>{editable?<HKBtn value={p[f.key]} onChange={v=>updateQC(entry.id,pi,f.key,v)}/>:<span style={{fontSize:11,color:hkColor(p[f.key]),fontWeight:600}}>{p[f.key]||"—"}</span>}</div>))}<div style={{marginTop:8,display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontSize:11,color:C.text3}}>QC</span><HKStars value={p.qcRating} onChange={editable?v=>updateQC(entry.id,pi,"qcRating",v):null}/></div></div>);
+  return(<div style={{animation:"fadeIn 0.25s ease"}}>
+    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
+      <SectionTitle>Housekeeping Scheduler & QC</SectionTitle>
+      <Btn variant="primary" icon={Plus} onClick={()=>{setEditId(null);setForm({date:addDays(TODAY,1),housekeeper:"",properties:[blankProp(),blankProp()]});setShowAdd(true);}}>Add Schedule</Btn>
+    </div>
+    <div style={{display:"flex",gap:12,marginBottom:20}}>
+      <KPICard label="Total Records" value={records.length} color={C.teal}/>
+      <KPICard label="Tomorrow" value={records.filter(r=>r.date===addDays(TODAY,1)).length} color={C.blue}/>
+      <KPICard label="Avg QC" value={avgQC==="—"?"—":avgQC+" ⭐"} color={C.amber}/>
+      <KPICard label="QC Issues" value={issues} color={issues>0?C.crimson:C.green}/>
+    </div>
+    <div style={{display:"flex",borderBottom:`1px solid ${C.border}`,marginBottom:20}}>
+      {[["schedule","Schedule"],["qc","Quality Control"],["history","History"]].map(([id,label])=>(<button key={id} onClick={()=>setTab(id)} style={{padding:"8px 24px",background:"none",border:"none",fontSize:13,borderBottom:`2px solid ${tab===id?C.teal:"transparent"}`,color:tab===id?C.teal:C.text2,cursor:"pointer",fontWeight:tab===id?600:400}}>{label}</button>))}
+    </div>
+    {tab==="schedule"&&(<div>
+      <div style={{display:"flex",gap:10,alignItems:"center",marginBottom:16}}>
+        <Input type="date" value={viewDate} onChange={setViewDate} style={{width:180}}/>
+        <Btn size="sm" variant="subtle" onClick={()=>setViewDate(addDays(TODAY,1))}>Tomorrow</Btn>
+        <Btn size="sm" variant="subtle" onClick={()=>setViewDate(TODAY)}>Today</Btn>
+      </div>
+      {todayE.length===0?<EmptyState icon={Users} title={"No schedule for "+fmtDate(viewDate)} sub="Click Add Schedule to assign housekeepers."/>:todayE.map(e=>(<Card key={e.id} style={{marginBottom:12}}><div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}><div style={{display:"flex",gap:12,alignItems:"center"}}><div style={{width:40,height:40,borderRadius:"50%",background:C.tealBg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,color:C.teal}}>{e.housekeeper.slice(0,2).toUpperCase()}</div><div><div style={{fontSize:14,fontWeight:700,color:C.text1}}>{e.housekeeper}</div><div style={{fontSize:11,color:C.text3}}>{fmtDate(e.date)} · {e.properties.length} propert{e.properties.length===1?"y":"ies"}</div></div></div><div style={{display:"flex",gap:8}}><Btn size="sm" variant="subtle" icon={Edit} onClick={()=>startEdit(e)}>Edit</Btn><Btn size="sm" variant="ghost" onClick={()=>del(e.id)}><Trash2 size={12} color={C.crimson}/></Btn></div></div><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:10}}>{e.properties.map((p,pi)=><PropCard key={pi} entry={e} p={p} pi={pi} editable={true}/>)}</div></Card>))}
+    </div>)}
+    {tab==="qc"&&(<div>{records.length===0?<EmptyState icon={CheckCircle} title="No records yet"/>:Object.entries(records.reduce((acc,r)=>{if(!acc[r.housekeeper])acc[r.housekeeper]=[];acc[r.housekeeper].push(r);return acc;},{})).map(([hk,entries])=>{const hkI=entries.flatMap(e=>e.properties).flatMap(p=>HK_QC_FIELDS.map(f=>p[f.key])).filter(v=>v==="Issue").length;const hkR=entries.flatMap(e=>e.properties).filter(p=>p.qcRating>0);const hkA=hkR.length?(hkR.reduce((s,p)=>s+p.qcRating,0)/hkR.length).toFixed(1):"—";return(<div key={hk} style={{marginBottom:24}}><div style={{display:"flex",gap:12,alignItems:"center",padding:"10px 16px",background:C.bg1,borderRadius:8,border:`1px solid ${C.border}`,marginBottom:10}}><div style={{width:36,height:36,borderRadius:"50%",background:C.tealBg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700,color:C.teal}}>{hk.slice(0,2).toUpperCase()}</div><div style={{flex:1}}><div style={{fontSize:14,fontWeight:700,color:C.text1}}>{hk}</div></div><span style={{color:hkI>0?C.crimson:C.green,fontSize:12}}>{hkI>0?"⚠️ "+hkI+" issues":"✓ No issues"}</span><span style={{color:C.amber,fontSize:12}}>⭐ {hkA}</span></div>{entries.sort((a,b)=>b.date.localeCompare(a.date)).flatMap((e,ei)=>e.properties.map((p,pi)=>(<div key={e.id+pi} style={{marginLeft:12,marginBottom:8,background:C.bg1,borderRadius:8,padding:"12px 16px",border:`1px solid ${HK_QC_FIELDS.some(f=>p[f.key]==="Issue")?C.crimson+"40":C.border}`,borderLeft:`3px solid ${HK_QC_FIELDS.some(f=>p[f.key]==="Issue")?C.crimson:C.green}`}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}><div><div style={{fontSize:13,fontWeight:600,color:C.text1}}>{p.propertyName}</div><div style={{fontSize:11,color:C.text3}}>{fmtDate(e.date)} · {p.taskType}</div></div><HKStars value={p.qcRating} onChange={v=>updateQC(e.id,pi,"qcRating",v)}/></div><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:8}}>{HK_QC_FIELDS.map(f=>(<div key={f.key}><div style={{fontSize:10,color:C.text3,marginBottom:3}}>{f.label}</div><HKBtn value={p[f.key]} onChange={v=>updateQC(e.id,pi,f.key,v)}/></div>))}</div></div>)))}</div>);})}
+    </div>)}
+    {tab==="history"&&(<div><div style={{display:"flex",gap:10,alignItems:"center",marginBottom:16}}><Input type="date" value={histDate} onChange={setHistDate} style={{width:180}}/></div>{histE.length===0?<EmptyState icon={BookMarked} title={"No records for "+fmtDate(histDate)}/>:histE.map(e=>(<Card key={e.id} style={{marginBottom:12}}><div style={{display:"flex",gap:10,alignItems:"center",marginBottom:12}}><div style={{width:36,height:36,borderRadius:"50%",background:C.tealBg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700,color:C.teal}}>{e.housekeeper.slice(0,2).toUpperCase()}</div><div><div style={{fontSize:13,fontWeight:600,color:C.text1}}>{e.housekeeper}</div><div style={{fontSize:11,color:C.text3}}>{fmtDate(e.date)}</div></div></div><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:10}}>{e.properties.map((p,pi)=><PropCard key={pi} entry={e} p={p} pi={pi} editable={false}/>)}</div></Card>))}</div>)}
+    <Modal open={showAdd} onClose={()=>{setShowAdd(false);setEditId(null);}} title={editId?"Edit Schedule":"Add Schedule"} width={560}>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:4}}>
+        <FormRow label="Date" required><Input type="date" value={form.date} onChange={v=>setForm(f=>({...f,date:v}))}/></FormRow>
+        <FormRow label="Housekeeper" required><Select value={form.housekeeper} onChange={v=>setForm(f=>({...f,housekeeper:v}))} options={["",...teamNames]}/></FormRow>
+      </div>
+      {[0,1].map(pi=>(<div key={pi} style={{background:C.bg2,borderRadius:8,padding:"14px 16px",marginBottom:12}}>
+        <div style={{fontSize:12,fontWeight:700,color:C.text2,marginBottom:10}}>Property {pi+1} {pi===1&&<span style={{color:C.text3,fontWeight:400}}>(optional)</span>}</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
+          <FormRow label="Property"><Select value={form.properties[pi]?.propertyName||""} onChange={v=>setForm(f=>({...f,properties:f.properties.map((p,i)=>i===pi?{...p,propertyName:v}:p)}))} options={["--",...propNames]}/></FormRow>
+          <FormRow label="Task Type"><Select value={form.properties[pi]?.taskType||"Full Turnover"} onChange={v=>setForm(f=>({...f,properties:f.properties.map((p,i)=>i===pi?{...p,taskType:v}:p)}))} options={HK_TASK_TYPES}/></FormRow>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
+          {HK_QC_FIELDS.map(field=>(<div key={field.key}><div style={{fontSize:11,color:C.text3,marginBottom:3}}>{field.label}</div><Select value={form.properties[pi]?.[field.key]||""} onChange={v=>setForm(f=>({...f,properties:f.properties.map((p,i)=>i===pi?{...p,[field.key]:v}:p)}))} options={["","Done","Not Required","Issue"]}/></div>))}
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:11,color:C.text3}}>QC Rating:</span><HKStars value={form.properties[pi]?.qcRating||0} onChange={v=>setForm(f=>({...f,properties:f.properties.map((p,i)=>i===pi?{...p,qcRating:v}:p)}))}/></div>
+      </div>))}
+      <div style={{display:"flex",gap:8}}><Btn variant="primary" icon={Save} onClick={save}>{editId?"Update":"Save"} Schedule</Btn><Btn variant="ghost" onClick={()=>{setShowAdd(false);setEditId(null);}}>Cancel</Btn></div>
+    </Modal>
+  </div>);
+}
+
 
 // ─── DAILY HISTORY ────────────────────────────────────────────────────────────
 function DailyHistory() {
@@ -2146,6 +2439,7 @@ function DailyHistory() {
     </div>
   );
 }
+
 
 // ─── SETTINGS ─────────────────────────────────────────────────────────────────
 function SettingsModule() {
@@ -2268,348 +2562,6 @@ function SettingsModule() {
   );
 }
 
-// ─── ROW COLOUR HELPERS ──────────────────────────────────────────────────────
-const getBookingRowColor = (booking) => {
-  const statuses = booking.cleans.map(c => getCleanStatus(c));
-  if (statuses.includes("Overdue"))      return { bg:"rgba(255,59,92,0.12)", border:"rgba(255,59,92,0.35)" };
-  if (statuses.includes("Due Today"))    return { bg:"rgba(245,166,35,0.15)", border:"rgba(245,166,35,0.4)" };
-  if (statuses.includes("Due Tomorrow")) return { bg:"rgba(0,212,184,0.09)", border:"rgba(0,212,184,0.4)" };
-  return { bg:"transparent", border:"transparent" };
-};
-
-// ─── HOUSEKEEPING SCHEDULER ───────────────────────────────────────────────────
-const HK_TASK_TYPES = ["Full Turnover","Mid-Stay Refresh","Full Turnover & Mid-Stay","Guest Extended","Other"];
-const HK_QC_FIELDS = [
-  { key:"keysCollected", label:"Keys Collected" },
-  { key:"guestKeys", label:"Guest Keys" },
-  { key:"electricityUnits", label:"Electricity Units" },
-  { key:"photos", label:"Photos Submitted" },
-  { key:"keysReturned", label:"Keys Returned" },
-];
-
-function hkColor(v) { return v==="Done"?C.green:v==="Issue"?C.crimson:C.text3; }
-function hkBg(v) { return v==="Done"?C.greenBg:v==="Issue"?C.crimsonBg:C.bg2; }
-function blankProp() { return { propertyName:"", taskType:"Full Turnover", keysCollected:"", guestKeys:"", electricityUnits:"", photos:"", keysReturned:"", qcRating:0, notes:"" }; }
-
-function HKStars({ value, onChange }) {
-  return (
-    <div style={{ display:"flex", gap:3 }}>
-      {[1,2,3,4,5].map(n => (
-        <span key={n} onClick={() => onChange && onChange(n)}
-          style={{ fontSize:18, cursor:onChange?"pointer":"default", color:n<=(value||0)?C.amber:C.border }}>★</span>
-      ))}
-    </div>
-  );
-}
-
-function HKBtn({ value, onChange }) {
-  const cycle = {"":"Done","Done":"Not Required","Not Required":"Issue","Issue":""};
-  return (
-    <button onClick={() => onChange && onChange(cycle[value||""]||"Done")}
-      style={{ padding:"3px 8px", borderRadius:4, fontSize:11, fontWeight:600, cursor:"pointer",
-        border:"none", background:hkBg(value), color:hkColor(value), fontFamily:"'DM Mono',monospace", minWidth:90 }}>
-      {value||"—"}
-    </button>
-  );
-}
-
-function HousekeepingScheduler() {
-  const { state, dispatch, toast } = useApp();
-  const [tab, setTab] = useState("schedule");
-  const [viewDate, setViewDate] = useState(addDays(TODAY,1));
-  const [histDate, setHistDate] = useState(TODAY);
-  const [showAdd, setShowAdd] = useState(false);
-  const [editId, setEditId] = useState(null);
-  const [form, setForm] = useState({ date:addDays(TODAY,1), housekeeper:"", properties:[blankProp(),blankProp()] });
-
-  const records = Array.isArray(state.housekeeping) ? state.housekeeping : [];
-  const teamNames = (state.team||[]).map(m => m.name);
-  const propNames = (state.properties||[]).map(p => p.name);
-
-  const save = () => {
-    if (!form.housekeeper) return toast("Select housekeeper","error");
-    const filled = form.properties.filter(p => p.propertyName && p.propertyName !== "--");
-    if (!filled.length) return toast("Add at least one property","error");
-    const id = editId || ("HK-"+String(records.length+1).padStart(3,"0"));
-    dispatch({ type: editId?"UPDATE_HK_SCHEDULE":"ADD_HK_SCHEDULE", payload:{ id, date:form.date, housekeeper:form.housekeeper, properties:filled }});
-    toast("Saved"); setShowAdd(false); setEditId(null);
-    setForm({ date:addDays(TODAY,1), housekeeper:"", properties:[blankProp(),blankProp()] });
-  };
-
-  const startEdit = (e) => {
-    const props = [...e.properties]; while(props.length<2) props.push(blankProp());
-    setForm({ date:e.date, housekeeper:e.housekeeper, properties:props });
-    setEditId(e.id); setShowAdd(true);
-  };
-
-  const updateQC = (entryId, pi, field, val) => {
-    const e = records.find(r => r.id===entryId); if (!e) return;
-    dispatch({ type:"UPDATE_HK_SCHEDULE", payload:{ id:entryId, properties:e.properties.map((p,i)=>i===pi?{...p,[field]:val}:p) }});
-  };
-
-  const del = (id) => { if(window.confirm("Delete?")) { dispatch({ type:"DELETE_HK_SCHEDULE", payload:id }); toast("Deleted"); } };
-
-  const todayEntries = records.filter(r => r.date===viewDate);
-  const histEntries = records.filter(r => r.date===histDate);
-  const issues = records.flatMap(r=>r.properties).flatMap(p=>HK_QC_FIELDS.map(f=>p[f.key])).filter(v=>v==="Issue").length;
-  const rated = records.flatMap(r=>r.properties).filter(p=>p.qcRating>0);
-  const avgQC = rated.length ? (rated.reduce((s,p)=>s+p.qcRating,0)/rated.length).toFixed(1) : "—";
-
-  const PropCard = ({ entry, p, pi, editable }) => (
-    <div style={{ background:C.bg2, borderRadius:8, padding:"12px 14px", borderLeft:`3px solid ${C.teal}` }}>
-      <div style={{ fontSize:13, fontWeight:600, color:C.text1, marginBottom:4 }}>{p.propertyName}</div>
-      <span style={{ fontSize:11, background:C.amberBg, color:C.amber, padding:"2px 8px", borderRadius:4, fontWeight:600, display:"inline-block", marginBottom:10 }}>{p.taskType}</span>
-      {HK_QC_FIELDS.map(f => (
-        <div key={f.key} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:5 }}>
-          <span style={{ fontSize:11, color:C.text3 }}>{f.label}</span>
-          {editable ? <HKBtn value={p[f.key]} onChange={v=>updateQC(entry.id,pi,f.key,v)} />
-            : <span style={{ fontSize:11, color:hkColor(p[f.key]), fontWeight:600 }}>{p[f.key]||"—"}</span>}
-        </div>
-      ))}
-      <div style={{ marginTop:8, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-        <span style={{ fontSize:11, color:C.text3 }}>QC Rating</span>
-        <HKStars value={p.qcRating} onChange={editable?v=>updateQC(entry.id,pi,"qcRating",v):null} />
-      </div>
-    </div>
-  );
-
-  return (
-    <div style={{ animation:"fadeIn 0.25s ease" }}>
-      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:20 }}>
-        <SectionTitle>Housekeeping Scheduler & QC</SectionTitle>
-        <Btn variant="primary" icon={Plus} onClick={() => { setEditId(null); setForm({ date:addDays(TODAY,1), housekeeper:"", properties:[blankProp(),blankProp()] }); setShowAdd(true); }}>Add Schedule</Btn>
-      </div>
-
-      <div style={{ display:"flex", gap:12, marginBottom:20 }}>
-        <KPICard label="Total Records" value={records.length} color={C.teal} />
-        <KPICard label="Tomorrow" value={records.filter(r=>r.date===addDays(TODAY,1)).length} color={C.blue} />
-        <KPICard label="Avg QC" value={avgQC==="—"?"—":avgQC+" ⭐"} color={C.amber} />
-        <KPICard label="QC Issues" value={issues} color={issues>0?C.crimson:C.green} />
-      </div>
-
-      <div style={{ display:"flex", borderBottom:`1px solid ${C.border}`, marginBottom:20 }}>
-        {[["schedule","Schedule"],["qc","Quality Control"],["history","History"]].map(([id,label]) => (
-          <button key={id} onClick={()=>setTab(id)}
-            style={{ padding:"8px 24px", background:"none", border:"none", fontSize:13,
-              borderBottom:`2px solid ${tab===id?C.teal:"transparent"}`,
-              color:tab===id?C.teal:C.text2, cursor:"pointer", fontWeight:tab===id?600:400 }}>
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {tab==="schedule" && (
-        <div>
-          <div style={{ display:"flex", gap:10, alignItems:"center", marginBottom:16 }}>
-            <Input type="date" value={viewDate} onChange={setViewDate} style={{ width:180 }} />
-            <Btn size="sm" variant="subtle" onClick={()=>setViewDate(addDays(TODAY,1))}>Tomorrow</Btn>
-            <Btn size="sm" variant="subtle" onClick={()=>setViewDate(TODAY)}>Today</Btn>
-          </div>
-          {todayEntries.length===0
-            ? <EmptyState icon={Users} title={"No schedule for "+fmtDate(viewDate)} sub="Click Add Schedule to assign housekeepers." />
-            : todayEntries.map(e => (
-              <Card key={e.id} style={{ marginBottom:12 }}>
-                <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:14 }}>
-                  <div style={{ display:"flex", gap:12, alignItems:"center" }}>
-                    <div style={{ width:40, height:40, borderRadius:"50%", background:C.tealBg, display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:700, color:C.teal }}>{e.housekeeper.slice(0,2).toUpperCase()}</div>
-                    <div><div style={{ fontSize:14, fontWeight:700, color:C.text1 }}>{e.housekeeper}</div><div style={{ fontSize:11, color:C.text3 }}>{fmtDate(e.date)} · {e.properties.length} propert{e.properties.length===1?"y":"ies"}</div></div>
-                  </div>
-                  <div style={{ display:"flex", gap:8 }}>
-                    <Btn size="sm" variant="subtle" icon={Edit} onClick={()=>startEdit(e)}>Edit</Btn>
-                    <Btn size="sm" variant="ghost" onClick={()=>del(e.id)}><Trash2 size={12} color={C.crimson}/></Btn>
-                  </div>
-                </div>
-                <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))", gap:10 }}>
-                  {e.properties.map((p,pi) => <PropCard key={pi} entry={e} p={p} pi={pi} editable={true} />)}
-                </div>
-              </Card>
-            ))
-          }
-        </div>
-      )}
-
-      {tab==="qc" && (
-        <div>
-          {records.length===0 ? <EmptyState icon={CheckCircle} title="No records yet" sub="Add schedules to start tracking quality." /> :
-            Object.entries(records.reduce((acc,r)=>{ if(!acc[r.housekeeper]) acc[r.housekeeper]=[]; acc[r.housekeeper].push(r); return acc; },{})).map(([hk,entries]) => {
-              const hkIssues = entries.flatMap(e=>e.properties).flatMap(p=>HK_QC_FIELDS.map(f=>p[f.key])).filter(v=>v==="Issue").length;
-              const hkRated = entries.flatMap(e=>e.properties).filter(p=>p.qcRating>0);
-              const hkAvg = hkRated.length?(hkRated.reduce((s,p)=>s+p.qcRating,0)/hkRated.length).toFixed(1):"—";
-              return (
-                <div key={hk} style={{ marginBottom:24 }}>
-                  <div style={{ display:"flex", gap:12, alignItems:"center", padding:"10px 16px", background:C.bg1, borderRadius:8, border:`1px solid ${C.border}`, marginBottom:10 }}>
-                    <div style={{ width:36, height:36, borderRadius:"50%", background:C.tealBg, display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, fontWeight:700, color:C.teal }}>{hk.slice(0,2).toUpperCase()}</div>
-                    <div style={{ flex:1 }}><div style={{ fontSize:14, fontWeight:700, color:C.text1 }}>{hk}</div><div style={{ fontSize:11, color:C.text3 }}>{entries.length} session{entries.length!==1?"s":""}</div></div>
-                    <span style={{ color:hkIssues>0?C.crimson:C.green, fontSize:12 }}>{hkIssues>0?"⚠️ "+hkIssues+" issues":"✓ No issues"}</span>
-                    <span style={{ color:C.amber, fontSize:12 }}>⭐ {hkAvg}</span>
-                  </div>
-                  {entries.sort((a,b)=>b.date.localeCompare(a.date)).flatMap((e,ei)=>
-                    e.properties.map((p,pi) => (
-                      <div key={e.id+pi} style={{ marginLeft:12, marginBottom:8, background:C.bg1, borderRadius:8, padding:"12px 16px",
-                        border:`1px solid ${HK_QC_FIELDS.some(f=>p[f.key]==="Issue")?C.crimson+"40":C.border}`,
-                        borderLeft:`3px solid ${HK_QC_FIELDS.some(f=>p[f.key]==="Issue")?C.crimson:C.green}` }}>
-                        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
-                          <div><div style={{ fontSize:13, fontWeight:600, color:C.text1 }}>{p.propertyName}</div><div style={{ fontSize:11, color:C.text3 }}>{fmtDate(e.date)} · {p.taskType}</div></div>
-                          <HKStars value={p.qcRating} onChange={v=>updateQC(e.id,pi,"qcRating",v)} />
-                        </div>
-                        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))", gap:8 }}>
-                          {HK_QC_FIELDS.map(f => (
-                            <div key={f.key}><div style={{ fontSize:10, color:C.text3, marginBottom:3 }}>{f.label}</div><HKBtn value={p[f.key]} onChange={v=>updateQC(e.id,pi,f.key,v)} /></div>
-                          ))}
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              );
-            })
-          }
-        </div>
-      )}
-
-      {tab==="history" && (
-        <div>
-          <div style={{ display:"flex", gap:10, alignItems:"center", marginBottom:16 }}>
-            <Input type="date" value={histDate} onChange={setHistDate} style={{ width:180 }} />
-          </div>
-          {histEntries.length===0 ? <EmptyState icon={BookMarked} title={"No records for "+fmtDate(histDate)} /> :
-            histEntries.map(e => (
-              <Card key={e.id} style={{ marginBottom:12 }}>
-                <div style={{ display:"flex", gap:10, alignItems:"center", marginBottom:12 }}>
-                  <div style={{ width:36, height:36, borderRadius:"50%", background:C.tealBg, display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, fontWeight:700, color:C.teal }}>{e.housekeeper.slice(0,2).toUpperCase()}</div>
-                  <div><div style={{ fontSize:13, fontWeight:600, color:C.text1 }}>{e.housekeeper}</div><div style={{ fontSize:11, color:C.text3 }}>{fmtDate(e.date)}</div></div>
-                </div>
-                <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))", gap:10 }}>
-                  {e.properties.map((p,pi) => <PropCard key={pi} entry={e} p={p} pi={pi} editable={false} />)}
-                </div>
-              </Card>
-            ))
-          }
-        </div>
-      )}
-
-      <Modal open={showAdd} onClose={()=>{setShowAdd(false);setEditId(null);}} title={editId?"Edit Schedule":"Add Schedule"} width={560}>
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:4 }}>
-          <FormRow label="Date" required><Input type="date" value={form.date} onChange={v=>setForm(f=>({...f,date:v}))} /></FormRow>
-          <FormRow label="Housekeeper" required><Select value={form.housekeeper} onChange={v=>setForm(f=>({...f,housekeeper:v}))} options={["",...teamNames]} /></FormRow>
-        </div>
-        {[0,1].map(pi => (
-          <div key={pi} style={{ background:C.bg2, borderRadius:8, padding:"14px 16px", marginBottom:12 }}>
-            <div style={{ fontSize:12, fontWeight:700, color:C.text2, marginBottom:10 }}>Property {pi+1} {pi===1&&<span style={{ color:C.text3, fontWeight:400 }}>(optional)</span>}</div>
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:10 }}>
-              <FormRow label="Property"><Select value={form.properties[pi]?.propertyName||""} onChange={v=>setForm(f=>({...f,properties:f.properties.map((p,i)=>i===pi?{...p,propertyName:v}:p)}))} options={["--",...propNames]} /></FormRow>
-              <FormRow label="Task Type"><Select value={form.properties[pi]?.taskType||"Full Turnover"} onChange={v=>setForm(f=>({...f,properties:f.properties.map((p,i)=>i===pi?{...p,taskType:v}:p)}))} options={HK_TASK_TYPES} /></FormRow>
-            </div>
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:8 }}>
-              {HK_QC_FIELDS.map(field => (
-                <div key={field.key}><div style={{ fontSize:11, color:C.text3, marginBottom:3 }}>{field.label}</div>
-                <Select value={form.properties[pi]?.[field.key]||""} onChange={v=>setForm(f=>({...f,properties:f.properties.map((p,i)=>i===pi?{...p,[field.key]:v}:p)}))} options={["","Done","Not Required","Issue"]} /></div>
-              ))}
-            </div>
-            <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-              <span style={{ fontSize:11, color:C.text3 }}>QC Rating:</span>
-              <HKStars value={form.properties[pi]?.qcRating||0} onChange={v=>setForm(f=>({...f,properties:f.properties.map((p,i)=>i===pi?{...p,qcRating:v}:p)}))} />
-            </div>
-          </div>
-        ))}
-        <div style={{ display:"flex", gap:8 }}>
-          <Btn variant="primary" icon={Save} onClick={save}>{editId?"Update":"Save"} Schedule</Btn>
-          <Btn variant="ghost" onClick={()=>{setShowAdd(false);setEditId(null);}}>Cancel</Btn>
-        </div>
-      </Modal>
-    </div>
-  );
-}
-
-// ─── PROPERTY SCORECARD ──────────────────────────────────────────────────────
-function PropertyScorecard() {
-  const { state } = useApp();
-  const [sortBy, setSortBy] = useState("rating");
-  const [areaFilter, setAreaFilter] = useState("All");
-
-  const scorecards = state.properties.map(prop => {
-    const propReviews = state.reviews.filter(r => r.propertyName === prop.name || r.propertyId === prop.id);
-    const propBookings = state.bookings.filter(b => b.propertyName === prop.name || b.propId === prop.id);
-    const avgRating = propReviews.length
-      ? (propReviews.reduce((s,r) => s + r.rating, 0) / propReviews.length) : null;
-    const revenue = propBookings.reduce((s,b) => s + b.revenue, 0);
-    const fiveStars = propReviews.filter(r => r.rating === 5).length;
-    const lowRatings = propReviews.filter(r => r.rating <= 3).length;
-    return { prop, reviews: propReviews, bookings: propBookings, avgRating, revenue, fiveStars, lowRatings };
-  }).filter(s => s.reviews.length > 0 || s.bookings.length > 0);
-
-  const areas = ["All", ...new Set(state.properties.map(p => p.area).filter(Boolean))];
-  const filtered = scorecards
-    .filter(s => areaFilter === "All" || s.prop.area === areaFilter)
-    .sort((a,b) => sortBy==="rating" ? (b.avgRating||0)-(a.avgRating||0)
-      : sortBy==="reviews" ? b.reviews.length-a.reviews.length : b.revenue-a.revenue);
-
-  const totalAvg = state.reviews.length
-    ? (state.reviews.reduce((s,r) => s+r.rating, 0)/state.reviews.length).toFixed(2) : "—";
-
-  const rColor = (r) => !r?C.text3:r>=4.5?C.green:r>=4.0?C.teal:r>=3.5?C.amber:C.crimson;
-  const rLabel = (r) => !r?"No reviews":r>=4.8?"Exceptional":r>=4.5?"Excellent":r>=4.0?"Good":r>=3.5?"Average":"Needs Attention";
-
-  return (
-    <div style={{ animation:"fadeIn 0.25s ease" }}>
-      <SectionTitle>Property Scorecard</SectionTitle>
-      <div style={{ display:"flex", gap:12, marginBottom:20 }}>
-        <KPICard label="Portfolio Avg" value={totalAvg==="—"?"—":totalAvg+" ⭐"} color={C.amber} />
-        <KPICard label="Properties Reviewed" value={scorecards.filter(s=>s.reviews.length>0).length} color={C.teal} />
-        <KPICard label="5-Star Reviews" value={state.reviews.filter(r=>r.rating===5).length} color={C.green} />
-        <KPICard label="Needs Attention" value={scorecards.filter(s=>s.avgRating&&s.avgRating<4.0).length} color={C.crimson} />
-      </div>
-      <div style={{ display:"flex", gap:10, marginBottom:20 }}>
-        <Select value={areaFilter} onChange={setAreaFilter} options={areas} style={{ width:160 }} />
-        <Select value={sortBy} onChange={setSortBy}
-          options={[{value:"rating",label:"Sort: Rating"},{value:"reviews",label:"Sort: Reviews"},{value:"revenue",label:"Sort: Revenue"}]}
-          style={{ width:180 }} />
-      </div>
-      {filtered.length === 0
-        ? <EmptyState icon={Star} title="No scorecards yet" sub="Add reviews from the Reviews page to see property performance here." />
-        : <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))", gap:14 }}>
-          {filtered.map(({ prop, reviews, avgRating, revenue, fiveStars, lowRatings }) => (
-            <div key={prop.id} style={{ background:C.bg1, border:`1px solid ${C.border}`, borderRadius:10, padding:16, borderTop:`3px solid ${rColor(avgRating)}` }}>
-              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:10 }}>
-                <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontSize:10, color:C.text3, fontFamily:"'DM Mono',monospace" }}>{prop.id}</div>
-                  <div style={{ fontSize:13, fontWeight:600, color:C.text1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{prop.name}</div>
-                  <div style={{ fontSize:11, color:C.text3 }}>{prop.area} · {prop.type}</div>
-                </div>
-                <div style={{ textAlign:"right", flexShrink:0, marginLeft:8 }}>
-                  <div style={{ fontSize:22, fontWeight:700, color:rColor(avgRating), fontFamily:"'DM Mono',monospace" }}>{avgRating?avgRating.toFixed(1):"—"}</div>
-                  <div style={{ fontSize:10, color:rColor(avgRating), fontWeight:600 }}>{rLabel(avgRating)}</div>
-                </div>
-              </div>
-              {avgRating && (
-                <div style={{ marginBottom:10 }}>
-                  <div style={{ display:"flex", gap:2, marginBottom:4 }}>
-                    {[1,2,3,4,5].map(n => <div key={n} style={{ flex:1, height:4, borderRadius:2, background:n<=Math.round(avgRating)?rColor(avgRating):C.border }} />)}
-                  </div>
-                  <div style={{ fontSize:11, color:C.text3 }}>{avgRating.toFixed(2)} avg · {reviews.length} review{reviews.length!==1?"s":""}</div>
-                </div>
-              )}
-              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8, marginBottom:10 }}>
-                {[{label:"Reviews",value:reviews.length,color:C.text2},{label:"5-Star",value:fiveStars,color:C.green},{label:"Low",value:lowRatings,color:lowRatings>0?C.crimson:C.text3}].map(s => (
-                  <div key={s.label} style={{ background:C.bg2, borderRadius:6, padding:"8px 10px", textAlign:"center" }}>
-                    <div style={{ fontSize:16, fontWeight:700, color:s.color, fontFamily:"'DM Mono',monospace" }}>{s.value}</div>
-                    <div style={{ fontSize:10, color:C.text3 }}>{s.label}</div>
-                  </div>
-                ))}
-              </div>
-              {revenue>0 && (
-                <div style={{ display:"flex", justifyContent:"space-between", fontSize:11, paddingTop:8, borderTop:`1px solid ${C.border}20` }}>
-                  <span style={{ color:C.text3 }}>Revenue</span>
-                  <span style={{ fontFamily:"'DM Mono',monospace", color:C.teal }}>{fmtCurr(revenue)}</span>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      }
-    </div>
-  );
-}
 
 // ─── MODULE ROUTER ────────────────────────────────────────────────────────────
 function ModuleContent({ active, onNav }) {
