@@ -567,7 +567,8 @@ function SearchBar({ value, onChange, placeholder = "Search..." }) {
 // ─── NAVIGATION MODULES CONFIG ────────────────────────────────────────────────
 const NAV = [
   { id:"dashboard",     icon:Home,         label:"Dashboard",          badge:null },
-  { id:"cleans",        icon:Calendar,     label:"Res & Cleans",       badge:"cleans" },
+  { id:"reservations",   icon:BookMarked,   label:"Reservations",        badge:null },
+  { id:"cleans",        icon:Calendar,     label:"Res & Cleans (10+ nights)", badge:"cleans" },
   { id:"dailyops",      icon:ClipboardList,label:"Daily Ops",          badge:null },
   { id:"housekeeping",  icon:Users,        label:"Housekeeping",        badge:null },
   { id:"financials",    icon:DollarSign,   label:"Financials",         badge:null },
@@ -954,7 +955,7 @@ function ResCleans() {
   const [sortBy, setSortBy] = useState("checkIn");
   const [tab, setTab] = useState("bookings"); // bookings | calendar | alerts
 
-  const bookings = state.bookings;
+  const bookings = state.bookings.filter(b => b.nights >= 10);
 
   // Derived clean alert stats
   const alertStats = useMemo(() => {
@@ -2567,6 +2568,7 @@ function SettingsModule() {
 function ModuleContent({ active, onNav }) {
   const map = {
     dashboard:   <Dashboard onNav={onNav} />,
+    reservations: <Reservations />,
     cleans:      <ResCleans />,
     dailyops:    <DailyOps />,
     housekeeping: <HousekeepingScheduler />,
@@ -2611,5 +2613,240 @@ export default function App() {
     <AppProvider>
       <AppInner />
     </AppProvider>
+  );
+}
+// ─── RESERVATIONS ────────────────────────────────────────────────────────────
+function Reservations() {
+  const { state, dispatch, toast } = useApp();
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [platformFilter, setPlatformFilter] = useState("All");
+  const [sortBy, setSortBy] = useState("checkIn");
+  const [showAdd, setShowAdd] = useState(false);
+  const [selected, setSelected] = useState(null);
+  const [nbForm, setNbForm] = useState({ id:"", guestName:"", propId:"", checkIn:"", checkOut:"", platform:"Airbnb", revenue:"", notes:"" });
+
+  const bookings = state.bookings;
+
+  const filtered = useMemo(() => {
+    let r = bookings;
+    if (search) r = r.filter(b =>
+      b.guestName.toLowerCase().includes(search.toLowerCase()) ||
+      b.propertyName.toLowerCase().includes(search.toLowerCase()) ||
+      b.id.toLowerCase().includes(search.toLowerCase())
+    );
+    if (statusFilter !== "All") r = r.filter(b => b.status === statusFilter);
+    if (platformFilter !== "All") r = r.filter(b => b.platform === platformFilter);
+    return [...r].sort((a,b) => {
+      if (sortBy === "checkIn") return a.checkIn.localeCompare(b.checkIn);
+      if (sortBy === "checkOut") return a.checkOut.localeCompare(b.checkOut);
+      if (sortBy === "revenue") return b.revenue - a.revenue;
+      if (sortBy === "nights") return b.nights - a.nights;
+      return 0;
+    });
+  }, [bookings, search, statusFilter, platformFilter, sortBy]);
+
+  const totalRevenue = bookings.reduce((s,b) => s+b.revenue, 0);
+  const inHouse = bookings.filter(b => b.status==="In-House").length;
+  const upcoming = bookings.filter(b => b.status==="Upcoming").length;
+  const checkedOut = bookings.filter(b => b.status==="Checked Out").length;
+  const shortStays = bookings.filter(b => b.nights < 10).length;
+  const longStays = bookings.filter(b => b.nights >= 10).length;
+
+  const handleAdd = () => {
+    if (!form.propId || !nbForm.checkIn || !nbForm.checkOut) return toast("Fill required fields","error");
+    const b = mkBooking(
+      nbForm.id || ("MAN-"+Date.now()),
+      nbForm.guestName || "Guest",
+      nbForm.propId, nbForm.checkIn, nbForm.checkOut,
+      nbForm.platform, nbForm.revenue, [], nbForm.notes
+    );
+    dispatch({ type:"ADD_BOOKING", payload:b });
+    toast("Booking added");
+    setShowAdd(false);
+    setNbForm({ id:"", guestName:"", propId:"", checkIn:"", checkOut:"", platform:"Airbnb", revenue:"", notes:"" });
+  };
+
+  // Use nbForm not form for add modal
+  const form = nbForm;
+
+  return (
+    <div style={{ animation:"fadeIn 0.25s ease" }}>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:20 }}>
+        <SectionTitle>Reservations</SectionTitle>
+        <Btn variant="primary" icon={Plus} onClick={() => setShowAdd(true)}>Add Booking</Btn>
+      </div>
+
+      {/* KPIs */}
+      <div style={{ display:"flex", gap:12, marginBottom:20, flexWrap:"wrap" }}>
+        <KPICard label="Total Bookings" value={bookings.length} color={C.teal} icon={Hash} />
+        <KPICard label="In-House" value={inHouse} color={C.teal} icon={Building} />
+        <KPICard label="Upcoming" value={upcoming} color={C.blue} icon={ArrowUp} />
+        <KPICard label="Checked Out" value={checkedOut} color={C.text3} icon={ArrowDown} />
+        <KPICard label="Short Stays (<10n)" value={shortStays} color={C.amber} />
+        <KPICard label="Long Stays (10n+)" value={longStays} color={C.green} sub="tracked in Res & Cleans" />
+        <KPICard label="Total Revenue" value={"R "+(totalRevenue/1000).toFixed(0)+"k"} color={C.amber} icon={DollarSign} />
+      </div>
+
+      {/* Info strip */}
+      <div style={{ background:C.tealBg, border:`1px solid ${C.teal}30`, borderRadius:8, padding:"10px 16px",
+        marginBottom:16, fontSize:12, color:C.teal, display:"flex", alignItems:"center", gap:8 }}>
+        <Info size={14} />
+        Bookings with <strong>10+ nights</strong> are also tracked in <strong>Res & Cleans</strong> for mid-stay clean scheduling.
+      </div>
+
+      {/* Filters */}
+      <div style={{ display:"flex", gap:10, marginBottom:16, flexWrap:"wrap", alignItems:"center" }}>
+        <SearchBar value={search} onChange={setSearch} placeholder="Search guest, property, ID..." />
+        <Select value={statusFilter} onChange={setStatusFilter}
+          options={["All","In-House","Upcoming","Checked Out"]} style={{ width:140 }} />
+        <Select value={platformFilter} onChange={setPlatformFilter}
+          options={["All","Airbnb","Booking.com","Direct"]} style={{ width:140 }} />
+        <Select value={sortBy} onChange={setSortBy}
+          options={[{value:"checkIn",label:"Sort: Check-in"},{value:"checkOut",label:"Sort: Check-out"},{value:"revenue",label:"Sort: Revenue"},{value:"nights",label:"Sort: Nights"}]}
+          style={{ width:160 }} />
+        <span style={{ fontSize:12, color:C.text3, marginLeft:"auto" }}>
+          Showing {filtered.length} of {bookings.length} bookings
+        </span>
+      </div>
+
+      {/* Table */}
+      <div style={{ background:C.bg1, border:`1px solid ${C.border}`, borderRadius:10, overflow:"hidden" }}>
+        {/* Header */}
+        <div style={{ display:"grid", gridTemplateColumns:"40px 180px 150px 100px 100px 60px 90px 100px 110px",
+          padding:"10px 16px", borderBottom:`1px solid ${C.border}`, background:C.bg2 }}>
+          {["","Property","Guest","Check-in","Check-out","Nts","Revenue","Platform","Status"].map(h => (
+            <div key={h} style={{ fontSize:11, color:C.text3, fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em" }}>{h}</div>
+          ))}
+        </div>
+
+        {filtered.length === 0 && <EmptyState icon={BookMarked} title="No bookings found" sub="Adjust your filters or add a booking." />}
+
+        {filtered.map(b => {
+          const hasFlag = b.notes && b.notes.length > 0;
+          const isLong = b.nights >= 10;
+          return (
+            <div key={b.id} onClick={() => setSelected(b)}
+              style={{ display:"grid", gridTemplateColumns:"40px 180px 150px 100px 100px 60px 90px 100px 110px",
+                padding:"11px 16px", borderBottom:`1px solid ${C.border}`, cursor:"pointer",
+                background:"transparent", alignItems:"center",
+                transition:"background 0.1s" }}>
+              {/* Night length indicator */}
+              <div title={isLong?"Tracked in Res & Cleans":""}>
+                {isLong
+                  ? <div style={{ width:8, height:8, borderRadius:"50%", background:C.teal }} title="10+ nights" />
+                  : <div style={{ width:8, height:8, borderRadius:"50%", background:C.border }} />
+                }
+              </div>
+              <div>
+                <div style={{ fontSize:13, color:C.text1, fontWeight:500, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{b.propertyName}</div>
+                <div style={{ fontSize:10, color:C.text3, fontFamily:"'DM Mono',monospace" }}>{b.id}</div>
+              </div>
+              <div style={{ fontSize:12, color: b.guestName==="Guest"?C.amber:C.text1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                {b.guestName}
+              </div>
+              <div style={{ fontSize:12, color:C.text2, fontFamily:"'DM Mono',monospace" }}>{fmtShort(b.checkIn)}</div>
+              <div style={{ fontSize:12, color:C.text2, fontFamily:"'DM Mono',monospace" }}>{fmtShort(b.checkOut)}</div>
+              <div style={{ fontSize:12, color: isLong?C.teal:C.text2, fontFamily:"'DM Mono',monospace", fontWeight:isLong?600:400 }}>{b.nights}</div>
+              <div style={{ fontSize:12, color:b.revenue===0?C.amber:C.teal, fontFamily:"'DM Mono',monospace" }}>
+                {b.revenue===0?"—":"R "+(b.revenue/1000).toFixed(1)+"k"}
+              </div>
+              <Badge label={b.platform} size="xs" />
+              <Badge label={b.status} size="xs" />
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Booking Detail Modal */}
+      <Modal open={!!selected} onClose={() => setSelected(null)} title={selected?.propertyName||""} width={560}>
+        {selected && (
+          <div>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:10, marginBottom:16 }}>
+              {[
+                ["Booking ID", selected.id],
+                ["Guest", selected.guestName],
+                ["Platform", selected.platform],
+                ["Check-in", fmtDate(selected.checkIn)],
+                ["Check-out", fmtDate(selected.checkOut)],
+                ["Nights", selected.nights],
+                ["Revenue", fmtCurr(selected.revenue)],
+                ["Status", selected.status],
+                ["Cleans", selected.cleans.length > 0 ? selected.cleans.length+" scheduled":"None"],
+              ].map(([k,v]) => (
+                <div key={k} style={{ background:C.bg2, borderRadius:6, padding:"10px 12px" }}>
+                  <div style={{ fontSize:10, color:C.text3, marginBottom:2 }}>{k}</div>
+                  <div style={{ fontSize:13, color:C.text1, fontWeight:500 }}>{v}</div>
+                </div>
+              ))}
+            </div>
+            {selected.notes && (
+              <div style={{ background:C.amberBg, border:`1px solid ${C.amber}30`, borderRadius:6, padding:"8px 12px", marginBottom:12, fontSize:12, color:C.amber }}>
+                {selected.notes}
+              </div>
+            )}
+            {selected.nights >= 10 && (
+              <div style={{ background:C.tealBg, border:`1px solid ${C.teal}30`, borderRadius:6, padding:"8px 12px", marginBottom:12, fontSize:12, color:C.teal }}>
+                ✓ {selected.nights} nights — tracked in Res & Cleans with {selected.cleans.length} mid-stay clean{selected.cleans.length!==1?"s":""}
+              </div>
+            )}
+            {selected.cleans.length > 0 && (
+              <div>
+                <div style={{ fontSize:12, fontWeight:600, color:C.text2, marginBottom:8 }}>Mid-Stay Cleans</div>
+                {selected.cleans.map((c,i) => (
+                  <div key={i} style={{ display:"flex", gap:12, alignItems:"center", padding:"6px 0", borderBottom:`1px solid ${C.border}20`, fontSize:12 }}>
+                    <span style={{ color:C.text3 }}>Clean #{c.cleanNumber}</span>
+                    <span style={{ fontFamily:"'DM Mono',monospace", color:C.text2 }}>{fmtDate(c.dueDate)}</span>
+                    <Badge label={c.status} size="xs" />
+                    {c.assignedHousekeeper && <span style={{ color:C.teal }}>👤 {c.assignedHousekeeper}</span>}
+                  </div>
+                ))}
+              </div>
+            )}
+            <div style={{ marginTop:16 }}>
+              <Btn variant="ghost" onClick={() => setSelected(null)}>Close</Btn>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Add Booking Modal */}
+      <Modal open={showAdd} onClose={() => setShowAdd(false)} title="Add New Booking" width={520}>
+        <FormRow label="Booking ID (optional)">
+          <Input value={nbForm.id} onChange={v=>setNbForm(f=>({...f,id:v}))} placeholder="e.g. HM1234ABC" />
+        </FormRow>
+        <FormRow label="Guest Name">
+          <Input value={nbForm.guestName} onChange={v=>setNbForm(f=>({...f,guestName:v}))} placeholder="Full name" />
+        </FormRow>
+        <FormRow label="Property" required>
+          <Select value={nbForm.propId} onChange={v=>setNbForm(f=>({...f,propId:v}))}
+            options={["", ...state.properties.filter(p=>p.status==="Active").map(p=>({value:p.id,label:`${p.id} · ${p.name}`}))]} />
+        </FormRow>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+          <FormRow label="Check-in" required><Input type="date" value={nbForm.checkIn} onChange={v=>setNbForm(f=>({...f,checkIn:v}))} /></FormRow>
+          <FormRow label="Check-out" required><Input type="date" value={nbForm.checkOut} onChange={v=>setNbForm(f=>({...f,checkOut:v}))} /></FormRow>
+        </div>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+          <FormRow label="Platform">
+            <Select value={nbForm.platform} onChange={v=>setNbForm(f=>({...f,platform:v}))} options={["Airbnb","Booking.com","Direct"]} />
+          </FormRow>
+          <FormRow label="Revenue (ZAR)">
+            <Input type="number" value={nbForm.revenue} onChange={v=>setNbForm(f=>({...f,revenue:v}))} placeholder="0.00" />
+          </FormRow>
+        </div>
+        {nbForm.checkIn && nbForm.checkOut && daysBetween(nbForm.checkIn,nbForm.checkOut) >= 10 && (
+          <div style={{ background:C.tealBg, border:`1px solid ${C.teal}30`, borderRadius:6, padding:"10px 14px", marginBottom:12, fontSize:12, color:C.teal }}>
+            ✓ {daysBetween(nbForm.checkIn,nbForm.checkOut)} nights → will appear in Res & Cleans with {Math.ceil(daysBetween(nbForm.checkIn,nbForm.checkOut)/7)-1} mid-stay clean(s)
+          </div>
+        )}
+        <FormRow label="Notes">
+          <Input value={nbForm.notes} onChange={v=>setNbForm(f=>({...f,notes:v}))} placeholder="Any notes..." />
+        </FormRow>
+        <div style={{ display:"flex", gap:8 }}>
+          <Btn variant="primary" icon={Plus} onClick={handleAdd}>Add Booking</Btn>
+          <Btn variant="ghost" onClick={() => setShowAdd(false)}>Cancel</Btn>
+        </div>
+      </Modal>
+    </div>
   );
 }
