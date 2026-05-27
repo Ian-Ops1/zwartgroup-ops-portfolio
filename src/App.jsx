@@ -1049,7 +1049,7 @@ function ResCleans() {
 
       {/* Tabs */}
       <div style={{ display:"flex", gap:0, marginBottom:20, borderBottom:`1px solid ${C.border}` }}>
-        {[["bookings","All Bookings"],["alerts","Clean Alerts"]].map(([id,label]) => (
+        {[["cleans","Today & Tomorrow"],["bookings","All Bookings"],["alerts","Clean Alerts"]].map(([id,label]) => (
           <button key={id} onClick={() => setTab(id)} style={{ padding:"8px 20px", background:"none", border:"none",
             borderBottom:`2px solid ${tab===id ? C.teal : "transparent"}`, color: tab===id ? C.teal : C.text2,
             cursor:"pointer", fontSize:13, fontWeight: tab===id ? 600 : 400, transition:"all 0.15s" }}>
@@ -1058,7 +1058,122 @@ function ResCleans() {
         ))}
       </div>
 
-      {tab === "alerts" ? <CleanAlerts bookings={bookings} onEdit={(b,i) => { setSelectedBooking(b); setSelectedClean(i); }} /> : (
+      {tab === "cleans" ? (() => {
+        const allCleans = bookings.flatMap(b =>
+          b.cleans.map((c, ci) => ({ ...c, booking:b, ci, liveStatus: getCleanStatus(c) }))
+        );
+        const overdueC   = allCleans.filter(c => c.liveStatus === "Overdue");
+        const todayC     = allCleans.filter(c => c.liveStatus === "Due Today");
+        const tomorrowC  = allCleans.filter(c => c.liveStatus === "Due Tomorrow");
+        const completedTodayC = allCleans.filter(c => c.status === "Completed" && c.completedDate === TODAY);
+
+        const CleanCard = ({ c, bg, border, badgeIcon }) => (
+          <div onClick={() => { setSelectedBooking(c.booking); setSelectedClean(c.ci); }}
+            style={{ background:bg, border:`1px solid ${border}40`, borderRadius:9,
+              padding:"14px 16px", cursor:"pointer", borderLeft:`4px solid ${border}` }}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:6 }}>
+              <div style={{ fontSize:13, fontWeight:700, color:C.text1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", flex:1 }}>
+                {c.booking.propertyName}
+              </div>
+              <span style={{ fontSize:18, marginLeft:8, flexShrink:0 }}>{badgeIcon}</span>
+            </div>
+            <div style={{ fontSize:11, color:C.text3, marginBottom:8 }}>
+              {c.booking.guestName} · Clean #{c.cleanNumber} of {c.booking.cleans.length} · {c.booking.nights}n
+            </div>
+            <div style={{ display:"flex", gap:6, alignItems:"center", justifyContent:"space-between" }}>
+              <Badge label={c.booking.platform} size="xs" />
+              {c.assignedHousekeeper
+                ? <span style={{ fontSize:11, color:border, fontWeight:600 }}>👤 {c.assignedHousekeeper}</span>
+                : <span style={{ fontSize:11, color:C.amber }}>⚠️ Unassigned</span>}
+            </div>
+          </div>
+        );
+
+        return (
+          <div>
+            {overdueC.length === 0 && todayC.length === 0 && tomorrowC.length === 0 ? (
+              <div style={{ background:C.greenBg, border:`1px solid ${C.green}30`, borderRadius:8,
+                padding:"14px 18px", marginBottom:20, display:"flex", alignItems:"center", gap:10 }}>
+                <CheckCircle size={18} color={C.green} />
+                <span style={{ fontSize:14, color:C.green, fontWeight:600 }}>All cleans on schedule — nothing urgent</span>
+              </div>
+            ) : null}
+
+            {overdueC.length > 0 && (
+              <div style={{ marginBottom:20 }}>
+                <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:12 }}>
+                  <div style={{ width:12, height:12, borderRadius:"50%", background:C.crimson }} />
+                  <span style={{ fontFamily:"'Syne',sans-serif", fontSize:14, fontWeight:700, color:C.crimson }}>
+                    Overdue — {overdueC.length} clean{overdueC.length!==1?"s":""}
+                  </span>
+                </div>
+                <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(230px,1fr))", gap:10 }}>
+                  {overdueC.map((c,i) => <CleanCard key={i} c={c} bg="rgba(255,59,92,0.08)" border={C.crimson} badgeIcon="🔴" />)}
+                </div>
+              </div>
+            )}
+
+            {todayC.length > 0 && (
+              <div style={{ marginBottom:20 }}>
+                <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:12 }}>
+                  <div style={{ width:12, height:12, borderRadius:"50%", background:C.amber }} />
+                  <span style={{ fontFamily:"'Syne',sans-serif", fontSize:14, fontWeight:700, color:C.amber }}>
+                    Cleaning Today — {todayC.length} propert{todayC.length!==1?"ies":"y"} · {fmtDate(TODAY)}
+                  </span>
+                </div>
+                <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(230px,1fr))", gap:10 }}>
+                  {todayC.map((c,i) => <CleanCard key={i} c={c} bg="rgba(245,166,35,0.12)" border={C.amber} badgeIcon="🟡" />)}
+                </div>
+              </div>
+            )}
+
+            {tomorrowC.length > 0 && (
+              <div style={{ marginBottom:20 }}>
+                <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:12 }}>
+                  <div style={{ width:12, height:12, borderRadius:"50%", background:C.teal,
+                    boxShadow:`0 0 8px ${C.teal}80` }} />
+                  <span style={{ fontFamily:"'Syne',sans-serif", fontSize:14, fontWeight:700, color:C.teal }}>
+                    Cleaning Tomorrow — {tomorrowC.length} propert{tomorrowC.length!==1?"ies":"y"} · {fmtDate(addDays(TODAY,1))}
+                  </span>
+                </div>
+                <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(230px,1fr))", gap:10 }}>
+                  {tomorrowC.map((c,i) => <CleanCard key={i} c={c} bg="rgba(0,212,184,0.09)" border={C.teal} badgeIcon="🩵" />)}
+                </div>
+              </div>
+            )}
+
+            {completedTodayC.length > 0 && (
+              <div style={{ marginBottom:20 }}>
+                <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:12 }}>
+                  <CheckCircle size={14} color={C.green} />
+                  <span style={{ fontFamily:"'Syne',sans-serif", fontSize:14, fontWeight:700, color:C.green }}>
+                    Completed Today — {completedTodayC.length} clean{completedTodayC.length!==1?"s":""} ✅
+                  </span>
+                </div>
+                <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(230px,1fr))", gap:10 }}>
+                  {completedTodayC.map((c,i) => (
+                    <div key={i} style={{ background:"rgba(34,197,94,0.08)", border:`1px solid ${C.green}30`,
+                      borderRadius:9, padding:"14px 16px", borderLeft:`4px solid ${C.green}` }}>
+                      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:6 }}>
+                        <div style={{ fontSize:13, fontWeight:700, color:C.text1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", flex:1 }}>
+                          {c.booking.propertyName}
+                        </div>
+                        <span style={{ fontSize:20, marginLeft:8 }}>✅</span>
+                      </div>
+                      <div style={{ fontSize:11, color:C.text3, marginBottom:6 }}>
+                        {c.booking.guestName} · Clean #{c.cleanNumber}
+                      </div>
+                      {c.assignedHousekeeper && (
+                        <span style={{ fontSize:11, color:C.green, fontWeight:600 }}>👤 {c.assignedHousekeeper}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })() : tab === "alerts" ? <CleanAlerts bookings={bookings} onEdit={(b,i) => { setSelectedBooking(b); setSelectedClean(i); }} /> : (
         <>
           {/* Controls */}
           <div style={{ display:"flex", gap:10, marginBottom:16, flexWrap:"wrap", alignItems:"center" }}>
