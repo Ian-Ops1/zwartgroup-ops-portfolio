@@ -974,8 +974,7 @@ function ResCleans() {
     if (search) r = r.filter(b => b.guestName.toLowerCase().includes(search.toLowerCase()) || b.propertyName.toLowerCase().includes(search.toLowerCase()) || b.id.toLowerCase().includes(search.toLowerCase()));
     if (statusFilter !== "All") r = r.filter(b => b.status === statusFilter);
     if (platformFilter !== "All") r = r.filter(b => b.platform === platformFilter);
-    if (bookingStatusFilter === "Cancelled") r = r.filter(b => b.bookingStatus === "Cancelled");
-    if (bookingStatusFilter === "Accepted") r = r.filter(b => b.bookingStatus !== "Cancelled");
+
     if (cleanFilter === "Has Urgent") r = r.filter(b => b.cleans.some(c => ["Overdue","Due Today","Due Tomorrow"].includes(getCleanStatus(c))));
     if (cleanFilter === "Has Cleans") r = r.filter(b => b.cleans.length > 0);
     if (cleanFilter === "No Cleans") r = r.filter(b => b.cleans.length === 0);
