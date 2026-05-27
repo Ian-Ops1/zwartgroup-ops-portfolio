@@ -99,135 +99,120 @@ const getCleanStatus = (clean) => {
 };
 
 // ─── STATIC DATA ──────────────────────────────────────────────────────────────
-// [id, name, area, beds, baths, portfolio]
+// [id, name, address, area, type]
 const PROP_RAW = [
-  ["ZG-001","605 The Tokyo","De Waterkant",1,1,1],
-  ["ZG-002","601 Quayside","V&A Waterfront",2,2,1],
-  ["ZG-003","8 Bramber Court","Sea Point",2,1,1],
-  ["ZG-004","109 Mouille Grange","Green Point",1,1,1],
-  ["ZG-005","310 De Waterkant Village","De Waterkant",1,1,1],
-  ["ZG-006","Penthouse 1 The Tide","Blouberg",3,2,1],
-  ["ZG-007","Unit 4 Sunset Manor","Sea Point",2,2,1],
-  ["ZG-008","12A Loader Street","De Waterkant",2,1,1],
-  ["ZG-009","501 Harbour Bridge","V&A Waterfront",2,2,1],
-  ["ZG-010","204 Rockwell","Green Point",2,2,1],
-  ["ZG-011","Loft 3 Bree Street Studios","CBD",1,1,1],
-  ["ZG-012","10 Duet Main House","Blouberg",4,3,1,"⚠️ Duplicate flag"],
-  ["ZG-013","Unit 7 Paarden Eiland Lofts","Paarden Eiland",2,1,1],
-  ["ZG-014","1503 The Houghton","Sea Point",3,2,1],
-  ["ZG-015","Unit 3 Castella Mare","Blouberg",3,2,1],
-  ["ZG-016","808 Granger Bay Court","V&A Waterfront",2,2,1],
-  ["ZG-017","605 The Tokyo","De Waterkant",1,1,1,"⚠️ Duplicate of ZG-001"],
-  ["ZG-018","22 Loader Lane Studio","De Waterkant",1,1,1],
-  ["ZG-019","201 Atlantic Views","Camps Bay",2,2,1],
-  ["ZG-020","Apartment 6 Chelsea Square","Green Point",1,1,1],
-  ["ZG-021","Villa Rosa Ground Floor","Fresnaye",3,2,1],
-  ["ZG-022","304 The Metropolitan","CBD",2,2,1],
-  ["ZG-023","Unit 9 Ocean Palms","Blouberg",2,1,1],
-  ["ZG-024","502 Waterfront Place","V&A Waterfront",3,3,1],
-  ["ZG-025","Garden Suite Clifton Views","Clifton",2,2,1],
-  ["ZG-026","301 Strand Street Lofts","CBD",1,1,2],
-  ["ZG-027","Penthouse B Blouberg Rise","Blouberg",3,2,2],
-  ["ZG-028","Unit 11 Signal Hill Estate","Signal Hill",2,2,2],
-  ["ZG-029","1204 The Peninsula","Sea Point",2,2,2],
-  ["ZG-030","Suite 2 Cape Quarter","De Waterkant",1,1,2],
-  ["ZG-031","7 Kloof Street Hideaway","Gardens",2,1,2],
-  ["ZG-032","403 Azure","Camps Bay",3,2,2],
-  ["ZG-033","Studio 5 The Foundry","Green Point",1,1,2],
-  ["ZG-034","Villa Ibiza Clifton 3rd","Clifton",4,3,2],
-  ["ZG-035","102 Salt Circle","Mouille Point",2,2,2],
-  ["ZG-036","201 Lions Head Lodge","Signal Hill",3,2,2],
-  ["ZG-037","Unit 6 Blouberg Sands","Blouberg",2,2,2],
-  ["ZG-038","1802 Portside Tower","CBD",2,2,2],
-  ["ZG-039","Garden Apt Park Road","Gardens",2,1,2],
-  ["ZG-040","Suite 401 De Waterkant House","De Waterkant",2,2,2],
-  ["ZG-041","Penthouse 3 Granger Bay","V&A Waterfront",3,3,2],
-  ["ZG-042","Unit 14 The Tigris","Blouberg",2,2,2],
-  ["ZG-043","503 Amsterdam Towers","CBD",2,1,2],
-  ["ZG-044","Beach House 2 Big Bay","Blouberg",4,3,2],
-  ["ZG-045","501 Bantry Bay Suites","Bantry Bay",3,2,2],
-  ["ZG-046","10 Duet Main House","Blouberg",4,3,2,"⚠️ Duplicate of ZG-012"],
-  ["ZG-047","Unit 8 Mouille Point Quay","Mouille Point",2,2,2],
-  ["ZG-048","Garden Studio Tamboerskloof","Tamboerskloof",1,1,2],
-  ["ZG-049","1601 One&Only Residences","V&A Waterfront",3,3,2],
-  ["ZG-050","Clifton Cove Villa","Clifton",5,4,2],
+  ["ZG-001","605 The Tokyo","87 Loop Street, Cape Town, 8000","CBD","Apartment"],
+  ["ZG-002","109 Station House","Station House Sea Point, 8060","Sea Point","Apartment"],
+  ["ZG-003","602 The Suro","The Suro, Holmfirth Road, 8060","Sea Point","Apartment"],
+  ["ZG-004","Suite 103 Strand Beach","243 High Level Road, 8005","Sea Point","Apartment"],
+  ["ZG-005","1322 16 on Bree","1322 Bree Street, Cape Town, 8000","CBD","Apartment"],
+  ["ZG-006","2309 16 on Bree","1322 Bree Street, Cape Town, 8000","CBD","Apartment"],
+  ["ZG-007","201 The Sage","Arthurs Road, Cape Town, 8060","Sea Point","Apartment"],
+  ["ZG-008","504 The Centurion","1 Frere Road, Cape Town, 8005","Sea Point","Apartment"],
+  ["ZG-009","314 Station House","Station House Sea Point, 8060","Sea Point","Apartment"],
+  ["ZG-010","10 Duet Loft","10 Duet Close, Durbanville, 7550","Durbanville","Cottage"],
+  ["ZG-011","10 Duet Cottage","10 Duet Close, Durbanville, 7550","Durbanville","Cottage"],
+  ["ZG-012","10 Duet Main House","10 Duet Close, Durbanville, 7550","Durbanville","House"],
+  ["ZG-013","5 Sunglint","24 Dudley Road, Sea Point, 8060","Sea Point","Apartment"],
+  ["ZG-014","201 The Suro","The Suro, Holmfirth Road, 8060","Sea Point","Apartment"],
+  ["ZG-015","Unit 3 Castella Mare","47 Coral Road, Table View, 7439","Table View","Apartment"],
+  ["ZG-016","417 Station House","Station House Sea Point, 8060","Sea Point","Apartment"],
+  ["ZG-017","605 The Tokyo","87 Loop Street, Cape Town, 8000","CBD","Apartment"],
+  ["ZG-018","35 Uxolo","Uxolo Apartments, Cape Town, 8001","CBD","Apartment"],
+  ["ZG-019","601 Station House","Station House Sea Point, 8060","Sea Point","Apartment"],
+  ["ZG-020","209 220 on Loop","220 Loop Street, Cape Town, 8000","CBD","Apartment"],
+  ["ZG-021","411 72 Kloof","72 Kloof, 1 Nicol Street, 8001","Gardens","Apartment"],
+  ["ZG-022","21 Bungalow","Clifton Beach","Clifton","House"],
+  ["ZG-023","Bungalow 25","Clifton Beach","Clifton","House"],
+  ["ZG-024","504 Greenmarket","Shortmarket Street, Cape Town, 8000","CBD","Apartment"],
+  ["ZG-025","601 Quayside Apartments","34 Prestwich Street, Cape Town, 8001","DWK","Apartment"],
+  ["ZG-026","110 220 on Loop","220 Loop Street, Cape Town, 8000","CBD","Apartment"],
+  ["ZG-027","108 343 on B","343 Main Road, Cape Town, 8005","CBD","Apartment"],
+  ["ZG-028","1008 The Tokyo","87 Loop Street, Cape Town, 8000","CBD","Apartment"],
+  ["ZG-029","602 The Tokyo","87 Loop Street, Cape Town, 8000","CBD","Apartment"],
+  ["ZG-030","Unit 4 Villa Palmar","Upper Portswood Road, Green Point, 8051","Green Point","Apartment"],
+  ["ZG-031","8 Bramber Court","12 Ravenscraig Road, Sea Point, 8005","Sea Point","Apartment"],
+  ["ZG-032","506 Greenmarket","Shortmarket Street, Cape Town, 8000","CBD","Apartment"],
+  ["ZG-033","24 Upper Pepper","24 Upper Pepper Street, Bo-Kaap, 8001","Bo-Kaap","House"],
+  ["ZG-034","109 Doric","Doric Court, York Road, Green Point, 8051","Green Point","Apartment"],
+  ["ZG-035","315 100 on Main","100 Main Road, Cape Town, 8005","CBD","Apartment"],
+  ["ZG-036","109 Mouille Grange","11 Beach Road, Mouille Point, 8005","Mouille Point","Apartment"],
+  ["ZG-037","2108 The Rubik","Loop Street, Cape Town, 8000","CBD","Apartment"],
+  ["ZG-038","602 126 on Main","126 Main Road, Cape Town, 8060","CBD","Apartment"],
+  ["ZG-039","92 Highstrand","Green Point, Cape Town","Green Point","Apartment"],
+  ["ZG-040","526 St Martini Gardens","Queen Victoria Street, Cape Town, 8000","CBD","Apartment"],
+  ["ZG-041","1005 Arnhem","6 Loxton Road, Milnerton, 7441","Milnerton","Apartment"],
+  ["ZG-042","57 North Walk","57 North Walk, Pinelands, 7405","Pinelands","House"],
+  ["ZG-043","505 Bridgewater","Conference Lane, Century City, 7441","Century City","Apartment"],
+  ["ZG-044","17 Upper Paradise","17 Upper Paradise Road, Newlands, 7700","Newlands","Cottage"],
+  ["ZG-045","35A Constantia Road","35A Constantia Road, Gardens, 8001","Gardens","Apartment"],
+  ["ZG-046","10 Duet Main House","10 Duet Close, Durbanville, 7550","Durbanville","House"],
+  ["ZG-047","59 Elgin","59 Elgin Road, Rondebosch, 7700","Rondebosch","House"],
+  ["ZG-048","78 Bryant Street","78 Bryant Street, Bo-Kaap","Bo-Kaap","House"],
+  ["ZG-049","614 Albert","1a Albert Road, Woodstock, 8001","Woodstock","Apartment"],
+  ["ZG-050","Unit 1, 2 Munnik Laas","2 Munnik Laas Street, N1 City, 7500","N1 City","House"],
+  ["ZG-051","Unit 2, 2 Munnik Laas","2 Munnik Laas Street, N1 City, 7500","N1 City","House"],
+  ["ZG-052","Unit 3, 2 Munnik Laas","2 Munnik Laas Street, N1 City, 7500","N1 City","House"],
 ];
-const PROPERTIES = PROP_RAW.map(([id,name,area,beds,baths,portfolio,flag]) => ({
-  id, name, area, beds, baths, portfolio, flag: flag||null,
-  type: beds === 1 ? "Studio/1-Bed" : beds <= 2 ? "2-Bed" : beds <= 3 ? "3-Bed" : "4+ Bed",
+const PROPERTIES = PROP_RAW.map(([id,name,address,area,type]) => ({
+  id, name, address, area, type,
+  flag: id==="ZG-046" ? "Duplicate of ZG-012" : id==="ZG-017" ? "Duplicate of ZG-001" : null,
+  portfolio: parseInt(id.replace("ZG-","")) <= 30 ? 1 : 2,
   status: "Active",
 }));
 
-const mkBooking = (id, guestName, propId, checkIn, checkOut, platform, revenue, extraCleans = [], notes = "") => {
+const mkBooking = (id, guestName, propId, checkIn, checkOut, platform, revenue, extraCleans=[], notes="") => {
   const prop = PROPERTIES.find(p => p.id === propId);
   const nights = daysBetween(checkIn, checkOut);
-  const cleans = calculateCleans(checkIn, checkOut, nights).map((c, i) => ({
-    ...c,
-    ...( extraCleans[i] || {}),
-    status: extraCleans[i]?.status || c.status,
+  const cleans = calculateCleans(checkIn, checkOut, nights).map((c,i) => ({
+    ...c, ...(extraCleans[i]||{}), status: extraCleans[i]?.status||c.status,
   }));
-  return { id, guestName, propId, propertyName: prop?.name || propId, area: prop?.area || "",
-    checkIn, checkOut, nights, platform, revenue: Number(revenue), notes,
-    status: daysBetween(checkOut, TODAY) > 0 ? "Checked Out" : daysBetween(TODAY, checkIn) > 0 ? "Upcoming" : "In-House",
-    cleans };
+  return { id, guestName, propId, propertyName: prop?.name||propId, area: prop?.area||"",
+    checkIn, checkOut, nights, platform, revenue: Number(revenue)||0, notes,
+    status: daysBetween(TODAY,checkIn)>0?"Upcoming":daysBetween(checkOut,TODAY)>0?"Checked Out":"In-House", cleans };
+};
+const mkBookingDirect = (id, guestName, propName, checkIn, checkOut, platform, revenue, cleanStatuses=[], notes="") => {
+  const nights = daysBetween(checkIn, checkOut);
+  const cleans = calculateCleans(checkIn, checkOut, nights).map((c,i) => ({
+    ...c, status: cleanStatuses[i]||c.status, assignedHousekeeper:"",
+  }));
+  return { id, guestName, propId:null, propertyName:propName, area:"",
+    checkIn, checkOut, nights, platform, revenue: Number(revenue)||0, notes,
+    status: daysBetween(TODAY,checkIn)>0?"Upcoming":daysBetween(checkOut,TODAY)>0?"Checked Out":"In-House", cleans };
 };
 
 const INITIAL_BOOKINGS = [
-  mkBooking("HMD9DDPMNY","Nomusa Buthelezi","ZG-015","2026-04-28","2026-05-29","Airbnb",16705.35,
-    [{status:"Completed",completedDate:"2026-05-05",assignedHousekeeper:"Rebecca"},{status:"Completed",completedDate:"2026-05-12",assignedHousekeeper:"Sharon"},{status:"Completed",completedDate:"2026-05-19",assignedHousekeeper:"Rebecca"},{status:"Upcoming"}]),
-  mkBooking("6947727965","Guest","ZG-002","2026-05-01","2026-05-29","Booking.com",22400.00,
-    [{status:"Completed",completedDate:"2026-05-08",assignedHousekeeper:"Sandy"},{status:"Completed",completedDate:"2026-05-15",assignedHousekeeper:"Sandy"},{status:"Upcoming"},{status:"Upcoming"}],"⚠️ Name missing"),
-  mkBooking("6112448606","Sipho Dlamini","ZG-006","2026-05-03","2026-05-24","Booking.com",18900.00,
-    [{status:"Completed",completedDate:"2026-05-10",assignedHousekeeper:"Betty"},{status:"Completed",completedDate:"2026-05-17",assignedHousekeeper:"Betty"}]),
-  mkBooking("5986083519","Amina Mokoena","ZG-019","2026-05-10","2026-05-31","Booking.com",14200.00,
-    [{status:"Completed",completedDate:"2026-05-17",assignedHousekeeper:"Netsai"},{status:"Upcoming"},{status:"Upcoming"}]),
-  mkBooking("AHBD72KP","Fatima Davids","ZG-034","2026-04-14","2026-05-26","Airbnb",31500.00,
-    [{status:"Completed",completedDate:"2026-04-21",assignedHousekeeper:"Kudzai"},{status:"Completed",completedDate:"2026-04-28",assignedHousekeeper:"Kudzai"},{status:"Completed",completedDate:"2026-05-05",assignedHousekeeper:"Kudzai"},{status:"Completed",completedDate:"2026-05-12",assignedHousekeeper:"Kudzai"},{status:"Upcoming"}]),
-  mkBooking("XPQM99AR","Liam van der Berg","ZG-032","2026-05-17","2026-05-31","Direct",12600.00,
-    [{status:"Overdue"},{status:"Upcoming"}]),
-  mkBooking("BC449281","Thabo Sithole","ZG-050","2026-04-20","2026-06-08","Airbnb",58000.00,
-    [{status:"Completed",completedDate:"2026-04-27",assignedHousekeeper:"Tryness"},{status:"Completed",completedDate:"2026-05-04",assignedHousekeeper:"Tryness"},{status:"Completed",completedDate:"2026-05-11",assignedHousekeeper:"Tryness"},{status:"Completed",completedDate:"2026-05-18",assignedHousekeeper:"Merjury"},{status:"Due Tomorrow"},{status:"Upcoming"},{start:"Upcoming"}]),
-  mkBooking("KWR331XZ","Guest","ZG-044","2026-05-07","2026-05-28","Booking.com",0,
-    [{status:"Completed",completedDate:"2026-05-14",assignedHousekeeper:"Sharon"}],"⚠️ Name missing; ⚠️ Revenue missing"),
-  mkBooking("NHQP7761","Zanele Khumalo","ZG-049","2026-05-05","2026-05-26","Airbnb",27800.00,
-    [{status:"Completed",completedDate:"2026-05-12",assignedHousekeeper:"Netsai"},{status:"Completed",completedDate:"2026-05-19",assignedHousekeeper:"Netsai"}]),
-  mkBooking("7839204651","Pieter Joubert","ZG-024","2026-05-01","2026-05-22","Booking.com",19400.00,
-    [{status:"Completed",completedDate:"2026-05-08",assignedHousekeeper:"Betty"},{status:"Completed",completedDate:"2026-05-15",assignedHousekeeper:"Betty"}]),
-  mkBooking("LQZB44MM","Sarah Ntuli","ZG-041","2026-05-08","2026-05-29","Airbnb",23100.00,
-    [{status:"Completed",completedDate:"2026-05-15",assignedHousekeeper:"Rebecca"},{status:"Due Tomorrow"}]),
-  mkBooking("DMHK9913","Guest","ZG-027","2026-05-15","2026-06-05","Direct",0,
-    [{status:"Upcoming"},{status:"Upcoming"}],"⚠️ Name missing; ⚠️ Revenue missing; ⚠️ Platform unconfirmed"),
-  mkBooking("AB88PQRS","Chidi Okonkwo","ZG-009","2026-05-20","2026-05-27","Airbnb",6300.00),
-  mkBooking("NXV221BK","Nia Petersen","ZG-031","2026-05-18","2026-06-08","Booking.com",15800.00,
-    [{status:"Upcoming"},{status:"Upcoming"},{status:"Upcoming"}]),
-  mkBooking("RSTW7823","Musa Hadebe","ZG-045","2026-05-22","2026-05-29","Direct",9800.00),
-  mkBooking("4420881957","Priya Naidoo","ZG-016","2026-05-03","2026-05-24","Booking.com",16200.00,
-    [{status:"Completed",completedDate:"2026-05-10",assignedHousekeeper:"Sandy"},{status:"Completed",completedDate:"2026-05-17",assignedHousekeeper:"Sandy"}]),
-  mkBooking("QPZX9912","Aisha Abrahams","ZG-035","2026-05-25","2026-06-15","Airbnb",18300.00,
-    [{status:"Upcoming"},{status:"Upcoming"}]),
-  mkBooking("JKWP3347","Mohammed Suleiman","ZG-004","2026-05-26","2026-06-02","Direct",7200.00),
-  mkBooking("BQNM5561","Lindiwe Dube","ZG-038","2026-05-10","2026-05-31","Airbnb",13400.00,
-    [{status:"Completed",completedDate:"2026-05-17",assignedHousekeeper:"Kudzai"},{status:"Due Today"},{status:"Upcoming"}]),
-  mkBooking("VXTR8890","Guest","ZG-003","2026-05-24","2026-05-31","Booking.com",5800.00,
-    [],"⚠️ Name missing"),
-  mkBooking("CPMQ6614","Naledi Modise","ZG-033","2026-05-20","2026-05-27","Airbnb",4900.00),
-  mkBooking("7123449820","Khulekani Zulu","ZG-043","2026-04-28","2026-05-19","Booking.com",11700.00,
-    [{status:"Completed",completedDate:"2026-05-05",assignedHousekeeper:"Merjury"},{status:"Completed",completedDate:"2026-05-12",assignedHousekeeper:"Merjury"}]),
-  mkBooking("WXPQ4401","Yusuf Essop","ZG-040","2026-05-26","2026-06-09","Airbnb",14800.00,
-    [{status:"Upcoming"}]),
-  mkBooking("LTBV2219","Thandiwe Cele","ZG-008","2026-05-08","2026-05-29","Direct",12100.00,
-    [{status:"Completed",completedDate:"2026-05-15",assignedHousekeeper:"Tryness"},{status:"Upcoming"}]),
-  mkBooking("RQHM7782","Jessica Fredericks","ZG-010","2026-05-12","2026-05-26","Airbnb",9600.00,
-    [{status:"Completed",completedDate:"2026-05-19",assignedHousekeeper:"Netsai"}]),
-  mkBooking("ZNXB5500","Tebogo Molefe","ZG-021","2026-05-24","2026-06-14","Booking.com",19200.00,
-    [{status:"Upcoming"},{status:"Upcoming"}]),
+  mkBookingDirect("HMD9DDPMNY","Nomusa Buthelezi","Unit 3 Castella Mare","2026-05-02","2026-06-02","Airbnb",16705.35,["Completed","Completed","Completed","Upcoming"]),
+  mkBookingDirect("HMMM4NRS3D","Lene Van Dyk","10 Duet Cottage","2026-05-01","2026-05-31","Airbnb",10541.63,["Completed","Completed","Completed","Upcoming"]),
+  mkBookingDirect("HMDSP3XDZD","Abigail Windvogel","35 Uxolo","2026-04-30","2026-05-28","Airbnb",13446.79,["Completed","Completed","Completed"]),
+  mkBookingDirect("HMPPK4ZEN5","Anthony Chijioke","2309 16 on Bree","2026-04-16","2026-05-16","Airbnb",28009.34,["Completed","Completed","Completed","Completed"]),
+  mkBookingDirect("HMZZYR9NP8","Oluwamayowa Fanoiki","2108 The Rubik","2026-04-13","2026-05-14","Airbnb",20117.40,["Completed","Completed","Completed","Completed"]),
+  mkBookingDirect("HMNZ59ABRW","Sylvester Selepe","601 Quayside Apartments","2026-04-24","2026-06-30","Airbnb",52196.41,["Completed","Completed","Completed","Completed","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming"]),
+  mkBookingDirect("HMKMTC9JAQ","Tonye Tariah","1005 Arnhem","2026-04-06","2026-05-08","Airbnb",23030.40,["Completed","Completed","Completed","Completed"]),
+  mkBookingDirect("HMQESEWZMJ","Francisca","Suite 103 Strand Beach","2026-05-01","2026-05-17","Airbnb",0,["Completed","Completed"],"Revenue missing"),
+  mkBookingDirect("HMH34D3NEA","Azeez Kehinde","504 Greenmarket","2026-04-30","2026-05-11","Airbnb",7763.89,["Completed"]),
+  mkBookingDirect("HMPRNKZKH4","Abdullah Habeeb","505 Bridgewater","2026-05-03","2026-06-03","Airbnb",24890.01,["Completed","Rescheduled","Upcoming","Upcoming"]),
+  mkBookingDirect("HMNRD2RRP9","Maya Dorel","8 Bramber Court","2026-04-11","2026-06-11","Airbnb",67965.89,["Completed","Completed","Completed","Completed","Rescheduled","Upcoming","Upcoming","Upcoming"]),
+  mkBookingDirect("HMMN2RHC4P","Serena Dell Angelo","504 The Centurion","2026-04-23","2026-05-25","Airbnb",22063.97,["Completed","Completed","Completed","Completed"]),
+  mkBookingDirect("HMJHWNNKMB","Milla Sequeira","201 The Suro","2026-05-04","2026-06-04","Airbnb",41017.65,["Completed","Completed","Upcoming","Upcoming"]),
+  mkBookingDirect("HMBRAYFMD2","Ontario","24 Upper Pepper","2026-05-04","2026-05-29","Airbnb",21933.38,["Completed","Completed","Upcoming"]),
+  mkBookingDirect("HMPFX4MBN2","Teresa Forester","10 Duet Loft","2026-05-07","2026-05-19","Airbnb",910.67,["Completed"]),
+  mkBookingDirect("HMC344RY9N","Brian Van Eyssen","Unit 2, 2 Munnik Laas","2026-05-08","2026-05-31","Airbnb",0,["Rescheduled","Rescheduled","Upcoming"],"Revenue missing"),
+  mkBookingDirect("5986083519","Alexis","417 Station House","2026-05-10","2026-08-01","Booking.com",0,["Rescheduled","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming"],"Revenue missing"),
+  mkBookingDirect("NA-601","Guest","601 Station House","2026-05-04","2026-08-01","Direct",0,["Completed","Completed","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming"],"Guest name missing"),
+  mkBookingDirect("HM3TX2FDHZ","Rhianne Tisdale","602 The Suro","2026-05-09","2026-06-14","Airbnb",0,["Rescheduled","Upcoming","Upcoming","Upcoming","Upcoming"],"Revenue missing"),
+  mkBookingDirect("HMEWYEMCWH","Guest","Unit 1, 2 Munnik Laas","2026-05-10","2026-06-30","Airbnb",0,["Rescheduled","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming"],"Guest name missing"),
+  mkBookingDirect("HMXRKNYWJN","Guest","10 Duet Main House","2026-05-14","2026-05-23","Airbnb",0,["Completed"],"Guest name missing"),
+  mkBookingDirect("4PL7YF","John","314 Station House","2026-05-11","2026-06-11","Direct",0,["Completed","Upcoming","Upcoming","Upcoming"],"Revenue missing"),
+  mkBookingDirect("NA-614","Guest","614 Albert","2026-05-14","2026-05-22","Airbnb",0,["Completed"],"Guest name missing"),
+  mkBookingDirect("NA-220","Guest","209 220 on Loop","2026-05-15","2026-06-15","Airbnb",0,["Completed","Upcoming","Upcoming","Upcoming"],"Guest name missing"),
+  mkBookingDirect("NA-126","Guest","602 126 on Main","2026-05-15","2026-05-28","Airbnb",0,["Completed"],"Guest name missing"),
 ];
-
-// Recalculate statuses
 INITIAL_BOOKINGS.forEach(b => {
-  b.cleans = b.cleans.map(c => ({ ...c, status: c.status === "Completed" ? "Completed" : c.status === "Overdue" ? "Overdue" : c.status === "Due Today" ? "Due Today" : c.status === "Due Tomorrow" ? "Due Tomorrow" : getCleanStatus(c) }));
-  b.status = daysBetween(TODAY, b.checkIn) > 0 ? "Upcoming" : daysBetween(b.checkOut, TODAY) > 0 ? "Checked Out" : "In-House";
+  b.cleans = b.cleans.map(c => ["Completed","Rescheduled"].includes(c.status) ? c : {...c, status:getCleanStatus(c)});
+  b.status = daysBetween(TODAY,b.checkIn)>0?"Upcoming":daysBetween(b.checkOut,TODAY)>0?"Checked Out":"In-House";
 });
+
 
 const INITIAL_INCIDENTS = [
   { id:"INC-001", propertyId:"ZG-002", propertyName:"601 Quayside", date:"2026-05-10", type:"Cleaning Issue", description:"Guest reported inadequate cleaning on arrival. Bin not emptied, bathroom not wiped down.", guest:"Sylvester Selepe", severity:"Medium", status:"Resolved", resolution:"Sharon returned for a full re-clean. Apology sent. 10% discount applied to next stay.", resolvedDate:"2026-05-10" },
@@ -321,6 +306,7 @@ const initialState = {
   sops: SOPS,
   templates: TEMPLATES,
   dailyOps: {},
+  housekeeping: [],
   settings: {
     companyName: "Zwart Group",
     managerName: "Operations Manager",
@@ -355,6 +341,9 @@ function reducer(state, action) {
     case "UPDATE_SETTINGS": return { ...state, settings: { ...state.settings, ...action.payload } };
     case "ADD_PROPERTY": return { ...state, properties: [...state.properties, action.payload] };
     case "UPDATE_PROPERTY": return { ...state, properties: state.properties.map(p => p.id === action.payload.id ? { ...p, ...action.payload } : p) };
+    case 'ADD_HK_SCHEDULE': return { ...state, housekeeping: [...(state.housekeeping||[]), action.payload] };
+    case 'UPDATE_HK_SCHEDULE': return { ...state, housekeeping: (state.housekeeping||[]).map(h => h.id===action.payload.id?{...h,...action.payload}:h) };
+    case 'DELETE_HK_SCHEDULE': return { ...state, housekeeping: (state.housekeeping||[]).filter(h => h.id!==action.payload) };
     default: return state;
   }
 }
@@ -579,13 +568,13 @@ const NAV = [
   { id:"dashboard",     icon:Home,         label:"Dashboard",          badge:null },
   { id:"cleans",        icon:Calendar,     label:"Res & Cleans",       badge:"cleans" },
   { id:"dailyops",      icon:ClipboardList,label:"Daily Ops",          badge:null },
+  { id:"housekeeping",  icon:Users,        label:"Housekeeping",        badge:null },
   { id:"financials",    icon:DollarSign,   label:"Financials",         badge:null },
   { id:"metrics",       icon:BarChart2,    label:"Advanced Metrics",   badge:null },
   { id:"revenue",       icon:TrendingUp,   label:"Revenue Strategy",   badge:null },
-  { id:"incidents",     icon:AlertTriangle,label:"Incident Register",  badge:"incidents" },
-  { id:"maintenance",   icon:Wrench,       label:"Maintenance",        badge:"maintenance" },
-  { id:"complaints",    icon:MessageSquare,label:"Complaints",         badge:"complaints" },
+  { id:"incidents",     icon:AlertTriangle,label:"Incidents & Complaints", badge:"incidents" },
   { id:"reviews",       icon:Star,         label:"Reviews",            badge:"reviews" },
+  { id:"scorecard",     icon:Target,       label:"Property Scorecard",  badge:null },
   { id:"statements",    icon:FileText,     label:"Owner Statements",   badge:null },
   { id:"team",          icon:Users,        label:"Team & Vendors",     badge:null },
   { id:"sops",          icon:BookOpen,     label:"SOPs",               badge:null },
@@ -600,12 +589,12 @@ function Sidebar({ active, onNav, collapsed, onToggle }) {
   const { state } = useApp();
   const badges = useMemo(() => {
     const openIncidents = state.incidents.filter(i => i.status === "Open").length;
-    const pendingMaint = state.maintenance.filter(m => m.status !== "Completed").length;
-    const openComplaints = state.complaints.filter(c => c.status === "Open").length;
+    const pendingMaint = 0;
+    const openComplaints = (state.complaints||[]).filter(c => c.status === "Open").length;
     const unrespondedReviews = state.reviews.filter(r => !r.responded).length;
     const urgentCleans = state.bookings.flatMap(b => b.cleans).filter(c =>
       ["Due Today","Due Tomorrow","Overdue"].includes(c.status)).length;
-    return { incidents: openIncidents, maintenance: pendingMaint,
+    return { incidents: openIncidents + openComplaints, maintenance: 0,
       complaints: openComplaints, reviews: unrespondedReviews, cleans: urgentCleans };
   }, [state]);
 
@@ -672,10 +661,10 @@ function Sidebar({ active, onNav, collapsed, onToggle }) {
       {!collapsed && (
         <div style={{ padding:"12px 16px", borderTop:`1px solid ${C.border}`, fontSize:11, color:C.text3 }}>
           <div style={{ display:"flex", gap:8, marginBottom:6 }}>
-            <span style={{ background:C.tealBg, color:C.teal, padding:"2px 8px", borderRadius:3, fontSize:10, fontWeight:600 }}>P1 ×25</span>
-            <span style={{ background:C.amberBg, color:C.amber, padding:"2px 8px", borderRadius:3, fontSize:10, fontWeight:600 }}>P2 ×25</span>
+            <span style={{ background:C.tealBg, color:C.teal, padding:"2px 8px", borderRadius:3, fontSize:10, fontWeight:600 }}>P1 ×30</span>
+            <span style={{ background:C.amberBg, color:C.amber, padding:"2px 8px", borderRadius:3, fontSize:10, fontWeight:600 }}>P2 ×22</span>
           </div>
-          <div style={{ color:C.text3, fontSize:10 }}>50 Properties · Cape Town</div>
+          <div style={{ color:C.text3, fontSize:10 }}>52 Properties · Cape Town</div>
         </div>
       )}
     </div>
@@ -2007,7 +1996,7 @@ function PropertiesModule() {
         </div>
       </div>
       <div style={{ display:"flex", gap:12, marginBottom:20 }}>
-        <KPICard label="Total Properties" value={50} color={C.teal} />
+        <KPICard label="Total Properties" value={state.properties.length} color={C.teal} />
         <KPICard label="Portfolio 1" value={state.properties.filter(p => p.portfolio===1).length} color={C.blue} />
         <KPICard label="Portfolio 2" value={state.properties.filter(p => p.portfolio===2).length} color={C.amber} />
         <KPICard label="Flags" value={state.properties.filter(p => p.flag).length} color={C.crimson} />
@@ -2032,7 +2021,7 @@ function PropertiesModule() {
                     {currentBooking && <Badge label="In-House" size="xs" />}
                   </div>
                   <div style={{ fontSize:13, fontWeight:600, color:C.text1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{p.name}</div>
-                  <div style={{ fontSize:11, color:C.text3, marginTop:2 }}>{p.area} · {p.beds}BR {p.baths}BA</div>
+                  <div style={{ fontSize:11, color:C.text3, marginTop:2 }}>{p.area} · {p.type}</div>
                   <div style={{ display:"flex", gap:12, marginTop:6, fontSize:11, color:C.text2 }}>
                     <span>{propBookings.length} bookings</span>
                     <span style={{ color:C.teal, fontFamily:"'DM Mono',monospace" }}>R {(propRevenue/1000).toFixed(1)}k</span>
@@ -2279,19 +2268,272 @@ function SettingsModule() {
   );
 }
 
+// ─── ROW COLOUR HELPERS ──────────────────────────────────────────────────────
+const getBookingRowColor = (booking) => {
+  const statuses = booking.cleans.map(c => getCleanStatus(c));
+  if (statuses.includes("Overdue"))      return { bg:"rgba(255,59,92,0.12)", border:"rgba(255,59,92,0.35)" };
+  if (statuses.includes("Due Today"))    return { bg:"rgba(245,166,35,0.15)", border:"rgba(245,166,35,0.4)" };
+  if (statuses.includes("Due Tomorrow")) return { bg:"rgba(0,212,184,0.09)", border:"rgba(0,212,184,0.4)" };
+  return { bg:"transparent", border:"transparent" };
+};
+
+// ─── HOUSEKEEPING SCHEDULER ───────────────────────────────────────────────────
+const HK_TASK_TYPES = ["Full Turnover","Mid-Stay Refresh","Full Turnover & Mid-Stay","Guest Extended","Other"];
+const HK_QC_FIELDS = [
+  { key:"keysCollected", label:"Keys Collected" },
+  { key:"guestKeys", label:"Guest Keys" },
+  { key:"electricityUnits", label:"Electricity Units" },
+  { key:"photos", label:"Photos Submitted" },
+  { key:"keysReturned", label:"Keys Returned" },
+];
+
+function hkColor(v) { return v==="Done"?C.green:v==="Issue"?C.crimson:C.text3; }
+function hkBg(v) { return v==="Done"?C.greenBg:v==="Issue"?C.crimsonBg:C.bg2; }
+function blankProp() { return { propertyName:"", taskType:"Full Turnover", keysCollected:"", guestKeys:"", electricityUnits:"", photos:"", keysReturned:"", qcRating:0, notes:"" }; }
+
+function HKStars({ value, onChange }) {
+  return (
+    <div style={{ display:"flex", gap:3 }}>
+      {[1,2,3,4,5].map(n => (
+        <span key={n} onClick={() => onChange && onChange(n)}
+          style={{ fontSize:18, cursor:onChange?"pointer":"default", color:n<=(value||0)?C.amber:C.border }}>★</span>
+      ))}
+    </div>
+  );
+}
+
+function HKBtn({ value, onChange }) {
+  const cycle = {"":"Done","Done":"Not Required","Not Required":"Issue","Issue":""};
+  return (
+    <button onClick={() => onChange && onChange(cycle[value||""]||"Done")}
+      style={{ padding:"3px 8px", borderRadius:4, fontSize:11, fontWeight:600, cursor:"pointer",
+        border:"none", background:hkBg(value), color:hkColor(value), fontFamily:"'DM Mono',monospace", minWidth:90 }}>
+      {value||"—"}
+    </button>
+  );
+}
+
+function HousekeepingScheduler() {
+  const { state, dispatch, toast } = useApp();
+  const [tab, setTab] = useState("schedule");
+  const [viewDate, setViewDate] = useState(addDays(TODAY,1));
+  const [histDate, setHistDate] = useState(TODAY);
+  const [showAdd, setShowAdd] = useState(false);
+  const [editId, setEditId] = useState(null);
+  const [form, setForm] = useState({ date:addDays(TODAY,1), housekeeper:"", properties:[blankProp(),blankProp()] });
+
+  const records = Array.isArray(state.housekeeping) ? state.housekeeping : [];
+  const teamNames = (state.team||[]).map(m => m.name);
+  const propNames = (state.properties||[]).map(p => p.name);
+
+  const save = () => {
+    if (!form.housekeeper) return toast("Select housekeeper","error");
+    const filled = form.properties.filter(p => p.propertyName && p.propertyName !== "--");
+    if (!filled.length) return toast("Add at least one property","error");
+    const id = editId || ("HK-"+String(records.length+1).padStart(3,"0"));
+    dispatch({ type: editId?"UPDATE_HK_SCHEDULE":"ADD_HK_SCHEDULE", payload:{ id, date:form.date, housekeeper:form.housekeeper, properties:filled }});
+    toast("Saved"); setShowAdd(false); setEditId(null);
+    setForm({ date:addDays(TODAY,1), housekeeper:"", properties:[blankProp(),blankProp()] });
+  };
+
+  const startEdit = (e) => {
+    const props = [...e.properties]; while(props.length<2) props.push(blankProp());
+    setForm({ date:e.date, housekeeper:e.housekeeper, properties:props });
+    setEditId(e.id); setShowAdd(true);
+  };
+
+  const updateQC = (entryId, pi, field, val) => {
+    const e = records.find(r => r.id===entryId); if (!e) return;
+    dispatch({ type:"UPDATE_HK_SCHEDULE", payload:{ id:entryId, properties:e.properties.map((p,i)=>i===pi?{...p,[field]:val}:p) }});
+  };
+
+  const del = (id) => { if(window.confirm("Delete?")) { dispatch({ type:"DELETE_HK_SCHEDULE", payload:id }); toast("Deleted"); } };
+
+  const todayEntries = records.filter(r => r.date===viewDate);
+  const histEntries = records.filter(r => r.date===histDate);
+  const issues = records.flatMap(r=>r.properties).flatMap(p=>HK_QC_FIELDS.map(f=>p[f.key])).filter(v=>v==="Issue").length;
+  const rated = records.flatMap(r=>r.properties).filter(p=>p.qcRating>0);
+  const avgQC = rated.length ? (rated.reduce((s,p)=>s+p.qcRating,0)/rated.length).toFixed(1) : "—";
+
+  const PropCard = ({ entry, p, pi, editable }) => (
+    <div style={{ background:C.bg2, borderRadius:8, padding:"12px 14px", borderLeft:`3px solid ${C.teal}` }}>
+      <div style={{ fontSize:13, fontWeight:600, color:C.text1, marginBottom:4 }}>{p.propertyName}</div>
+      <span style={{ fontSize:11, background:C.amberBg, color:C.amber, padding:"2px 8px", borderRadius:4, fontWeight:600, display:"inline-block", marginBottom:10 }}>{p.taskType}</span>
+      {HK_QC_FIELDS.map(f => (
+        <div key={f.key} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:5 }}>
+          <span style={{ fontSize:11, color:C.text3 }}>{f.label}</span>
+          {editable ? <HKBtn value={p[f.key]} onChange={v=>updateQC(entry.id,pi,f.key,v)} />
+            : <span style={{ fontSize:11, color:hkColor(p[f.key]), fontWeight:600 }}>{p[f.key]||"—"}</span>}
+        </div>
+      ))}
+      <div style={{ marginTop:8, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+        <span style={{ fontSize:11, color:C.text3 }}>QC Rating</span>
+        <HKStars value={p.qcRating} onChange={editable?v=>updateQC(entry.id,pi,"qcRating",v):null} />
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{ animation:"fadeIn 0.25s ease" }}>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:20 }}>
+        <SectionTitle>Housekeeping Scheduler & QC</SectionTitle>
+        <Btn variant="primary" icon={Plus} onClick={() => { setEditId(null); setForm({ date:addDays(TODAY,1), housekeeper:"", properties:[blankProp(),blankProp()] }); setShowAdd(true); }}>Add Schedule</Btn>
+      </div>
+
+      <div style={{ display:"flex", gap:12, marginBottom:20 }}>
+        <KPICard label="Total Records" value={records.length} color={C.teal} />
+        <KPICard label="Tomorrow" value={records.filter(r=>r.date===addDays(TODAY,1)).length} color={C.blue} />
+        <KPICard label="Avg QC" value={avgQC==="—"?"—":avgQC+" ⭐"} color={C.amber} />
+        <KPICard label="QC Issues" value={issues} color={issues>0?C.crimson:C.green} />
+      </div>
+
+      <div style={{ display:"flex", borderBottom:`1px solid ${C.border}`, marginBottom:20 }}>
+        {[["schedule","Schedule"],["qc","Quality Control"],["history","History"]].map(([id,label]) => (
+          <button key={id} onClick={()=>setTab(id)}
+            style={{ padding:"8px 24px", background:"none", border:"none", fontSize:13,
+              borderBottom:`2px solid ${tab===id?C.teal:"transparent"}`,
+              color:tab===id?C.teal:C.text2, cursor:"pointer", fontWeight:tab===id?600:400 }}>
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab==="schedule" && (
+        <div>
+          <div style={{ display:"flex", gap:10, alignItems:"center", marginBottom:16 }}>
+            <Input type="date" value={viewDate} onChange={setViewDate} style={{ width:180 }} />
+            <Btn size="sm" variant="subtle" onClick={()=>setViewDate(addDays(TODAY,1))}>Tomorrow</Btn>
+            <Btn size="sm" variant="subtle" onClick={()=>setViewDate(TODAY)}>Today</Btn>
+          </div>
+          {todayEntries.length===0
+            ? <EmptyState icon={Users} title={"No schedule for "+fmtDate(viewDate)} sub="Click Add Schedule to assign housekeepers." />
+            : todayEntries.map(e => (
+              <Card key={e.id} style={{ marginBottom:12 }}>
+                <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:14 }}>
+                  <div style={{ display:"flex", gap:12, alignItems:"center" }}>
+                    <div style={{ width:40, height:40, borderRadius:"50%", background:C.tealBg, display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:700, color:C.teal }}>{e.housekeeper.slice(0,2).toUpperCase()}</div>
+                    <div><div style={{ fontSize:14, fontWeight:700, color:C.text1 }}>{e.housekeeper}</div><div style={{ fontSize:11, color:C.text3 }}>{fmtDate(e.date)} · {e.properties.length} propert{e.properties.length===1?"y":"ies"}</div></div>
+                  </div>
+                  <div style={{ display:"flex", gap:8 }}>
+                    <Btn size="sm" variant="subtle" icon={Edit} onClick={()=>startEdit(e)}>Edit</Btn>
+                    <Btn size="sm" variant="ghost" onClick={()=>del(e.id)}><Trash2 size={12} color={C.crimson}/></Btn>
+                  </div>
+                </div>
+                <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))", gap:10 }}>
+                  {e.properties.map((p,pi) => <PropCard key={pi} entry={e} p={p} pi={pi} editable={true} />)}
+                </div>
+              </Card>
+            ))
+          }
+        </div>
+      )}
+
+      {tab==="qc" && (
+        <div>
+          {records.length===0 ? <EmptyState icon={CheckCircle} title="No records yet" sub="Add schedules to start tracking quality." /> :
+            Object.entries(records.reduce((acc,r)=>{ if(!acc[r.housekeeper]) acc[r.housekeeper]=[]; acc[r.housekeeper].push(r); return acc; },{})).map(([hk,entries]) => {
+              const hkIssues = entries.flatMap(e=>e.properties).flatMap(p=>HK_QC_FIELDS.map(f=>p[f.key])).filter(v=>v==="Issue").length;
+              const hkRated = entries.flatMap(e=>e.properties).filter(p=>p.qcRating>0);
+              const hkAvg = hkRated.length?(hkRated.reduce((s,p)=>s+p.qcRating,0)/hkRated.length).toFixed(1):"—";
+              return (
+                <div key={hk} style={{ marginBottom:24 }}>
+                  <div style={{ display:"flex", gap:12, alignItems:"center", padding:"10px 16px", background:C.bg1, borderRadius:8, border:`1px solid ${C.border}`, marginBottom:10 }}>
+                    <div style={{ width:36, height:36, borderRadius:"50%", background:C.tealBg, display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, fontWeight:700, color:C.teal }}>{hk.slice(0,2).toUpperCase()}</div>
+                    <div style={{ flex:1 }}><div style={{ fontSize:14, fontWeight:700, color:C.text1 }}>{hk}</div><div style={{ fontSize:11, color:C.text3 }}>{entries.length} session{entries.length!==1?"s":""}</div></div>
+                    <span style={{ color:hkIssues>0?C.crimson:C.green, fontSize:12 }}>{hkIssues>0?"⚠️ "+hkIssues+" issues":"✓ No issues"}</span>
+                    <span style={{ color:C.amber, fontSize:12 }}>⭐ {hkAvg}</span>
+                  </div>
+                  {entries.sort((a,b)=>b.date.localeCompare(a.date)).flatMap((e,ei)=>
+                    e.properties.map((p,pi) => (
+                      <div key={e.id+pi} style={{ marginLeft:12, marginBottom:8, background:C.bg1, borderRadius:8, padding:"12px 16px",
+                        border:`1px solid ${HK_QC_FIELDS.some(f=>p[f.key]==="Issue")?C.crimson+"40":C.border}`,
+                        borderLeft:`3px solid ${HK_QC_FIELDS.some(f=>p[f.key]==="Issue")?C.crimson:C.green}` }}>
+                        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
+                          <div><div style={{ fontSize:13, fontWeight:600, color:C.text1 }}>{p.propertyName}</div><div style={{ fontSize:11, color:C.text3 }}>{fmtDate(e.date)} · {p.taskType}</div></div>
+                          <HKStars value={p.qcRating} onChange={v=>updateQC(e.id,pi,"qcRating",v)} />
+                        </div>
+                        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))", gap:8 }}>
+                          {HK_QC_FIELDS.map(f => (
+                            <div key={f.key}><div style={{ fontSize:10, color:C.text3, marginBottom:3 }}>{f.label}</div><HKBtn value={p[f.key]} onChange={v=>updateQC(e.id,pi,f.key,v)} /></div>
+                          ))}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              );
+            })
+          }
+        </div>
+      )}
+
+      {tab==="history" && (
+        <div>
+          <div style={{ display:"flex", gap:10, alignItems:"center", marginBottom:16 }}>
+            <Input type="date" value={histDate} onChange={setHistDate} style={{ width:180 }} />
+          </div>
+          {histEntries.length===0 ? <EmptyState icon={BookMarked} title={"No records for "+fmtDate(histDate)} /> :
+            histEntries.map(e => (
+              <Card key={e.id} style={{ marginBottom:12 }}>
+                <div style={{ display:"flex", gap:10, alignItems:"center", marginBottom:12 }}>
+                  <div style={{ width:36, height:36, borderRadius:"50%", background:C.tealBg, display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, fontWeight:700, color:C.teal }}>{e.housekeeper.slice(0,2).toUpperCase()}</div>
+                  <div><div style={{ fontSize:13, fontWeight:600, color:C.text1 }}>{e.housekeeper}</div><div style={{ fontSize:11, color:C.text3 }}>{fmtDate(e.date)}</div></div>
+                </div>
+                <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))", gap:10 }}>
+                  {e.properties.map((p,pi) => <PropCard key={pi} entry={e} p={p} pi={pi} editable={false} />)}
+                </div>
+              </Card>
+            ))
+          }
+        </div>
+      )}
+
+      <Modal open={showAdd} onClose={()=>{setShowAdd(false);setEditId(null);}} title={editId?"Edit Schedule":"Add Schedule"} width={560}>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:4 }}>
+          <FormRow label="Date" required><Input type="date" value={form.date} onChange={v=>setForm(f=>({...f,date:v}))} /></FormRow>
+          <FormRow label="Housekeeper" required><Select value={form.housekeeper} onChange={v=>setForm(f=>({...f,housekeeper:v}))} options={["",...teamNames]} /></FormRow>
+        </div>
+        {[0,1].map(pi => (
+          <div key={pi} style={{ background:C.bg2, borderRadius:8, padding:"14px 16px", marginBottom:12 }}>
+            <div style={{ fontSize:12, fontWeight:700, color:C.text2, marginBottom:10 }}>Property {pi+1} {pi===1&&<span style={{ color:C.text3, fontWeight:400 }}>(optional)</span>}</div>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:10 }}>
+              <FormRow label="Property"><Select value={form.properties[pi]?.propertyName||""} onChange={v=>setForm(f=>({...f,properties:f.properties.map((p,i)=>i===pi?{...p,propertyName:v}:p)}))} options={["--",...propNames]} /></FormRow>
+              <FormRow label="Task Type"><Select value={form.properties[pi]?.taskType||"Full Turnover"} onChange={v=>setForm(f=>({...f,properties:f.properties.map((p,i)=>i===pi?{...p,taskType:v}:p)}))} options={HK_TASK_TYPES} /></FormRow>
+            </div>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:8 }}>
+              {HK_QC_FIELDS.map(field => (
+                <div key={field.key}><div style={{ fontSize:11, color:C.text3, marginBottom:3 }}>{field.label}</div>
+                <Select value={form.properties[pi]?.[field.key]||""} onChange={v=>setForm(f=>({...f,properties:f.properties.map((p,i)=>i===pi?{...p,[field.key]:v}:p)}))} options={["","Done","Not Required","Issue"]} /></div>
+              ))}
+            </div>
+            <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+              <span style={{ fontSize:11, color:C.text3 }}>QC Rating:</span>
+              <HKStars value={form.properties[pi]?.qcRating||0} onChange={v=>setForm(f=>({...f,properties:f.properties.map((p,i)=>i===pi?{...p,qcRating:v}:p)}))} />
+            </div>
+          </div>
+        ))}
+        <div style={{ display:"flex", gap:8 }}>
+          <Btn variant="primary" icon={Save} onClick={save}>{editId?"Update":"Save"} Schedule</Btn>
+          <Btn variant="ghost" onClick={()=>{setShowAdd(false);setEditId(null);}}>Cancel</Btn>
+        </div>
+      </Modal>
+    </div>
+  );
+}
+
 // ─── MODULE ROUTER ────────────────────────────────────────────────────────────
 function ModuleContent({ active, onNav }) {
   const map = {
     dashboard:   <Dashboard onNav={onNav} />,
     cleans:      <ResCleans />,
     dailyops:    <DailyOps />,
+    housekeeping: <HousekeepingScheduler />,
     financials:  <Financials />,
     metrics:     <AdvancedMetrics />,
     revenue:     <RevenueStrategy />,
     incidents:   <IncidentRegister />,
-    maintenance: <Maintenance />,
-    complaints:  <Complaints />,
     reviews:     <Reviews />,
+    scorecard:   <PropertyScorecard />,
     statements:  <OwnerStatements />,
     team:        <TeamVendors />,
     sops:        <SOPs />,
