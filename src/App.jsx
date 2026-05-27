@@ -2521,6 +2521,96 @@ function HousekeepingScheduler() {
   );
 }
 
+// ─── PROPERTY SCORECARD ──────────────────────────────────────────────────────
+function PropertyScorecard() {
+  const { state } = useApp();
+  const [sortBy, setSortBy] = useState("rating");
+  const [areaFilter, setAreaFilter] = useState("All");
+
+  const scorecards = state.properties.map(prop => {
+    const propReviews = state.reviews.filter(r => r.propertyName === prop.name || r.propertyId === prop.id);
+    const propBookings = state.bookings.filter(b => b.propertyName === prop.name || b.propId === prop.id);
+    const avgRating = propReviews.length
+      ? (propReviews.reduce((s,r) => s + r.rating, 0) / propReviews.length) : null;
+    const revenue = propBookings.reduce((s,b) => s + b.revenue, 0);
+    const fiveStars = propReviews.filter(r => r.rating === 5).length;
+    const lowRatings = propReviews.filter(r => r.rating <= 3).length;
+    return { prop, reviews: propReviews, bookings: propBookings, avgRating, revenue, fiveStars, lowRatings };
+  }).filter(s => s.reviews.length > 0 || s.bookings.length > 0);
+
+  const areas = ["All", ...new Set(state.properties.map(p => p.area).filter(Boolean))];
+  const filtered = scorecards
+    .filter(s => areaFilter === "All" || s.prop.area === areaFilter)
+    .sort((a,b) => sortBy==="rating" ? (b.avgRating||0)-(a.avgRating||0)
+      : sortBy==="reviews" ? b.reviews.length-a.reviews.length : b.revenue-a.revenue);
+
+  const totalAvg = state.reviews.length
+    ? (state.reviews.reduce((s,r) => s+r.rating, 0)/state.reviews.length).toFixed(2) : "—";
+
+  const rColor = (r) => !r?C.text3:r>=4.5?C.green:r>=4.0?C.teal:r>=3.5?C.amber:C.crimson;
+  const rLabel = (r) => !r?"No reviews":r>=4.8?"Exceptional":r>=4.5?"Excellent":r>=4.0?"Good":r>=3.5?"Average":"Needs Attention";
+
+  return (
+    <div style={{ animation:"fadeIn 0.25s ease" }}>
+      <SectionTitle>Property Scorecard</SectionTitle>
+      <div style={{ display:"flex", gap:12, marginBottom:20 }}>
+        <KPICard label="Portfolio Avg" value={totalAvg==="—"?"—":totalAvg+" ⭐"} color={C.amber} />
+        <KPICard label="Properties Reviewed" value={scorecards.filter(s=>s.reviews.length>0).length} color={C.teal} />
+        <KPICard label="5-Star Reviews" value={state.reviews.filter(r=>r.rating===5).length} color={C.green} />
+        <KPICard label="Needs Attention" value={scorecards.filter(s=>s.avgRating&&s.avgRating<4.0).length} color={C.crimson} />
+      </div>
+      <div style={{ display:"flex", gap:10, marginBottom:20 }}>
+        <Select value={areaFilter} onChange={setAreaFilter} options={areas} style={{ width:160 }} />
+        <Select value={sortBy} onChange={setSortBy}
+          options={[{value:"rating",label:"Sort: Rating"},{value:"reviews",label:"Sort: Reviews"},{value:"revenue",label:"Sort: Revenue"}]}
+          style={{ width:180 }} />
+      </div>
+      {filtered.length === 0
+        ? <EmptyState icon={Star} title="No scorecards yet" sub="Add reviews from the Reviews page to see property performance here." />
+        : <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))", gap:14 }}>
+          {filtered.map(({ prop, reviews, avgRating, revenue, fiveStars, lowRatings }) => (
+            <div key={prop.id} style={{ background:C.bg1, border:`1px solid ${C.border}`, borderRadius:10, padding:16, borderTop:`3px solid ${rColor(avgRating)}` }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:10 }}>
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ fontSize:10, color:C.text3, fontFamily:"'DM Mono',monospace" }}>{prop.id}</div>
+                  <div style={{ fontSize:13, fontWeight:600, color:C.text1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{prop.name}</div>
+                  <div style={{ fontSize:11, color:C.text3 }}>{prop.area} · {prop.type}</div>
+                </div>
+                <div style={{ textAlign:"right", flexShrink:0, marginLeft:8 }}>
+                  <div style={{ fontSize:22, fontWeight:700, color:rColor(avgRating), fontFamily:"'DM Mono',monospace" }}>{avgRating?avgRating.toFixed(1):"—"}</div>
+                  <div style={{ fontSize:10, color:rColor(avgRating), fontWeight:600 }}>{rLabel(avgRating)}</div>
+                </div>
+              </div>
+              {avgRating && (
+                <div style={{ marginBottom:10 }}>
+                  <div style={{ display:"flex", gap:2, marginBottom:4 }}>
+                    {[1,2,3,4,5].map(n => <div key={n} style={{ flex:1, height:4, borderRadius:2, background:n<=Math.round(avgRating)?rColor(avgRating):C.border }} />)}
+                  </div>
+                  <div style={{ fontSize:11, color:C.text3 }}>{avgRating.toFixed(2)} avg · {reviews.length} review{reviews.length!==1?"s":""}</div>
+                </div>
+              )}
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8, marginBottom:10 }}>
+                {[{label:"Reviews",value:reviews.length,color:C.text2},{label:"5-Star",value:fiveStars,color:C.green},{label:"Low",value:lowRatings,color:lowRatings>0?C.crimson:C.text3}].map(s => (
+                  <div key={s.label} style={{ background:C.bg2, borderRadius:6, padding:"8px 10px", textAlign:"center" }}>
+                    <div style={{ fontSize:16, fontWeight:700, color:s.color, fontFamily:"'DM Mono',monospace" }}>{s.value}</div>
+                    <div style={{ fontSize:10, color:C.text3 }}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
+              {revenue>0 && (
+                <div style={{ display:"flex", justifyContent:"space-between", fontSize:11, paddingTop:8, borderTop:`1px solid ${C.border}20` }}>
+                  <span style={{ color:C.text3 }}>Revenue</span>
+                  <span style={{ fontFamily:"'DM Mono',monospace", color:C.teal }}>{fmtCurr(revenue)}</span>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      }
+    </div>
+  );
+}
+
 // ─── MODULE ROUTER ────────────────────────────────────────────────────────────
 function ModuleContent({ active, onNav }) {
   const map = {
