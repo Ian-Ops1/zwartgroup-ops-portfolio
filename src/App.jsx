@@ -1176,6 +1176,23 @@ function ResCleans() {
         );
       })() : tab === "alerts" ? <CleanAlerts bookings={bookings} onEdit={(b,i) => { setSelectedBooking(b); setSelectedClean(i); }} /> : (
         <>
+          {/* Colour Legend */}
+          <div style={{ display:"flex", gap:16, marginBottom:12, alignItems:"center", flexWrap:"wrap",
+            padding:"10px 14px", background:C.bg1, borderRadius:8, border:`1px solid ${C.border}` }}>
+            <span style={{ fontSize:11, color:C.text3, fontWeight:600, textTransform:"uppercase", letterSpacing:"0.06em" }}>Row colour:</span>
+            {[
+              { bg:"rgba(255,59,92,0.15)",  border:C.crimson, label:"🔴 Missed / Overdue" },
+              { bg:"rgba(245,166,35,0.18)", border:C.amber,   label:"🟡 Cleaning Today" },
+              { bg:"rgba(0,212,184,0.13)",  border:C.teal,    label:"🩵 Cleaning Tomorrow" },
+              { bg:"transparent",           border:C.border,  label:"⬜ Upcoming" },
+            ].map(s => (
+              <div key={s.label} style={{ display:"flex", alignItems:"center", gap:6 }}>
+                <div style={{ width:28, height:16, borderRadius:4, background:s.bg, border:`2px solid ${s.border}` }} />
+                <span style={{ fontSize:11, color:C.text2, fontWeight:500 }}>{s.label}</span>
+              </div>
+            ))}
+          </div>
+
           {/* Controls */}
           <div style={{ display:"flex", gap:10, marginBottom:16, flexWrap:"wrap", alignItems:"center" }}>
             <SearchBar value={search} onChange={setSearch} placeholder="Search guest, property, ID..." />
@@ -1210,9 +1227,18 @@ function ResCleans() {
               const urgentClean = b.cleans.some(c => ["Overdue","Due Today"].includes(getCleanStatus(c)));
               return (
                 <div key={b.id}>
+                  {(() => {
+                    const cleanStatuses = b.cleans.map(c => getCleanStatus(c));
+                    const isOverdue   = cleanStatuses.includes("Overdue");
+                    const isToday     = cleanStatuses.includes("Due Today");
+                    const isTomorrow  = cleanStatuses.includes("Due Tomorrow");
+                    const rowBg     = isOverdue  ? "rgba(255,59,92,0.15)"  : isToday   ? "rgba(245,166,35,0.18)" : isTomorrow ? "rgba(0,212,184,0.13)" : "transparent";
+                    const rowBorder = isOverdue  ? `4px solid ${C.crimson}` : isToday  ? `4px solid ${C.amber}`  : isTomorrow ? `4px solid ${C.teal}`   : `4px solid transparent`;
+                    const rowLine   = isOverdue  ? `1px solid rgba(255,59,92,0.3)` : isToday ? `1px solid rgba(245,166,35,0.3)` : isTomorrow ? `1px solid rgba(0,212,184,0.25)` : `1px solid ${C.border}`;
+                    return (
                   <div onClick={() => toggleExpand(b.id)} style={{ display:"grid", gridTemplateColumns:"180px 140px 100px 100px 70px 80px 100px 120px 40px",
-                    padding:"12px 16px", borderBottom:`1px solid ${C.border}`, cursor:"pointer",
-                    background: urgentClean ? "rgba(255,59,92,0.04)" : hasFlag ? "rgba(245,166,35,0.03)" : "transparent",
+                    padding:"12px 16px", borderBottom:rowLine, cursor:"pointer",
+                    background:rowBg, borderLeft:rowBorder,
                     transition:"background 0.1s", alignItems:"center" }}>
                     <div>
                       <div style={{ fontSize:13, color:C.text1, fontWeight:500, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{b.propertyName}</div>
@@ -1231,6 +1257,8 @@ function ResCleans() {
                     <Badge label={b.status} size="xs" />
                     <div style={{ color:C.text3 }}>{isExp ? <ChevronUp size={14}/> : <ChevronDown size={14}/>}</div>
                   </div>
+                    );
+                  })()}
 
                   {isExp && (
                     <div style={{ padding:"16px 24px 20px", background:C.bg0, borderBottom:`1px solid ${C.border}` }}>
