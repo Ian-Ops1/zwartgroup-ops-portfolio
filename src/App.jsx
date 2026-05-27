@@ -2730,6 +2730,172 @@ export default function App() {
     </AppProvider>
   );
 }
+// ─── BOOKING DETAIL MODAL ────────────────────────────────────────────────────
+function BookingDetailModal({ booking, properties, onClose, onSave }) {
+  const [editingProp, setEditingProp] = useState(false);
+  const [editingGuest, setEditingGuest] = useState(false);
+  const [editingRevenue, setEditingRevenue] = useState(false);
+  const [propValue, setPropValue] = useState(booking.propertyName || "");
+  const [guestValue, setGuestValue] = useState(booking.guestName || "");
+  const [revenueValue, setRevenueValue] = useState(String(booking.revenue || ""));
+  const [useCustomProp, setUseCustomProp] = useState(false);
+
+  const activeProps = (properties || []).filter(p => p.status === "Active");
+
+  const handleSave = () => {
+    const updates = {
+      propertyName: propValue,
+      guestName: guestValue,
+      revenue: Number(revenueValue) || 0,
+    };
+    onSave(updates);
+  };
+
+  const hasChanges = propValue !== booking.propertyName ||
+    guestValue !== booking.guestName ||
+    Number(revenueValue) !== booking.revenue;
+
+  return (
+    <Modal open={true} onClose={onClose} title="Booking Details" width={580}>
+      {/* Property Name — editable */}
+      <div style={{ background:C.bg2, borderRadius:8, padding:"14px 16px", marginBottom:12 }}>
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:editingProp?10:0 }}>
+          <div>
+            <div style={{ fontSize:10, color:C.text3, marginBottom:2, textTransform:"uppercase", letterSpacing:"0.06em" }}>Property Name</div>
+            {!editingProp && (
+              <div style={{ fontSize:15, fontWeight:700, color:C.text1 }}>{propValue}</div>
+            )}
+          </div>
+          {!editingProp && (
+            <Btn size="sm" variant="subtle" icon={Edit} onClick={() => setEditingProp(true)}>Edit</Btn>
+          )}
+        </div>
+        {editingProp && (
+          <div>
+            <div style={{ display:"flex", gap:8, marginBottom:8 }}>
+              <button onClick={() => setUseCustomProp(false)}
+                style={{ fontSize:11, padding:"4px 10px", borderRadius:5, cursor:"pointer", border:"none",
+                  background: !useCustomProp ? C.tealBg : C.bg3, color: !useCustomProp ? C.teal : C.text2, fontWeight:600 }}>
+                Pick from list
+              </button>
+              <button onClick={() => setUseCustomProp(true)}
+                style={{ fontSize:11, padding:"4px 10px", borderRadius:5, cursor:"pointer", border:"none",
+                  background: useCustomProp ? C.tealBg : C.bg3, color: useCustomProp ? C.teal : C.text2, fontWeight:600 }}>
+                Type custom
+              </button>
+            </div>
+            {useCustomProp ? (
+              <Input value={propValue} onChange={setPropValue} placeholder="Type property name..." />
+            ) : (
+              <Select value={propValue} onChange={setPropValue}
+                options={["", ...activeProps.map(p => ({ value:p.name, label:`${p.id} · ${p.name}` }))]} />
+            )}
+            <div style={{ display:"flex", gap:8, marginTop:8 }}>
+              <Btn size="sm" variant="primary" onClick={() => setEditingProp(false)}>Done</Btn>
+              <Btn size="sm" variant="ghost" onClick={() => { setPropValue(booking.propertyName); setEditingProp(false); }}>Cancel</Btn>
+            </div>
+            {propValue && (
+              <div style={{ marginTop:8, fontSize:11, color:C.teal }}>
+                → Will be saved as: <strong>{propValue}</strong>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Other booking details grid */}
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:10, marginBottom:12 }}>
+        {/* Guest Name - editable */}
+        <div style={{ background:C.bg2, borderRadius:6, padding:"10px 12px" }}>
+          <div style={{ fontSize:10, color:C.text3, marginBottom:2 }}>Guest Name</div>
+          {editingGuest ? (
+            <div>
+              <Input value={guestValue} onChange={setGuestValue} style={{ marginBottom:6 }} />
+              <Btn size="sm" variant="primary" onClick={() => setEditingGuest(false)}>Done</Btn>
+            </div>
+          ) : (
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+              <span style={{ fontSize:13, color:C.text1, fontWeight:500 }}>{guestValue}</span>
+              <button onClick={() => setEditingGuest(true)}
+                style={{ background:"none", border:"none", cursor:"pointer", color:C.text3, padding:2 }}>
+                <Edit size={11} />
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Revenue - editable */}
+        <div style={{ background:C.bg2, borderRadius:6, padding:"10px 12px" }}>
+          <div style={{ fontSize:10, color:C.text3, marginBottom:2 }}>Revenue</div>
+          {editingRevenue ? (
+            <div>
+              <Input type="number" value={revenueValue} onChange={setRevenueValue} style={{ marginBottom:6 }} />
+              <Btn size="sm" variant="primary" onClick={() => setEditingRevenue(false)}>Done</Btn>
+            </div>
+          ) : (
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+              <span style={{ fontSize:13, color:C.teal, fontFamily:"'DM Mono',monospace" }}>{fmtCurr(Number(revenueValue))}</span>
+              <button onClick={() => setEditingRevenue(true)}
+                style={{ background:"none", border:"none", cursor:"pointer", color:C.text3, padding:2 }}>
+                <Edit size={11} />
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Read-only fields */}
+        {[
+          ["Booking ID", booking.id],
+          ["Platform", booking.platform],
+          ["Check-in", fmtDate(booking.checkIn)],
+          ["Check-out", fmtDate(booking.checkOut)],
+          ["Nights", booking.nights],
+          ["Status", booking.status],
+        ].map(([k,v]) => (
+          <div key={k} style={{ background:C.bg2, borderRadius:6, padding:"10px 12px" }}>
+            <div style={{ fontSize:10, color:C.text3, marginBottom:2 }}>{k}</div>
+            <div style={{ fontSize:13, color:C.text1, fontWeight:500 }}>{v}</div>
+          </div>
+        ))}
+      </div>
+
+      {booking.notes && (
+        <div style={{ background:C.amberBg, border:`1px solid ${C.amber}30`, borderRadius:6,
+          padding:"8px 12px", marginBottom:12, fontSize:12, color:C.amber }}>
+          {booking.notes}
+        </div>
+      )}
+
+      {booking.nights >= 10 && (
+        <div style={{ background:C.tealBg, border:`1px solid ${C.teal}30`, borderRadius:6,
+          padding:"8px 12px", marginBottom:12, fontSize:12, color:C.teal }}>
+          ✓ {booking.nights} nights — tracked in Res & Cleans with {booking.cleans.length} mid-stay clean{booking.cleans.length!==1?"s":""}
+        </div>
+      )}
+
+      {booking.cleans.length > 0 && (
+        <div style={{ marginBottom:16 }}>
+          <div style={{ fontSize:12, fontWeight:600, color:C.text2, marginBottom:8 }}>Mid-Stay Cleans</div>
+          {booking.cleans.map((c,i) => (
+            <div key={i} style={{ display:"flex", gap:12, alignItems:"center", padding:"6px 0",
+              borderBottom:`1px solid ${C.border}20`, fontSize:12 }}>
+              <span style={{ color:C.text3 }}>Clean #{c.cleanNumber}</span>
+              <span style={{ fontFamily:"'DM Mono',monospace", color:C.text2 }}>{fmtDate(c.dueDate)}</span>
+              <Badge label={c.status} size="xs" />
+              {c.assignedHousekeeper && <span style={{ color:C.teal }}>👤 {c.assignedHousekeeper}</span>}
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div style={{ display:"flex", gap:8 }}>
+        {hasChanges && <Btn variant="primary" icon={Save} onClick={handleSave}>Save Changes</Btn>}
+        <Btn variant="ghost" onClick={onClose}>{hasChanges ? "Cancel" : "Close"}</Btn>
+      </div>
+    </Modal>
+  );
+}
+
 // ─── RESERVATIONS ────────────────────────────────────────────────────────────
 function Reservations() {
   const { state, dispatch, toast } = useApp();
@@ -3014,56 +3180,16 @@ function Reservations() {
       </div>
 
       {/* Booking Detail Modal */}
-      <Modal open={!!selected} onClose={() => setSelected(null)} title={selected?.propertyName||""} width={560}>
-        {selected && (
-          <div>
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:10, marginBottom:16 }}>
-              {[
-                ["Booking ID", selected.id],
-                ["Guest", selected.guestName],
-                ["Platform", selected.platform],
-                ["Check-in", fmtDate(selected.checkIn)],
-                ["Check-out", fmtDate(selected.checkOut)],
-                ["Nights", selected.nights],
-                ["Revenue", fmtCurr(selected.revenue)],
-                ["Status", selected.status],
-                ["Cleans", selected.cleans.length > 0 ? selected.cleans.length+" scheduled":"None"],
-              ].map(([k,v]) => (
-                <div key={k} style={{ background:C.bg2, borderRadius:6, padding:"10px 12px" }}>
-                  <div style={{ fontSize:10, color:C.text3, marginBottom:2 }}>{k}</div>
-                  <div style={{ fontSize:13, color:C.text1, fontWeight:500 }}>{v}</div>
-                </div>
-              ))}
-            </div>
-            {selected.notes && (
-              <div style={{ background:C.amberBg, border:`1px solid ${C.amber}30`, borderRadius:6, padding:"8px 12px", marginBottom:12, fontSize:12, color:C.amber }}>
-                {selected.notes}
-              </div>
-            )}
-            {selected.nights >= 10 && (
-              <div style={{ background:C.tealBg, border:`1px solid ${C.teal}30`, borderRadius:6, padding:"8px 12px", marginBottom:12, fontSize:12, color:C.teal }}>
-                ✓ {selected.nights} nights — tracked in Res & Cleans with {selected.cleans.length} mid-stay clean{selected.cleans.length!==1?"s":""}
-              </div>
-            )}
-            {selected.cleans.length > 0 && (
-              <div>
-                <div style={{ fontSize:12, fontWeight:600, color:C.text2, marginBottom:8 }}>Mid-Stay Cleans</div>
-                {selected.cleans.map((c,i) => (
-                  <div key={i} style={{ display:"flex", gap:12, alignItems:"center", padding:"6px 0", borderBottom:`1px solid ${C.border}20`, fontSize:12 }}>
-                    <span style={{ color:C.text3 }}>Clean #{c.cleanNumber}</span>
-                    <span style={{ fontFamily:"'DM Mono',monospace", color:C.text2 }}>{fmtDate(c.dueDate)}</span>
-                    <Badge label={c.status} size="xs" />
-                    {c.assignedHousekeeper && <span style={{ color:C.teal }}>👤 {c.assignedHousekeeper}</span>}
-                  </div>
-                ))}
-              </div>
-            )}
-            <div style={{ marginTop:16 }}>
-              <Btn variant="ghost" onClick={() => setSelected(null)}>Close</Btn>
-            </div>
-          </div>
-        )}
-      </Modal>
+      {selected && <BookingDetailModal
+        booking={selected}
+        properties={state.properties}
+        onClose={() => setSelected(null)}
+        onSave={(updates) => {
+          dispatch({ type:"UPDATE_BOOKING", payload:{ id:selected.id, ...updates }});
+          toast("Booking updated");
+          setSelected(null);
+        }}
+      />}
 
       {/* Add Booking Modal */}
       <Modal open={showAdd} onClose={() => setShowAdd(false)} title="Add New Booking" width={520}>
