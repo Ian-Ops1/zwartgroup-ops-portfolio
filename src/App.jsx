@@ -2625,8 +2625,110 @@ function Reservations() {
   const [showAdd, setShowAdd] = useState(false);
   const [selected, setSelected] = useState(null);
   const [nbForm, setNbForm] = useState({ id:"", guestName:"", propId:"", checkIn:"", checkOut:"", platform:"Airbnb", revenue:"", notes:"" });
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState(null);
+  const fileRef = useRef(null);
 
   const bookings = state.bookings;
+
+  const toISO = (v) => {
+    if (!v) return null;
+    if (v instanceof Date) return v.toISOString().slice(0,10);
+    if (typeof v === "number") {
+      // Excel serial date
+      const d = new Date((v - 25569) * 86400 * 1000);
+      return d.toISOString().slice(0,10);
+    }
+    const s = String(v).trim();
+    // Try DD/MM/YYYY or DD-MM-YYYY
+    const dmy = s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})$/);
+    if (dmy) {
+      const yr = dmy[3].length === 2 ? "20"+dmy[3] : dmy[3];
+      return `${yr}-${dmy[2].padStart(2,"0")}-${dmy[1].padStart(2,"0")}`;
+    }
+    // Try YYYY-MM-DD already
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+    // Try parsing naturally
+    const parsed = new Date(s);
+    if (!isNaN(parsed)) return parsed.toISOString().slice(0,10);
+    return null;
+  };
+
+  const processRows = (rows, headers) => {
+    const find = (keys) => {
+      for (const k of keys) {
+        const idx = headers.findIndex(h => h && String(h).toLowerCase().includes(k.toLowerCase()));
+        if (idx >= 0) return idx;
+      }
+      return -1;
+    };
+    const idIdx       = find(["id","booking id","reservation id","ref","confirmation"]);
+    const guestIdx    = find(["guest","name","guest name","customer"]);
+    const propIdx     = find(["property","unit","apartment","listing"]);
+    const checkInIdx  = find(["check in","checkin","check-in","arrival","start"]);
+    const checkOutIdx = find(["check out","checkout","check-out","departure","end"]);
+    const platformIdx = find(["platform","channel","source","ota"]);
+    const revenueIdx  = find(["revenue","amount","total","price","rent","payout"]);
+    const nightsIdx   = find(["nights","duration","length","stay"]);
+
+    const added = []; const skipped = [];
+    for (const row of rows) {
+      if (!row || row.every(v => !v)) continue;
+      const checkIn  = toISO(checkInIdx >= 0 ? row[checkInIdx] : null);
+      const checkOut = toISO(checkOutIdx >= 0 ? row[checkOutIdx] : null);
+      if (!checkIn || !checkOut || checkIn >= checkOut) { skipped.push(row); continue; }
+
+      const id = idIdx >= 0 && row[idIdx] ? String(row[idIdx]).trim() : "IMP-"+Date.now()+"-"+Math.random().toString(36).slice(2,6);
+      const guestName = guestIdx >= 0 && row[guestIdx] ? String(row[guestIdx]).trim() : "Guest";
+      const propName  = propIdx  >= 0 && row[propIdx]  ? String(row[propIdx]).trim()  : "Unknown Property";
+      const platform  = platformIdx >= 0 && row[platformIdx] ? String(row[platformIdx]).trim() : "Airbnb";
+      const revenue   = revenueIdx >= 0 ? Number(String(row[revenueIdx]||"0").replace(/[^0-9.]/g,""))||0 : 0;
+
+      // Skip if booking ID already exists
+      if (state.bookings.find(b => b.id === id)) { skipped.push(row); continue; }
+
+      added.push(mkBookingDirect(id, guestName, propName, checkIn, checkOut, platform, revenue));
+    }
+    return { added, skipped };
+  };
+
+  const handleImport = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setImporting(true); setImportResult(null);
+    try {
+      const ext = file.name.split(".").pop().toLowerCase();
+      if (ext === "csv") {
+        // Parse CSV
+        const text = await file.text();
+        const lines = text.split("\n").map(l => l.split(",").map(v => v.replace(/^"|"$/g,"").trim()));
+        const headers = lines[0];
+        const rows = lines.slice(1).filter(r => r.some(v => v));
+        const { added, skipped } = processRows(rows, headers);
+        added.forEach(b => dispatch({ type:"ADD_BOOKING", payload:b }));
+        setImportResult({ added:added.length, skipped:skipped.length, file:file.name });
+        toast(added.length + " bookings imported from CSV");
+      } else {
+        // Parse Excel using dynamic import
+        const XLSX = await import("https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm");
+        const ab = await file.arrayBuffer();
+        const wb = XLSX.read(ab);
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const data = XLSX.utils.sheet_to_json(ws, { header:1, defval:null });
+        const headers = data[0] || [];
+        const rows = data.slice(1);
+        const { added, skipped } = processRows(rows, headers);
+        added.forEach(b => dispatch({ type:"ADD_BOOKING", payload:b }));
+        setImportResult({ added:added.length, skipped:skipped.length, file:file.name });
+        toast(added.length + " bookings imported from Excel");
+      }
+    } catch (err) {
+      toast("Import failed: " + err.message, "error");
+    } finally {
+      setImporting(false);
+      e.target.value = "";
+    }
+  };
 
   const filtered = useMemo(() => {
     let r = bookings;
@@ -2674,8 +2776,30 @@ function Reservations() {
     <div style={{ animation:"fadeIn 0.25s ease" }}>
       <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:20 }}>
         <SectionTitle>Reservations</SectionTitle>
-        <Btn variant="primary" icon={Plus} onClick={() => setShowAdd(true)}>Add Booking</Btn>
+        <div style={{ display:"flex", gap:8 }}>
+          <input ref={fileRef} type="file" accept=".csv,.xlsx,.xls" onChange={handleImport} style={{ display:"none" }} />
+          <Btn variant="subtle" icon={Upload} onClick={() => fileRef.current?.click()} disabled={importing}>
+            {importing ? "Importing..." : "Import CSV / Excel"}
+          </Btn>
+          <Btn variant="primary" icon={Plus} onClick={() => setShowAdd(true)}>Add Booking</Btn>
+        </div>
       </div>
+
+      {/* Import Result Banner */}
+      {importResult && (
+        <div style={{ background:C.tealBg, border:`1px solid ${C.teal}30`, borderRadius:8, padding:"10px 16px",
+          marginBottom:16, display:"flex", alignItems:"center", gap:12 }}>
+          <CheckCircle size={16} color={C.teal} />
+          <span style={{ fontSize:13, color:C.teal }}>
+            Imported <strong>{importResult.added}</strong> bookings from <strong>{importResult.file}</strong>
+            {importResult.skipped > 0 && ` · ${importResult.skipped} rows skipped (duplicates or missing dates)`}
+          </span>
+          <button onClick={() => setImportResult(null)}
+            style={{ marginLeft:"auto", background:"none", border:"none", cursor:"pointer", color:C.text3 }}>
+            <X size={14} />
+          </button>
+        </div>
+      )}
 
       {/* KPIs */}
       <div style={{ display:"flex", gap:12, marginBottom:20, flexWrap:"wrap" }}>
@@ -2693,6 +2817,22 @@ function Reservations() {
         marginBottom:16, fontSize:12, color:C.teal, display:"flex", alignItems:"center", gap:8 }}>
         <Info size={14} />
         Bookings with <strong>10+ nights</strong> are also tracked in <strong>Res & Cleans</strong> for mid-stay clean scheduling.
+      </div>
+
+      {/* Import format guide */}
+      <div style={{ background:C.bg1, border:`1px solid ${C.border}`, borderRadius:8, padding:"10px 16px",
+        marginBottom:16, fontSize:12, color:C.text3, display:"flex", alignItems:"center", gap:16, flexWrap:"wrap" }}>
+        <span style={{ color:C.text2, fontWeight:600 }}>Import format:</span>
+        <span>Columns needed: <span style={{ fontFamily:"'DM Mono',monospace", color:C.teal }}>Booking ID, Guest Name, Property, Check-in, Check-out, Platform, Revenue</span></span>
+        <span>Dates accepted: <span style={{ fontFamily:"'DM Mono',monospace", color:C.teal }}>DD/MM/YYYY · YYYY-MM-DD · Excel serial</span></span>
+        <button onClick={() => {
+          const csv = "Booking ID,Guest Name,Property,Check-in,Check-out,Platform,Revenue\nHM123,John Smith,605 The Tokyo,2026-06-01,2026-06-15,Airbnb,12000\n";
+          const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
+          a.download = "bookings_template.csv"; a.click();
+        }} style={{ background:C.tealBg, color:C.teal, border:`1px solid ${C.teal}30`, borderRadius:5,
+          padding:"4px 10px", cursor:"pointer", fontSize:11, fontWeight:600, marginLeft:"auto" }}>
+          ↓ Download Template
+        </button>
       </div>
 
       {/* Filters */}
