@@ -974,6 +974,8 @@ function ResCleans() {
     if (search) r = r.filter(b => b.guestName.toLowerCase().includes(search.toLowerCase()) || b.propertyName.toLowerCase().includes(search.toLowerCase()) || b.id.toLowerCase().includes(search.toLowerCase()));
     if (statusFilter !== "All") r = r.filter(b => b.status === statusFilter);
     if (platformFilter !== "All") r = r.filter(b => b.platform === platformFilter);
+    if (bookingStatusFilter === "Cancelled") r = r.filter(b => b.bookingStatus === "Cancelled");
+    if (bookingStatusFilter === "Accepted") r = r.filter(b => b.bookingStatus !== "Cancelled");
     if (cleanFilter === "Has Urgent") r = r.filter(b => b.cleans.some(c => ["Overdue","Due Today","Due Tomorrow"].includes(getCleanStatus(c))));
     if (cleanFilter === "Has Cleans") r = r.filter(b => b.cleans.length > 0);
     if (cleanFilter === "No Cleans") r = r.filter(b => b.cleans.length === 0);
@@ -1288,7 +1290,7 @@ function ResCleans() {
         <FormRow label="Guest Name"><Input value={nbForm.guestName} onChange={v => setNbForm(f => ({...f, guestName:v}))} placeholder="Full name" /></FormRow>
         <FormRow label="Property" required>
           <Select value={nbForm.propId} onChange={v => setNbForm(f => ({...f, propId:v}))}
-            options={["", ...state.properties.map(p => ({ value:p.id, label:`${p.id} · ${p.name}` }))]} />
+            options={["", ...state.properties.map(p => ({ value:p.id, label:p.name }))]} />
         </FormRow>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
           <FormRow label="Check-in" required><Input type="date" value={nbForm.checkIn} onChange={v => setNbForm(f => ({...f, checkIn:v}))} /></FormRow>
@@ -1688,7 +1690,7 @@ function IncidentRegister() {
       <Modal open={showAdd} onClose={() => setShowAdd(false)} title="Log Incident">
         <FormRow label="Property" required>
           <Select value={form.propertyId} onChange={v => setForm(f => ({...f, propertyId:v}))}
-            options={["", ...state.properties.map(p => ({ value:p.id, label:`${p.id} · ${p.name}` }))]} />
+            options={["", ...state.properties.map(p => ({ value:p.id, label:p.name }))]} />
         </FormRow>
         <FormRow label="Date"><Input type="date" value={form.date} onChange={v => setForm(f => ({...f, date:v}))} /></FormRow>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
@@ -1775,7 +1777,7 @@ function Maintenance() {
       <Modal open={showAdd} onClose={() => setShowAdd(false)} title="Log Maintenance Issue">
         <FormRow label="Property" required>
           <Select value={form.propertyId} onChange={v => setForm(f => ({...f, propertyId:v}))}
-            options={["", ...state.properties.map(p => ({ value:p.id, label:`${p.id} · ${p.name}` }))]} />
+            options={["", ...state.properties.map(p => ({ value:p.id, label:p.name }))]} />
         </FormRow>
         <FormRow label="Issue Description" required>
           <textarea value={form.issue} onChange={e => setForm(f => ({...f, issue:e.target.value}))} rows={2} style={{ ...inputStyle, resize:"vertical" }} />
@@ -2788,7 +2790,7 @@ function BookingDetailModal({ booking, properties, onClose, onSave }) {
               <Input value={propValue} onChange={setPropValue} placeholder="Type property name..." />
             ) : (
               <Select value={propValue} onChange={setPropValue}
-                options={["", ...activeProps.map(p => ({ value:p.name, label:`${p.id} · ${p.name}` }))]} />
+                options={["", ...activeProps.map(p => ({ value:p.name, label:p.name }))]} />
             )}
             <div style={{ display:"flex", gap:8, marginTop:8 }}>
               <Btn size="sm" variant="primary" onClick={() => setEditingProp(false)}>Done</Btn>
@@ -2906,6 +2908,7 @@ function Reservations() {
   const [showAdd, setShowAdd] = useState(false);
   const [selected, setSelected] = useState(null);
   const [nbForm, setNbForm] = useState({ id:"", guestName:"", propId:"", checkIn:"", checkOut:"", platform:"Airbnb", revenue:"", notes:"" });
+  const [bookingStatusFilter, setBookingStatusFilter] = useState("Accepted");
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState(null);
   const fileRef = useRef(null);
@@ -3020,6 +3023,8 @@ function Reservations() {
     );
     if (statusFilter !== "All") r = r.filter(b => b.status === statusFilter);
     if (platformFilter !== "All") r = r.filter(b => b.platform === platformFilter);
+    if (bookingStatusFilter === "Cancelled") r = r.filter(b => b.bookingStatus === "Cancelled");
+    if (bookingStatusFilter === "Accepted") r = r.filter(b => b.bookingStatus !== "Cancelled");
     return [...r].sort((a,b) => {
       if (sortBy === "checkIn") return a.checkIn.localeCompare(b.checkIn);
       if (sortBy === "checkOut") return a.checkOut.localeCompare(b.checkOut);
@@ -3090,6 +3095,7 @@ function Reservations() {
         <KPICard label="Checked Out" value={checkedOut} color={C.text3} icon={ArrowDown} />
         <KPICard label="Short Stays (<10n)" value={shortStays} color={C.amber} />
         <KPICard label="Long Stays (10n+)" value={longStays} color={C.green} sub="tracked in Res & Cleans" />
+        <KPICard label="Cancelled" value={bookings.filter(b=>b.bookingStatus==="Cancelled").length} color={C.crimson} />
         <KPICard label="Total Revenue" value={"R "+(totalRevenue/1000).toFixed(0)+"k"} color={C.amber} icon={DollarSign} />
       </div>
 
@@ -3123,6 +3129,8 @@ function Reservations() {
           options={["All","In-House","Upcoming","Checked Out"]} style={{ width:140 }} />
         <Select value={platformFilter} onChange={setPlatformFilter}
           options={["All","Airbnb","Booking.com","Direct"]} style={{ width:140 }} />
+        <Select value={bookingStatusFilter} onChange={setBookingStatusFilter}
+          options={["All","Accepted","Cancelled"]} style={{ width:130 }} />
         <Select value={sortBy} onChange={setSortBy}
           options={[{value:"checkIn",label:"Sort: Check-in"},{value:"checkOut",label:"Sort: Check-out"},{value:"revenue",label:"Sort: Revenue"},{value:"nights",label:"Sort: Nights"}]}
           style={{ width:160 }} />
@@ -3134,9 +3142,9 @@ function Reservations() {
       {/* Table */}
       <div style={{ background:C.bg1, border:`1px solid ${C.border}`, borderRadius:10, overflow:"hidden" }}>
         {/* Header */}
-        <div style={{ display:"grid", gridTemplateColumns:"40px 180px 150px 100px 100px 60px 90px 100px 110px",
+        <div style={{ display:"grid", gridTemplateColumns:"12px 1fr 140px 90px 90px 50px 90px 100px 100px 80px",
           padding:"10px 16px", borderBottom:`1px solid ${C.border}`, background:C.bg2 }}>
-          {["","Property","Guest","Check-in","Check-out","Nts","Revenue","Platform","Status"].map(h => (
+          {["","Property","Guest","Check-in","Check-out","Nts","Revenue","Platform","Booking Status",""].map(h => (
             <div key={h} style={{ fontSize:11, color:C.text3, fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em" }}>{h}</div>
           ))}
         </div>
@@ -3147,33 +3155,53 @@ function Reservations() {
           const hasFlag = b.notes && b.notes.length > 0;
           const isLong = b.nights >= 10;
           return (
-            <div key={b.id} onClick={() => setSelected(b)}
-              style={{ display:"grid", gridTemplateColumns:"40px 180px 150px 100px 100px 60px 90px 100px 110px",
-                padding:"11px 16px", borderBottom:`1px solid ${C.border}`, cursor:"pointer",
-                background:"transparent", alignItems:"center",
+            <div key={b.id}
+              style={{ display:"grid", gridTemplateColumns:"12px 1fr 140px 90px 90px 50px 90px 100px 100px 80px",
+                padding:"11px 16px", borderBottom:`1px solid ${C.border}`,
+                background: b.bookingStatus==="Cancelled" ? "rgba(255,59,92,0.05)" : "transparent",
+                alignItems:"center", opacity: b.bookingStatus==="Cancelled" ? 0.7 : 1,
                 transition:"background 0.1s" }}>
               {/* Night length indicator */}
-              <div title={isLong?"Tracked in Res & Cleans":""}>
-                {isLong
-                  ? <div style={{ width:8, height:8, borderRadius:"50%", background:C.teal }} title="10+ nights" />
-                  : <div style={{ width:8, height:8, borderRadius:"50%", background:C.border }} />
+              <div>
+                {isLong && b.bookingStatus !== "Cancelled"
+                  ? <div style={{ width:8, height:8, borderRadius:"50%", background:C.teal }} title="In Res & Cleans" />
+                  : <div style={{ width:8, height:8, borderRadius:"50%", background:"transparent" }} />
                 }
               </div>
-              <div>
-                <div style={{ fontSize:13, color:C.text1, fontWeight:500, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{b.propertyName}</div>
+              <div onClick={() => setSelected(b)} style={{ cursor:"pointer", minWidth:0 }}>
+                <div style={{ fontSize:13, color: b.bookingStatus==="Cancelled"?C.text3:C.text1, fontWeight:500,
+                  overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap",
+                  textDecoration: b.bookingStatus==="Cancelled"?"line-through":"none" }}>
+                  {b.propertyName}
+                </div>
                 <div style={{ fontSize:10, color:C.text3, fontFamily:"'DM Mono',monospace" }}>{b.id}</div>
               </div>
-              <div style={{ fontSize:12, color: b.guestName==="Guest"?C.amber:C.text1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+              <div onClick={() => setSelected(b)} style={{ cursor:"pointer", fontSize:12, color: b.guestName==="Guest"?C.amber:C.text2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
                 {b.guestName}
               </div>
               <div style={{ fontSize:12, color:C.text2, fontFamily:"'DM Mono',monospace" }}>{fmtShort(b.checkIn)}</div>
               <div style={{ fontSize:12, color:C.text2, fontFamily:"'DM Mono',monospace" }}>{fmtShort(b.checkOut)}</div>
-              <div style={{ fontSize:12, color: isLong?C.teal:C.text2, fontFamily:"'DM Mono',monospace", fontWeight:isLong?600:400 }}>{b.nights}</div>
+              <div style={{ fontSize:12, color:isLong?C.teal:C.text2, fontFamily:"'DM Mono',monospace", fontWeight:isLong?600:400 }}>{b.nights}</div>
               <div style={{ fontSize:12, color:b.revenue===0?C.amber:C.teal, fontFamily:"'DM Mono',monospace" }}>
                 {b.revenue===0?"—":"R "+(b.revenue/1000).toFixed(1)+"k"}
               </div>
               <Badge label={b.platform} size="xs" />
-              <Badge label={b.status} size="xs" />
+              {/* Booking Status */}
+              <div>
+                <span style={{ fontSize:11, fontWeight:600, fontFamily:"'DM Mono',monospace", padding:"3px 8px", borderRadius:4,
+                  background: b.bookingStatus==="Cancelled" ? C.crimsonBg : C.greenBg,
+                  color: b.bookingStatus==="Cancelled" ? C.crimson : C.green,
+                  border: `1px solid ${b.bookingStatus==="Cancelled" ? C.crimson : C.green}30` }}>
+                  {b.bookingStatus==="Cancelled" ? "Cancelled" : "Accepted"}
+                </span>
+              </div>
+              {/* Cancel / Restore button */}
+              <div>
+                {b.bookingStatus==="Cancelled"
+                  ? <Btn size="sm" variant="subtle" onClick={() => dispatch({ type:"UPDATE_BOOKING", payload:{ id:b.id, bookingStatus:"Accepted" }})} >Restore</Btn>
+                  : <Btn size="sm" variant="ghost" onClick={() => { if(window.confirm("Mark this booking as cancelled?")) dispatch({ type:"UPDATE_BOOKING", payload:{ id:b.id, bookingStatus:"Cancelled" }}); }}>Cancel</Btn>
+                }
+              </div>
             </div>
           );
         })}
@@ -3201,7 +3229,7 @@ function Reservations() {
         </FormRow>
         <FormRow label="Property" required>
           <Select value={nbForm.propId} onChange={v=>setNbForm(f=>({...f,propId:v}))}
-            options={["", ...state.properties.filter(p=>p.status==="Active").map(p=>({value:p.id,label:`${p.id} · ${p.name}`}))]} />
+            options={["", ...state.properties.filter(p=>p.status==="Active").map(p=>({value:p.id, label:p.name}))]} />
         </FormRow>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
           <FormRow label="Check-in" required><Input type="date" value={nbForm.checkIn} onChange={v=>setNbForm(f=>({...f,checkIn:v}))} /></FormRow>
