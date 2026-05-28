@@ -2444,7 +2444,7 @@ function HousekeepingScheduler(){
   const[histDate,setHistDate]=useState(TODAY);
   const[showAdd,setShowAdd]=useState(false);
   const[editId,setEditId]=useState(null);
-  const[form,setForm]=useState({date:addDays(TODAY,1),housekeeper:"",properties:[blankProp(),blankProp()]});
+  const[form,setForm]=useState({date:addDays(TODAY,1),housekeeper:"",properties:[blankProp(),blankProp(),blankProp(),blankProp()]});
   const records=Array.isArray(state.housekeeping)?state.housekeeping:[];
   const teamNames=(state.team||[]).map(m=>m.name);
   const propNames=(state.properties||[]).filter(p=>p.status==="Active").map(p=>p.name);
@@ -2455,9 +2455,9 @@ function HousekeepingScheduler(){
     const id=editId||("HK-"+String(records.length+1).padStart(3,"0"));
     dispatch({type:editId?"UPDATE_HK_SCHEDULE":"ADD_HK_SCHEDULE",payload:{id,date:form.date,housekeeper:form.housekeeper,properties:filled}});
     toast("Saved");setShowAdd(false);setEditId(null);
-    setForm({date:addDays(TODAY,1),housekeeper:"",properties:[blankProp(),blankProp()]});
+    setForm({date:addDays(TODAY,1),housekeeper:"",properties:[blankProp(),blankProp(),blankProp(),blankProp()]});
   };
-  const startEdit=(e)=>{const props=[...e.properties];while(props.length<2)props.push(blankProp());setForm({date:e.date,housekeeper:e.housekeeper,properties:props});setEditId(e.id);setShowAdd(true);};
+  const startEdit=(e)=>{const props=[...e.properties];while(props.length<4)props.push(blankProp());setForm({date:e.date,housekeeper:e.housekeeper,properties:props});setEditId(e.id);setShowAdd(true);};
   const updateQC=(entryId,pi,field,val)=>{const e=records.find(r=>r.id===entryId);if(!e)return;dispatch({type:"UPDATE_HK_SCHEDULE",payload:{id:entryId,properties:e.properties.map((p,i)=>i===pi?{...p,[field]:val}:p)}});};
   const del=(id)=>{if(window.confirm("Delete?"))dispatch({type:"DELETE_HK_SCHEDULE",payload:id});};
   const todayE=records.filter(r=>r.date===viewDate);
@@ -2469,7 +2469,7 @@ function HousekeepingScheduler(){
   return(<div style={{animation:"fadeIn 0.25s ease"}}>
     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
       <SectionTitle>Housekeeping Scheduler & QC</SectionTitle>
-      <Btn variant="primary" icon={Plus} onClick={()=>{setEditId(null);setForm({date:addDays(TODAY,1),housekeeper:"",properties:[blankProp(),blankProp()]});setShowAdd(true);}}>Add Schedule</Btn>
+      <Btn variant="primary" icon={Plus} onClick={()=>{setEditId(null);setForm({date:addDays(TODAY,1),housekeeper:"",properties:[blankProp(),blankProp(),blankProp(),blankProp()]});setShowAdd(true);}}>Add Schedule</Btn>
     </div>
     <div style={{display:"flex",gap:12,marginBottom:20}}>
       <KPICard label="Total Records" value={records.length} color={C.teal}/>
@@ -2496,8 +2496,8 @@ function HousekeepingScheduler(){
         <FormRow label="Date" required><Input type="date" value={form.date} onChange={v=>setForm(f=>({...f,date:v}))}/></FormRow>
         <FormRow label="Housekeeper" required><Select value={form.housekeeper} onChange={v=>setForm(f=>({...f,housekeeper:v}))} options={["",...teamNames]}/></FormRow>
       </div>
-      {[0,1].map(pi=>(<div key={pi} style={{background:C.bg2,borderRadius:8,padding:"14px 16px",marginBottom:12}}>
-        <div style={{fontSize:12,fontWeight:700,color:C.text2,marginBottom:10}}>Property {pi+1} {pi===1&&<span style={{color:C.text3,fontWeight:400}}>(optional)</span>}</div>
+      {[0,1,2,3].map(pi=>(<div key={pi} style={{background:C.bg2,borderRadius:8,padding:"14px 16px",marginBottom:12}}>
+        <div style={{fontSize:12,fontWeight:700,color:C.text2,marginBottom:10}}>Property {pi+1} {pi>0&&<span style={{color:C.text3,fontWeight:400}}>(optional)</span>}</div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
           <FormRow label="Property"><Select value={form.properties[pi]?.propertyName||""} onChange={v=>setForm(f=>({...f,properties:f.properties.map((p,i)=>i===pi?{...p,propertyName:v}:p)}))} options={["--",...propNames]}/></FormRow>
           <FormRow label="Task Type"><Select value={form.properties[pi]?.taskType||"Full Turnover"} onChange={v=>setForm(f=>({...f,properties:f.properties.map((p,i)=>i===pi?{...p,taskType:v}:p)}))} options={HK_TASK_TYPES}/></FormRow>
@@ -2649,34 +2649,98 @@ function SettingsModule() {
 
         {/* Hospitable Sync */}
         <Card style={{ gridColumn:"1 / -1" }}>
-          <div style={{ fontSize:13, fontWeight:700, color:C.teal, marginBottom:16, display:"flex", alignItems:"center", gap:8 }}>
-            <Zap size={16} color={C.teal} /> Hospitable Sync
-            <span style={{ fontSize:11, color:C.text3, fontWeight:400, marginLeft:4 }}>— Demo mode available</span>
+          <div style={{ fontSize:13, fontWeight:700, color:C.teal, marginBottom:4, display:"flex", alignItems:"center", gap:8 }}>
+            <Zap size={16} color={C.teal} /> Hospitable Auto-Sync
+            {state.settings.hospitable?.enabled && (
+              <span style={{ fontSize:11, background:C.greenBg, color:C.green, padding:"2px 8px", borderRadius:4, fontWeight:600 }}>● LIVE</span>
+            )}
           </div>
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:16 }}>
-            <FormRow label="Hospitable API Key">
-              <Input value={hospForm.apiKey} onChange={v => setHospForm(f => ({...f, apiKey:v}))} placeholder="hosp_live_xxxx..." />
-            </FormRow>
-            <FormRow label="API URL">
-              <Input value={hospForm.apiUrl} onChange={v => setHospForm(f => ({...f, apiUrl:v}))} placeholder="https://api.hospitable.com" />
-            </FormRow>
+          <div style={{ fontSize:12, color:C.text3, marginBottom:16 }}>
+            Paste your Hospitable MCP URL below. The app will automatically pull new bookings every time it loads and every 5 minutes while open.
           </div>
-          <div style={{ background:C.bg2, borderRadius:8, padding:"14px 16px", marginBottom:16 }}>
-            <div style={{ fontSize:12, color:C.text2, marginBottom:8 }}>
-              <strong style={{ color:C.text1 }}>Sync Logic:</strong> Imports bookings with ≥7 nights. Auto-calculates mid-stay cleans (⌊nights ÷ 7⌋). Maps properties via ZG-XXX IDs.
+
+          <FormRow label="Hospitable API Token" required>
+            <Input value={hospForm.apiUrl || ""} onChange={v => setHospForm(f => ({...f, apiUrl:v}))}
+              placeholder="Paste your Hospitable API token here..." />
+          </FormRow>
+
+          <div style={{ display:"flex", gap:10, alignItems:"center", marginBottom:16 }}>
+            <div onClick={() => setHospForm(f => ({...f, enabled: !f.enabled}))}
+              style={{ width:44, height:24, borderRadius:12, cursor:"pointer", transition:"background 0.2s",
+                background: hospForm.enabled ? C.teal : C.border, position:"relative" }}>
+              <div style={{ width:18, height:18, borderRadius:"50%", background:"#fff", position:"absolute",
+                top:3, transition:"left 0.2s", left: hospForm.enabled ? 23 : 3 }} />
             </div>
-            <div style={{ fontSize:12, color:C.text3 }}>Last sync: {state.settings.hospitable?.lastSync ? fmtDate(state.settings.hospitable.lastSync) : "Never"}</div>
+            <span style={{ fontSize:13, color: hospForm.enabled ? C.teal : C.text2, fontWeight:500 }}>
+              {hospForm.enabled ? "Auto-sync enabled" : "Auto-sync disabled"}
+            </span>
           </div>
+
+          {/* Status */}
+          <div style={{ background:C.bg2, borderRadius:8, padding:"12px 16px", marginBottom:16 }}>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:12 }}>
+              <div>
+                <div style={{ fontSize:10, color:C.text3, marginBottom:2 }}>Last Sync</div>
+                <div style={{ fontSize:13, color:C.text1, fontWeight:500 }}>
+                  {state.settings.hospitable?.lastSync
+                    ? new Date(state.settings.hospitable.lastSync).toLocaleString()
+                    : "Never"}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize:10, color:C.text3, marginBottom:2 }}>Total Bookings</div>
+                <div style={{ fontSize:13, color:C.teal, fontWeight:600, fontFamily:"'DM Mono',monospace" }}>
+                  {state.bookings.length}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize:10, color:C.text3, marginBottom:2 }}>Sync Behaviour</div>
+                <div style={{ fontSize:13, color:C.text1 }}>Add new only · Skip duplicates</div>
+              </div>
+            </div>
+          </div>
+
           {syncResult && (
-            <div style={{ background:C.greenBg, border:`1px solid ${C.green}30`, borderRadius:6, padding:"10px 14px", marginBottom:12, fontSize:12, color:C.green }}>
-              ✓ {syncResult.message}
+            <div style={{ background: syncResult.error ? C.crimsonBg : C.greenBg,
+              border:`1px solid ${syncResult.error ? C.crimson : C.green}30`,
+              borderRadius:6, padding:"10px 14px", marginBottom:12, fontSize:12,
+              color: syncResult.error ? C.crimson : C.green }}>
+              {syncResult.error ? "⚠️ " : "✓ "}{syncResult.message}
             </div>
           )}
+
           <div style={{ display:"flex", gap:8 }}>
-            <Btn variant="primary" onClick={demoSync} disabled={syncing} icon={RefreshCw}>
-              {syncing ? "Syncing..." : "Run Demo Sync"}
+            <Btn variant="primary" icon={Save} onClick={async () => {
+              dispatch({ type:"UPDATE_SETTINGS", payload:{ hospitable: hospForm }});
+              toast("Settings saved");
+              if (hospForm.enabled && hospForm.apiUrl) {
+                setSyncing(true); setSyncResult(null);
+                try {
+                  const count = await syncFromHospitable(hospForm.apiUrl, state, dispatch, toast);
+                  setSyncResult({ message: count + " new booking" + (count!==1?"s":"") + " added from Hospitable" });
+                } catch(e) {
+                  setSyncResult({ error:true, message: e.message });
+                } finally { setSyncing(false); }
+              }
+            }} disabled={syncing}>
+              {syncing ? "Syncing..." : "Save & Sync Now"}
             </Btn>
-            <Btn variant="ghost" onClick={save} icon={Save}>Save API Config</Btn>
+            <Btn variant="subtle" icon={RefreshCw} onClick={async () => {
+              if (!hospForm.apiUrl) return toast("Enter your MCP URL first","error");
+              setSyncing(true); setSyncResult(null);
+              try {
+                const count = await syncFromHospitable(hospForm.apiUrl, state, dispatch, toast);
+                setSyncResult({ message: count + " new booking" + (count!==1?"s":"") + " added" });
+              } catch(e) {
+                setSyncResult({ error:true, message: e.message });
+              } finally { setSyncing(false); }
+            }} disabled={syncing}>
+              {syncing ? "Syncing..." : "Sync Now"}
+            </Btn>
+          </div>
+
+          <div style={{ marginTop:12, fontSize:11, color:C.text3, lineHeight:1.6 }}>
+            💡 Your API token is a long string starting with <span style={{ fontFamily:"'DM Mono',monospace", color:C.teal }}>eyJ...</span> — find it in Hospitable → Settings → API → Personal Access Tokens.
           </div>
         </Card>
 
@@ -2733,10 +2797,135 @@ function ModuleContent({ active, onNav }) {
   return map[active] || <EmptyState icon={Layers} title="Module not found" />;
 }
 
+// ─── HOSPITABLE SYNC ─────────────────────────────────────────────────────────
+async function syncFromHospitable(token, state, dispatch, toast) {
+  if (!token) throw new Error("No API token configured");
+
+  const headers = {
+    "Authorization": `Bearer ${token}`,
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+  };
+
+  // Fetch reservations from Hospitable REST API
+  // Hospitable API: GET /v1/reservations
+  let allReservations = [];
+  let page = 1;
+  let hasMore = true;
+
+  while (hasMore) {
+    const res = await fetch(`https://api.hospitable.com/v1/reservations?per_page=100&page=${page}&status=accepted`, { headers });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || `API error ${res.status}`);
+    }
+    const data = await res.json();
+
+    // Hospitable returns { data: [...], meta: { current_page, last_page } }
+    const items = data.data || data.reservations || data || [];
+    if (!Array.isArray(items) || items.length === 0) { hasMore = false; break; }
+    allReservations = allReservations.concat(items);
+
+    const meta = data.meta || {};
+    if (meta.current_page && meta.last_page && meta.current_page < meta.last_page) {
+      page++;
+    } else {
+      hasMore = false;
+    }
+  }
+
+  // Also fetch cancelled reservations
+  try {
+    const cancelRes = await fetch(`https://api.hospitable.com/v1/reservations?per_page=100&status=cancelled`, { headers });
+    if (cancelRes.ok) {
+      const cancelData = await cancelRes.json();
+      const cancelled = cancelData.data || cancelData.reservations || [];
+      allReservations = allReservations.concat(cancelled.map(r => ({ ...r, _isCancelled: true })));
+    }
+  } catch {}
+
+  if (allReservations.length === 0) {
+    toast("Hospitable connected — no reservations found", "info");
+    return 0;
+  }
+
+  // Get existing booking IDs to avoid duplicates
+  const existingIds = new Set(state.bookings.map(b => b.id));
+  let addedCount = 0;
+
+  allReservations.forEach(r => {
+    // Hospitable reservation fields
+    const id = String(
+      r.code || r.id || r.reservation_code || r.confirmation_code || ""
+    ).trim();
+    if (!id || existingIds.has(id)) return;
+
+    // Dates
+    const checkIn  = (r.check_in  || r.checkin  || r.arrival   || r.start_date || "").slice(0,10);
+    const checkOut = (r.check_out || r.checkout || r.departure || r.end_date   || "").slice(0,10);
+    if (!checkIn || !checkOut || checkIn >= checkOut) return;
+
+    // Guest name
+    const guest = r.guest?.full_name || r.guest?.name || r.guest_name ||
+      [r.guest?.first_name, r.guest?.last_name].filter(Boolean).join(" ") || "Guest";
+
+    // Property name
+    const propName = r.property?.name || r.listing?.name || r.property_name ||
+      r.listing_name || r.unit_name || "Unknown Property";
+
+    // Platform / channel
+    const platform = r.platform || r.channel?.name || r.source ||
+      r.booking_channel || "Airbnb";
+
+    // Revenue
+    const revenue = Number(
+      r.revenue?.total || r.total_price || r.amount ||
+      r.payout?.amount || r.host_payout || 0
+    );
+
+    const booking = mkBookingDirect(id, guest, propName, checkIn, checkOut, platform, revenue, []);
+    if (r._isCancelled) booking.bookingStatus = "Cancelled";
+
+    dispatch({ type:"ADD_BOOKING", payload:booking });
+    existingIds.add(id); // prevent adding same booking twice if it appears in multiple pages
+    addedCount++;
+  });
+
+  // Update last sync timestamp
+  dispatch({ type:"UPDATE_SETTINGS", payload:{
+    hospitable: { ...state.settings.hospitable, lastSync: new Date().toISOString() }
+  }});
+
+  if (addedCount > 0) {
+    toast(`✓ Hospitable sync — ${addedCount} new booking${addedCount!==1?"s":""} added`);
+  } else {
+    toast("✓ Hospitable sync — up to date, no new bookings");
+  }
+
+  return addedCount;
+}
+
 // ─── APP ROOT ─────────────────────────────────────────────────────────────────
 function AppInner() {
   const [active, setActive] = useState("dashboard");
   const [collapsed, setCollapsed] = useState(false);
+  const { state, dispatch, toast } = useApp();
+
+  // Auto-sync from Hospitable on load and every 5 minutes
+  useEffect(() => {
+    const doSync = async () => {
+      const apiUrl = state.settings?.hospitable?.apiUrl;
+      if (!apiUrl || !state.settings?.hospitable?.enabled) return;
+      try {
+        await syncFromHospitable(apiUrl, state, dispatch, toast); // apiUrl field stores the token
+      } catch(e) {
+        console.warn("Hospitable auto-sync failed:", e.message);
+      }
+    };
+    doSync();
+    const interval = setInterval(doSync, 5 * 60 * 1000); // every 5 minutes
+    return () => clearInterval(interval);
+  }, [state.settings?.hospitable?.apiUrl, state.settings?.hospitable?.enabled]);
 
   return (
     <div style={{ display:"flex", height:"100vh", overflow:"hidden", background:C.bg0, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
@@ -3088,12 +3277,28 @@ function Reservations() {
   return (
     <div style={{ animation:"fadeIn 0.25s ease" }}>
       <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:20 }}>
-        <SectionTitle>Reservations</SectionTitle>
+        <div>
+          <SectionTitle>Reservations</SectionTitle>
+          {state.settings?.hospitable?.enabled && state.settings?.hospitable?.apiUrl && (
+            <div style={{ fontSize:11, color:C.teal, marginTop:-8 }}>
+              ● Hospitable auto-sync active · Last sync: {state.settings.hospitable.lastSync
+                ? new Date(state.settings.hospitable.lastSync).toLocaleTimeString()
+                : "not yet synced"}
+            </div>
+          )}
+        </div>
         <div style={{ display:"flex", gap:8 }}>
           <input ref={fileRef} type="file" accept=".csv,.xlsx,.xls" onChange={handleImport} style={{ display:"none" }} />
           <Btn variant="subtle" icon={Upload} onClick={() => fileRef.current?.click()} disabled={importing}>
             {importing ? "Importing..." : "Import CSV / Excel"}
           </Btn>
+          {state.settings?.hospitable?.enabled && state.settings?.hospitable?.apiUrl && (
+            <Btn variant="subtle" icon={RefreshCw} onClick={async () => {
+              try {
+                await syncFromHospitable(state.settings.hospitable.apiUrl, state, dispatch, toast);
+              } catch(e) { toast("Sync failed: " + e.message, "error"); }
+            }}>Sync Now</Btn>
+          )}
           <Btn variant="primary" icon={Plus} onClick={() => setShowAdd(true)}>Add Booking</Btn>
         </div>
       </div>
