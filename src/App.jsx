@@ -279,12 +279,308 @@ const INITIAL_TEAM = [
 ];
 
 const SOPS = [
-  { id:"SOP-001", title:"Pre-arrival Checklist", category:"Housekeeping", content:`1. Complete full unit clean minimum 2 hours before check-in\n2. Make all beds with fresh linen (hospital corners)\n3. Replace all towels (bath, hand, face, pool if applicable)\n4. Replenish welcome pack: coffee pods, tea, sugar, milk portions, biscuits\n5. Check snack basket per listing description\n6. Test all appliances: AC, dishwasher, washing machine, TV\n7. Check WiFi router is on and test connection\n8. Fill ice trays / ensure ice maker functioning\n9. Check pool/Jacuzzi temperature if applicable\n10. Photograph completed unit and submit to ops group` },
-  { id:"SOP-002", title:"Mid-Stay Clean Protocol", category:"Housekeeping", content:`1. Knock and announce 3 times before entering\n2. Replace all used linen if guest requests; tidy if not\n3. Replace ALL towels regardless\n4. Empty all bins\n5. Restock consumables: toilet paper (min 4 rolls), soap, shampoo, conditioner\n6. Clean kitchen surfaces, wipe appliances\n7. Clean bathrooms fully\n8. Photograph and report any damage immediately\n9. Replenish welcome pack items\n10. Log completion in app with timestamp` },
-  { id:"SOP-003", title:"Checkout Inspection", category:"Inspection", content:`1. Inspect within 1 hour of checkout\n2. Check all rooms for damage or missing items\n3. Photograph any damage immediately\n4. Strip all beds and bag linen for laundry\n5. Check all appliances functioning\n6. Note any consumables to restock\n7. Log condition rating 1-5 in app\n8. Report damage to manager within 15 minutes` },
-  { id:"SOP-004", title:"Damage Reporting", category:"Incidents", content:`1. Photograph damage immediately from multiple angles\n2. Log in Incident Register with date, time, description\n3. WhatsApp photo to manager group immediately\n4. Obtain quote from vendor within 24 hours\n5. Charge guest via platform if within claim window\n6. Document resolution in incident record` },
-  { id:"SOP-005", title:"Emergency Contacts Protocol", category:"Emergency", content:`1. Fire: 107 (Cape Town Fire & Rescue)\n2. Police: 10111\n3. Ambulance: 10177\n4. Electricty faults: City of Cape Town 0860 103 089\n5. Water faults: City of Cape Town 0860 103 089\n6. After-hours manager: See Settings > Emergency Numbers\n7. Always inform guest of emergency services contacted\n8. Document all emergency incidents` },
-  { id:"SOP-006", title:"Guest Check-in Communication", category:"Guest Comms", content:`1. Send check-in details 48 hours before arrival\n2. Include: door code/key location, WiFi details, parking instructions\n3. Include: appliance guide (AC, TV, dishwasher)\n4. Include: local emergency contacts\n5. Message guest 1 hour after check-in to confirm all good\n6. Respond to all messages within 30 minutes\n7. Escalate complaints to manager within 15 minutes` },
+  {
+    id:"SOP-001", title:"Guest Check-in", category:"Check-in",
+    content:`STEP 1.0 · 48 hrs before arrival
+Action: Send pre-arrival message
+Detail: Include unit address, parking instructions, access code, WiFi name & password, nearest emergency contacts. Use Template T-01. Confirm guest has read and acknowledged.
+
+STEP 2.0 · 48 hrs before arrival
+Action: Verify guest details
+Detail: Confirm guest count vs booking. Check for special requests (late arrival, baby cot, accessibility needs). Flag any discrepancies to manager immediately.
+
+STEP 3.0 · Day before arrival
+Action: Confirm unit is on cleaning schedule
+Detail: Check Housekeeping tab — unit must appear on tomorrow's schedule with a confirmed housekeeper assigned. If not, escalate immediately.
+
+STEP 4.0 · Day of check-in
+Action: 15-point inspection
+Detail: Run full inspection from Housekeeping checklist. Unit must be clear by 13:00. Check: linen, towels, consumables, appliances, WiFi, AC, TV, locks, welcome pack, snacks, cleanliness.
+
+STEP 5.0 · Day of, 10:00
+Action: Send check-in reminder
+Detail: Remind guest of check-in window (14:00–20:00) and access code. Use Template T-02. Confirm they have all details.
+
+STEP 6.0 · 14:00 onwards
+Action: Be available on WhatsApp
+Detail: Stay available from 14:00 until guest confirms they are inside. Reply within 15 minutes. Do not go offline until confirmed.
+
+STEP 7.0 · On any access issue
+Action: Access failure protocol
+Detail: If guest cannot get in: Call immediately. If unresolved in 10 min: go in person or send team member. Do not leave guest outside for more than 20 minutes.
+
+STEP 8.0 · After check-in confirmed
+Action: Log confirmation
+Detail: Note time guest confirmed entry. Update booking status to In-House. Log any issues or notes in the Incident Register.`
+  },
+  {
+    id:"SOP-002", title:"Guest Complaint — LARA Framework", category:"Complaints",
+    content:`The LARA Framework is the standard response method for all guest complaints. Follow every step, in order, every time.
+
+L · LISTEN (During the call)
+Let the guest finish speaking completely. Do not interrupt, justify, or defend. Take written notes. Give them your full attention. Silence is okay — it shows you are processing.
+
+A · ACKNOWLEDGE (During the call)
+Use these exact words: "I completely understand, and I'm sorry this has happened." Do not say "but". Do not explain what went wrong yet. Acknowledgement must come before explanation.
+
+R · RESOLVE (Within 1 hour)
+Offer a concrete fix — not "I'll look into it". Give a specific action and timeline. Example: "I'm sending someone right now and they'll be there by 3pm." Do not promise refunds or compensation without owner approval.
+
+A · ACT & DOCUMENT (Same day)
+Follow through exactly as promised. Then log the incident in the Incident Register with: date, property, guest name, complaint description, action taken, resolution time.
+
+⚠ RULES — ALWAYS:
+• NEVER argue with a guest, even if they are wrong
+• NEVER promise a refund or compensation without owner approval
+• ALWAYS follow up the same day to confirm the issue is resolved
+• ALWAYS log every complaint, even if resolved immediately
+• If a guest leaves a negative review, follow SOP-05 Review Management`
+  },
+  {
+    id:"SOP-003", title:"Maintenance Escalation — Tier System", category:"Maintenance",
+    content:`TIER 1 — Guest-Impacting Issues (Respond immediately)
+Issues: No hot water, no WiFi, broken AC/heating, lock failure, pest sighting, flooding, no electricity, gas smell.
+
+T1 · 0–15 minutes: Contact guest
+WhatsApp or call guest: "We're aware of the issue and have already called a technician. They will be there by [time]." Never leave guest without communication.
+
+T1 · 0–30 minutes: Call primary technician
+Use the Vendor Escalation Ladder in Team & Vendors. Log issue in system immediately. If primary is unavailable, move to next vendor. Do not wait longer than 30 minutes to escalate.
+
+T1 · Update guest every 30 minutes until resolved.
+Log all contact and resolution in the Incident Register.
+
+---
+
+TIER 2 — Non-Urgent Maintenance (Respond within 48 hrs)
+Issues: Minor appliance issue, cosmetic damage, slow drain, non-urgent lock issue.
+
+T2 · Within 48 hours: Schedule repair
+Contact technician, schedule during next available low-occupancy window. Update the system. Notify owner if cost exceeds R500.
+
+---
+
+TIER 3 — Cosmetic & Batch Work (Weekly)
+Issues: Paint touch-ups, garden maintenance, furniture scuffs, general wear and tear.
+
+T3 · Weekly: Compile and schedule
+Compile a weekly batch list. Schedule during next major gap. Send to owner for approval if total cost exceeds R2,000.`
+  },
+  {
+    id:"SOP-004", title:"Damage Claim Procedure", category:"Incidents",
+    content:`STEP 1.0 · At check-out
+Action: Check for damage
+Detail: Do a walk-through immediately after guest departure, before the housekeeper enters. Photograph the entire unit — every room, every surface. Compare to pre-arrival photos.
+
+STEP 2.0 · If damage is found
+Action: Document comprehensively
+Detail: Photo and video evidence from multiple angles, written description, estimated replacement/repair value. Log in Incident Register immediately. Note time of discovery.
+
+STEP 3.0 · Within 24 hours
+Action: Notify platform
+Detail: Submit claim through Airbnb Resolution Centre or Booking.com Extranet. Include all documentation: photos, videos, written description, repair estimates. Retain copies of everything.
+
+STEP 4.0 · Ongoing
+Action: Follow up
+Detail: Track claim status every 48 hours. Escalate to platform support if not resolved within 7 days. Keep owner fully informed throughout.
+
+STEP 5.0 · All times
+Action: Maintain evidence
+Detail: Keep all photos and correspondence until the claim is fully resolved and payment received. Do not discard any evidence.
+
+STEP 6.0 · After resolution
+Action: Log and update
+Detail: Update the Incident Register with final outcome and amount received. Photograph repaired/replaced items. Review whether SOPs need updating to prevent recurrence.`
+  },
+  {
+    id:"SOP-005", title:"Review Management", category:"Reviews",
+    content:`STEP 1.0 · Every morning (09:00)
+Action: Check all platforms for new reviews
+Detail: Check Airbnb, Booking.com, Google. Screenshot and save all new reviews in the Reviews module. Do not leave any review unread for more than 24 hours.
+
+STEP 2.0 · Within 24 hours of any review
+Action: Respond to all reviews
+Detail: Positive reviews: Thank warmly and personally. Mention something specific about their stay. Negative reviews: Acknowledge the concern without being defensive. Offer context professionally. Always end positively.
+
+STEP 3.0 · For any negative review (3 stars or below)
+Action: Internal review
+Detail: Log in the Incident Register. Discuss with owner within 48 hours. Identify the root cause. Determine whether an SOP needs updating to prevent recurrence.
+
+STEP 4.0 · Monthly
+Action: Analyse trends
+Detail: Review all reviews from the past month. Look for repeated themes. Three or more mentions of the same issue = a systemic problem that requires an SOP update or process change.
+
+STEP 5.0 · Rating targets
+• Airbnb: Maintain 4.8+ overall rating
+• Booking.com: Maintain 8.5+ review score
+• Any property dropping below target: Escalate to manager within 24 hours`
+  },
+  {
+    id:"SOP-006", title:"Inventory & Stock Management", category:"Operations",
+    content:`STEP 1.0 · Every Monday morning
+Action: Count all stock
+Detail: Walk all storage areas. Count every consumable item: toilet paper, shampoo, conditioner, body wash, soap, coffee pods, tea, sugar, laundry detergent, dishwasher tablets, bin bags, batteries. Update inventory records.
+
+STEP 2.0 · When any item is at or below reorder point
+Action: Place order immediately
+Detail: Do not wait for the weekly stock count. If you notice an item is running low during any property visit, flag it and order immediately. Stock-outs during guest stays are unacceptable.
+
+STEP 3.0 · On delivery
+Action: Check and log delivery
+Detail: Count all items received. Check for damage. Compare against order. Update inventory records. File supplier invoice. Report any discrepancies to manager same day.
+
+STEP 4.0 · Monthly audit
+Action: Audit linen quality
+Detail: Check all linen for staining, pilling, tears, or discolouration. Remove any sub-standard items immediately. Maintain a 20% buffer stock of all linen above active usage.
+
+STEP 5.0 · Standard stock levels per unit (minimum)
+• Toilet paper: 8 rolls
+• Towels (bath): 2 per guest + 2 spare
+• Towels (hand/face): 2 per guest
+• Coffee pods: 8 minimum
+• Tea bags: 10 minimum
+• Shampoo/conditioner: 1 bottle each
+• Body wash/soap: 1 per bathroom
+• Bin bags: 6 minimum`
+  },
+  {
+    id:"SOP-007", title:"Pre-Arrival Housekeeping Checklist", category:"Housekeeping",
+    content:`Complete minimum 2 hours before check-in. Unit must pass all points before guest arrival.
+
+BEDROOM(S)
+□ Fresh linen on all beds — hospital corners
+□ Extra blanket folded at foot of bed
+□ Bedside tables wiped and clear
+□ Mirror cleaned, no streaks
+□ Wardrobe interior clean, hangers uniform
+
+BATHROOM(S)
+□ Full clean — toilet, basin, shower/bath, tiles
+□ Fresh bath towels, hand towels, face cloths
+□ Shampoo, conditioner, body wash, soap replenished
+□ Toilet paper: minimum 4 rolls visible
+□ Bin emptied and relined
+
+KITCHEN
+□ All surfaces wiped — counters, stovetop, inside microwave
+□ Dishwasher empty and clean
+□ Fridge wiped inside — no previous guest items
+□ Coffee machine cleaned, pods/capsules replenished
+□ Welcome pack: coffee, tea, sugar, milk portions, biscuits
+
+LIVING AREA
+□ All surfaces dusted and wiped
+□ Cushions plumped and arranged
+□ TV remote batteries checked
+□ All lights and switches tested
+
+TECHNICAL
+□ WiFi router on — test connection from phone
+□ AC/heating tested and set to neutral
+□ All appliances tested: TV, washing machine, dishwasher
+□ Front door access code tested from outside
+
+FINAL CHECK
+□ All windows closed and locked
+□ Photograph entire unit — submit to ops group
+□ Update housekeeping record with completion time`
+  },
+  {
+    id:"SOP-008", title:"Mid-Stay Clean Protocol", category:"Housekeeping",
+    content:`Applies to all bookings of 10+ nights. Clean is scheduled every 7 days from check-in.
+
+BEFORE ENTRY
+□ Knock and announce clearly: "Housekeeping" — 3 times
+□ Wait 30 seconds before entering
+□ If guest is present, confirm they are comfortable to proceed
+
+BEDROOM(S)
+□ Change all linen if guest requests — tidy and straighten if not
+□ Replace ALL towels regardless of guest preference
+□ Wipe bedside tables and surfaces
+
+BATHROOM(S)
+□ Full clean — toilet, basin, shower/bath
+□ Replace ALL towels (bath, hand, face)
+□ Restock: toilet paper (min 4 rolls), soap, shampoo, conditioner
+□ Empty bin and reline
+
+KITCHEN
+□ Wipe all surfaces
+□ Clean appliances (microwave, stovetop)
+□ Replenish: coffee pods, tea, sugar, milk portions
+
+GENERAL
+□ Vacuum/sweep all floors
+□ Empty all bins
+□ Note any damage and photograph immediately
+
+AFTER CLEAN
+□ Photograph completed unit
+□ Report any damage to manager within 15 minutes
+□ Log completion in system with timestamp and housekeeper name`
+  },
+  {
+    id:"SOP-009", title:"Checkout Inspection", category:"Inspection",
+    content:`Complete within 1 hour of guest checkout.
+
+INSPECTION SEQUENCE
+□ Inspect before housekeeper enters — you need unaltered evidence
+□ Walk through every room systematically
+□ Photograph every room regardless of condition
+
+DAMAGE ASSESSMENT
+□ Check all furniture — sofas, beds, chairs, tables
+□ Check all appliances — test TV, AC, washing machine
+□ Check all fixtures — taps, showerhead, toilet flush, door handles
+□ Check walls, ceilings for damage or marks
+□ Check kitchen — inside fridge, microwave, stovetop
+□ Count all inventory items (towels, crockery, cutlery, remote controls)
+
+REPORTING
+□ Any damage: photograph immediately, multiple angles
+□ Log in Incident Register within 15 minutes of discovery
+□ WhatsApp photo to manager group immediately
+□ Obtain repair/replacement quote within 24 hours
+
+RATINGS
+□ Rate unit condition 1–5 in the system
+□ 1–2: Escalate to manager, hold cleaning until assessment
+□ 3: Normal clean, note any minor damage
+□ 4–5: Standard clean, no issues to report`
+  },
+  {
+    id:"SOP-010", title:"Emergency Contacts & Protocol", category:"Emergency",
+    content:`EMERGENCY SERVICES
+• Fire & Rescue: 107
+• Police: 10111
+• Ambulance: 10177
+• City of Cape Town Faults: 0860 103 089
+• Electricity faults: 0860 103 089
+• Water & sanitation: 0860 103 089
+• Poison Centre: 0861 555 777
+
+INTERNAL ESCALATION ORDER
+1. On-call Manager (see Settings > Emergency Numbers)
+2. Andy — Internet & Tech: +27 84 999 0000
+3. Cleanix — Maintenance: +27 21 555 7777
+
+WHEN TO CALL EMERGENCY SERVICES
+• Fire, smoke, or gas smell — evacuate first, call 107
+• Medical emergency — call 10177 immediately
+• Break-in or security threat — call 10111
+• Flooding — shut water mains, call City of Cape Town
+
+AFTER ANY EMERGENCY
+1. Ensure guest safety is confirmed
+2. Call manager immediately
+3. Log in Incident Register within 1 hour
+4. Take photographs of any damage
+5. Inform owner within 24 hours
+6. Complete full incident report within 48 hours
+
+NEVER: Leave a guest in an emergency situation without a manager knowing.`
+  },
 ];
 
 const TEMPLATES = [
@@ -1543,6 +1839,104 @@ function Financials() {
   const netProfit     = totalIncome - totalExpense;
   const totalVAT      = filtered.filter(f=>f.type==="Income").reduce((s,f)=>s+calcVAT(f.type,f.amount),0);
 
+  const propFileRef = useRef(null);
+  const [propImporting, setPropImporting] = useState(false);
+  const [propImportResult, setPropImportResult] = useState(null);
+
+  const handlePropImport = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setPropImporting(true);
+    setPropImportResult(null);
+    try {
+      const ext = file.name.split(".").pop().toLowerCase();
+      let rows = [];
+      let headers = [];
+
+      if (ext === "csv") {
+        const text = await file.text();
+        const lines = text.split("\n").map(l => l.split(",").map(v => v.replace(/^"|"$/g,"").trim()));
+        headers = lines[0].map(h => h.toLowerCase().trim());
+        rows = lines.slice(1).filter(r => r.some(v => v));
+      } else {
+        const XLSX = await import("https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm");
+        const ab = await file.arrayBuffer();
+        const wb = XLSX.read(ab);
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const data = XLSX.utils.sheet_to_json(ws, { header:1, defval:"" });
+        headers = (data[0]||[]).map(h => String(h).toLowerCase().trim());
+        rows = data.slice(1).filter(r => r.some(v => v));
+      }
+
+      // Find columns by name
+      const col = (keys) => {
+        for (const k of keys) {
+          const idx = headers.findIndex(h => h.includes(k));
+          if (idx >= 0) return idx;
+        }
+        return -1;
+      };
+      const idIdx      = col(["id","property id","prop id","zg","code"]);
+      const nameIdx    = col(["name","property name","listing"]);
+      const addressIdx = col(["address","location","street"]);
+      const areaIdx    = col(["area","suburb","neighbourhood","city"]);
+      const typeIdx    = col(["type","property type","unit type"]);
+      const portIdx    = col(["portfolio","port"]);
+      const ownerIdx   = col(["owner","landlord"]);
+      const emailIdx   = col(["email","owner email"]);
+      const phoneIdx   = col(["phone","contact","owner phone"]);
+
+      if (nameIdx < 0) {
+        toast("Could not find a 'Name' column in your file. Please check the column headers.", "error");
+        return;
+      }
+
+      let added = 0; let skipped = 0;
+      const existingIds = new Set(state.properties.map(p => p.id));
+      const existingNames = new Set(state.properties.map(p => p.name.toLowerCase()));
+
+      rows.forEach(row => {
+        const name = String(row[nameIdx]||"").trim();
+        if (!name) { skipped++; return; }
+        if (existingNames.has(name.toLowerCase())) { skipped++; return; }
+
+        const id = idIdx >= 0 && row[idIdx]
+          ? String(row[idIdx]).trim().toUpperCase()
+          : "ZG-" + String(state.properties.length + added + 1).padStart(3,"0");
+
+        if (existingIds.has(id)) { skipped++; return; }
+
+        const newProp = {
+          id,
+          name,
+          address:  addressIdx >= 0 ? String(row[addressIdx]||"").trim() : "",
+          area:     areaIdx    >= 0 ? String(row[areaIdx]||"").trim()    : "",
+          type:     typeIdx    >= 0 ? String(row[typeIdx]||"").trim()    : "Apartment",
+          portfolio: portIdx   >= 0 ? Number(row[portIdx])||1            : 1,
+          ownerName:  ownerIdx >= 0 ? String(row[ownerIdx]||"").trim()  : "",
+          ownerEmail: emailIdx >= 0 ? String(row[emailIdx]||"").trim()  : "",
+          ownerPhone: phoneIdx >= 0 ? String(row[phoneIdx]||"").trim()  : "",
+          managementFee: 20,
+          flag: null,
+          status: "Active",
+        };
+
+        dispatch({ type:"ADD_PROPERTY", payload:newProp });
+        existingIds.add(id);
+        existingNames.add(name.toLowerCase());
+        added++;
+      });
+
+      setPropImportResult({ added, skipped, file:file.name });
+      toast(`✓ Imported ${added} properties from ${file.name}`);
+    } catch (err) {
+      toast("Import failed: " + err.message, "error");
+    } finally {
+      setPropImporting(false);
+      e.target.value = "";
+    }
+  };
+
   const handleAdd = () => {
     if (!form.propertyName || !form.amount || !form.date) return toast("Fill required fields","error");
     const id = "FIN-"+String(ledger.length+1).padStart(4,"0");
@@ -1988,6 +2382,104 @@ function IncidentRegister() {
   const [selected, setSelected] = useState(null);
   const [form, setForm] = useState({ propertyId:"", type:"Cleaning Issue", description:"", guest:"", severity:"Medium", date:TODAY });
 
+  const propFileRef = useRef(null);
+  const [propImporting, setPropImporting] = useState(false);
+  const [propImportResult, setPropImportResult] = useState(null);
+
+  const handlePropImport = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setPropImporting(true);
+    setPropImportResult(null);
+    try {
+      const ext = file.name.split(".").pop().toLowerCase();
+      let rows = [];
+      let headers = [];
+
+      if (ext === "csv") {
+        const text = await file.text();
+        const lines = text.split("\n").map(l => l.split(",").map(v => v.replace(/^"|"$/g,"").trim()));
+        headers = lines[0].map(h => h.toLowerCase().trim());
+        rows = lines.slice(1).filter(r => r.some(v => v));
+      } else {
+        const XLSX = await import("https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm");
+        const ab = await file.arrayBuffer();
+        const wb = XLSX.read(ab);
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const data = XLSX.utils.sheet_to_json(ws, { header:1, defval:"" });
+        headers = (data[0]||[]).map(h => String(h).toLowerCase().trim());
+        rows = data.slice(1).filter(r => r.some(v => v));
+      }
+
+      // Find columns by name
+      const col = (keys) => {
+        for (const k of keys) {
+          const idx = headers.findIndex(h => h.includes(k));
+          if (idx >= 0) return idx;
+        }
+        return -1;
+      };
+      const idIdx      = col(["id","property id","prop id","zg","code"]);
+      const nameIdx    = col(["name","property name","listing"]);
+      const addressIdx = col(["address","location","street"]);
+      const areaIdx    = col(["area","suburb","neighbourhood","city"]);
+      const typeIdx    = col(["type","property type","unit type"]);
+      const portIdx    = col(["portfolio","port"]);
+      const ownerIdx   = col(["owner","landlord"]);
+      const emailIdx   = col(["email","owner email"]);
+      const phoneIdx   = col(["phone","contact","owner phone"]);
+
+      if (nameIdx < 0) {
+        toast("Could not find a 'Name' column in your file. Please check the column headers.", "error");
+        return;
+      }
+
+      let added = 0; let skipped = 0;
+      const existingIds = new Set(state.properties.map(p => p.id));
+      const existingNames = new Set(state.properties.map(p => p.name.toLowerCase()));
+
+      rows.forEach(row => {
+        const name = String(row[nameIdx]||"").trim();
+        if (!name) { skipped++; return; }
+        if (existingNames.has(name.toLowerCase())) { skipped++; return; }
+
+        const id = idIdx >= 0 && row[idIdx]
+          ? String(row[idIdx]).trim().toUpperCase()
+          : "ZG-" + String(state.properties.length + added + 1).padStart(3,"0");
+
+        if (existingIds.has(id)) { skipped++; return; }
+
+        const newProp = {
+          id,
+          name,
+          address:  addressIdx >= 0 ? String(row[addressIdx]||"").trim() : "",
+          area:     areaIdx    >= 0 ? String(row[areaIdx]||"").trim()    : "",
+          type:     typeIdx    >= 0 ? String(row[typeIdx]||"").trim()    : "Apartment",
+          portfolio: portIdx   >= 0 ? Number(row[portIdx])||1            : 1,
+          ownerName:  ownerIdx >= 0 ? String(row[ownerIdx]||"").trim()  : "",
+          ownerEmail: emailIdx >= 0 ? String(row[emailIdx]||"").trim()  : "",
+          ownerPhone: phoneIdx >= 0 ? String(row[phoneIdx]||"").trim()  : "",
+          managementFee: 20,
+          flag: null,
+          status: "Active",
+        };
+
+        dispatch({ type:"ADD_PROPERTY", payload:newProp });
+        existingIds.add(id);
+        existingNames.add(name.toLowerCase());
+        added++;
+      });
+
+      setPropImportResult({ added, skipped, file:file.name });
+      toast(`✓ Imported ${added} properties from ${file.name}`);
+    } catch (err) {
+      toast("Import failed: " + err.message, "error");
+    } finally {
+      setPropImporting(false);
+      e.target.value = "";
+    }
+  };
+
   const handleAdd = () => {
     if (!form.propertyId || !form.description) return toast("Fill required fields","error");
     const prop = state.properties.find(p => p.id === form.propertyId);
@@ -2079,6 +2571,104 @@ function Maintenance() {
   const { state, dispatch, toast } = useApp();
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ propertyId:"", issue:"", vendor:"", raisedDate:TODAY, scheduledDate:"", status:"Pending", cost:"", notes:"" });
+
+  const propFileRef = useRef(null);
+  const [propImporting, setPropImporting] = useState(false);
+  const [propImportResult, setPropImportResult] = useState(null);
+
+  const handlePropImport = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setPropImporting(true);
+    setPropImportResult(null);
+    try {
+      const ext = file.name.split(".").pop().toLowerCase();
+      let rows = [];
+      let headers = [];
+
+      if (ext === "csv") {
+        const text = await file.text();
+        const lines = text.split("\n").map(l => l.split(",").map(v => v.replace(/^"|"$/g,"").trim()));
+        headers = lines[0].map(h => h.toLowerCase().trim());
+        rows = lines.slice(1).filter(r => r.some(v => v));
+      } else {
+        const XLSX = await import("https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm");
+        const ab = await file.arrayBuffer();
+        const wb = XLSX.read(ab);
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const data = XLSX.utils.sheet_to_json(ws, { header:1, defval:"" });
+        headers = (data[0]||[]).map(h => String(h).toLowerCase().trim());
+        rows = data.slice(1).filter(r => r.some(v => v));
+      }
+
+      // Find columns by name
+      const col = (keys) => {
+        for (const k of keys) {
+          const idx = headers.findIndex(h => h.includes(k));
+          if (idx >= 0) return idx;
+        }
+        return -1;
+      };
+      const idIdx      = col(["id","property id","prop id","zg","code"]);
+      const nameIdx    = col(["name","property name","listing"]);
+      const addressIdx = col(["address","location","street"]);
+      const areaIdx    = col(["area","suburb","neighbourhood","city"]);
+      const typeIdx    = col(["type","property type","unit type"]);
+      const portIdx    = col(["portfolio","port"]);
+      const ownerIdx   = col(["owner","landlord"]);
+      const emailIdx   = col(["email","owner email"]);
+      const phoneIdx   = col(["phone","contact","owner phone"]);
+
+      if (nameIdx < 0) {
+        toast("Could not find a 'Name' column in your file. Please check the column headers.", "error");
+        return;
+      }
+
+      let added = 0; let skipped = 0;
+      const existingIds = new Set(state.properties.map(p => p.id));
+      const existingNames = new Set(state.properties.map(p => p.name.toLowerCase()));
+
+      rows.forEach(row => {
+        const name = String(row[nameIdx]||"").trim();
+        if (!name) { skipped++; return; }
+        if (existingNames.has(name.toLowerCase())) { skipped++; return; }
+
+        const id = idIdx >= 0 && row[idIdx]
+          ? String(row[idIdx]).trim().toUpperCase()
+          : "ZG-" + String(state.properties.length + added + 1).padStart(3,"0");
+
+        if (existingIds.has(id)) { skipped++; return; }
+
+        const newProp = {
+          id,
+          name,
+          address:  addressIdx >= 0 ? String(row[addressIdx]||"").trim() : "",
+          area:     areaIdx    >= 0 ? String(row[areaIdx]||"").trim()    : "",
+          type:     typeIdx    >= 0 ? String(row[typeIdx]||"").trim()    : "Apartment",
+          portfolio: portIdx   >= 0 ? Number(row[portIdx])||1            : 1,
+          ownerName:  ownerIdx >= 0 ? String(row[ownerIdx]||"").trim()  : "",
+          ownerEmail: emailIdx >= 0 ? String(row[emailIdx]||"").trim()  : "",
+          ownerPhone: phoneIdx >= 0 ? String(row[phoneIdx]||"").trim()  : "",
+          managementFee: 20,
+          flag: null,
+          status: "Active",
+        };
+
+        dispatch({ type:"ADD_PROPERTY", payload:newProp });
+        existingIds.add(id);
+        existingNames.add(name.toLowerCase());
+        added++;
+      });
+
+      setPropImportResult({ added, skipped, file:file.name });
+      toast(`✓ Imported ${added} properties from ${file.name}`);
+    } catch (err) {
+      toast("Import failed: " + err.message, "error");
+    } finally {
+      setPropImporting(false);
+      e.target.value = "";
+    }
+  };
 
   const handleAdd = () => {
     if (!form.propertyId || !form.issue) return toast("Fill required fields","error");
@@ -2229,6 +2819,104 @@ function Reviews() {
     setSelectedBooking(booking);
     setForm({ rating:5, comment:"", platform:booking.platform||"Airbnb", date:TODAY });
     setShowAdd(true);
+  };
+
+  const propFileRef = useRef(null);
+  const [propImporting, setPropImporting] = useState(false);
+  const [propImportResult, setPropImportResult] = useState(null);
+
+  const handlePropImport = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setPropImporting(true);
+    setPropImportResult(null);
+    try {
+      const ext = file.name.split(".").pop().toLowerCase();
+      let rows = [];
+      let headers = [];
+
+      if (ext === "csv") {
+        const text = await file.text();
+        const lines = text.split("\n").map(l => l.split(",").map(v => v.replace(/^"|"$/g,"").trim()));
+        headers = lines[0].map(h => h.toLowerCase().trim());
+        rows = lines.slice(1).filter(r => r.some(v => v));
+      } else {
+        const XLSX = await import("https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm");
+        const ab = await file.arrayBuffer();
+        const wb = XLSX.read(ab);
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const data = XLSX.utils.sheet_to_json(ws, { header:1, defval:"" });
+        headers = (data[0]||[]).map(h => String(h).toLowerCase().trim());
+        rows = data.slice(1).filter(r => r.some(v => v));
+      }
+
+      // Find columns by name
+      const col = (keys) => {
+        for (const k of keys) {
+          const idx = headers.findIndex(h => h.includes(k));
+          if (idx >= 0) return idx;
+        }
+        return -1;
+      };
+      const idIdx      = col(["id","property id","prop id","zg","code"]);
+      const nameIdx    = col(["name","property name","listing"]);
+      const addressIdx = col(["address","location","street"]);
+      const areaIdx    = col(["area","suburb","neighbourhood","city"]);
+      const typeIdx    = col(["type","property type","unit type"]);
+      const portIdx    = col(["portfolio","port"]);
+      const ownerIdx   = col(["owner","landlord"]);
+      const emailIdx   = col(["email","owner email"]);
+      const phoneIdx   = col(["phone","contact","owner phone"]);
+
+      if (nameIdx < 0) {
+        toast("Could not find a 'Name' column in your file. Please check the column headers.", "error");
+        return;
+      }
+
+      let added = 0; let skipped = 0;
+      const existingIds = new Set(state.properties.map(p => p.id));
+      const existingNames = new Set(state.properties.map(p => p.name.toLowerCase()));
+
+      rows.forEach(row => {
+        const name = String(row[nameIdx]||"").trim();
+        if (!name) { skipped++; return; }
+        if (existingNames.has(name.toLowerCase())) { skipped++; return; }
+
+        const id = idIdx >= 0 && row[idIdx]
+          ? String(row[idIdx]).trim().toUpperCase()
+          : "ZG-" + String(state.properties.length + added + 1).padStart(3,"0");
+
+        if (existingIds.has(id)) { skipped++; return; }
+
+        const newProp = {
+          id,
+          name,
+          address:  addressIdx >= 0 ? String(row[addressIdx]||"").trim() : "",
+          area:     areaIdx    >= 0 ? String(row[areaIdx]||"").trim()    : "",
+          type:     typeIdx    >= 0 ? String(row[typeIdx]||"").trim()    : "Apartment",
+          portfolio: portIdx   >= 0 ? Number(row[portIdx])||1            : 1,
+          ownerName:  ownerIdx >= 0 ? String(row[ownerIdx]||"").trim()  : "",
+          ownerEmail: emailIdx >= 0 ? String(row[emailIdx]||"").trim()  : "",
+          ownerPhone: phoneIdx >= 0 ? String(row[phoneIdx]||"").trim()  : "",
+          managementFee: 20,
+          flag: null,
+          status: "Active",
+        };
+
+        dispatch({ type:"ADD_PROPERTY", payload:newProp });
+        existingIds.add(id);
+        existingNames.add(name.toLowerCase());
+        added++;
+      });
+
+      setPropImportResult({ added, skipped, file:file.name });
+      toast(`✓ Imported ${added} properties from ${file.name}`);
+    } catch (err) {
+      toast("Import failed: " + err.message, "error");
+    } finally {
+      setPropImporting(false);
+      e.target.value = "";
+    }
   };
 
   const handleAdd = () => {
@@ -3114,6 +3802,104 @@ function TeamVendors() {
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [form, setForm] = useState({ name:"", role:"Housekeeper", phone:"", notes:"", portfolio:["1","2"] });
 
+  const propFileRef = useRef(null);
+  const [propImporting, setPropImporting] = useState(false);
+  const [propImportResult, setPropImportResult] = useState(null);
+
+  const handlePropImport = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setPropImporting(true);
+    setPropImportResult(null);
+    try {
+      const ext = file.name.split(".").pop().toLowerCase();
+      let rows = [];
+      let headers = [];
+
+      if (ext === "csv") {
+        const text = await file.text();
+        const lines = text.split("\n").map(l => l.split(",").map(v => v.replace(/^"|"$/g,"").trim()));
+        headers = lines[0].map(h => h.toLowerCase().trim());
+        rows = lines.slice(1).filter(r => r.some(v => v));
+      } else {
+        const XLSX = await import("https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm");
+        const ab = await file.arrayBuffer();
+        const wb = XLSX.read(ab);
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const data = XLSX.utils.sheet_to_json(ws, { header:1, defval:"" });
+        headers = (data[0]||[]).map(h => String(h).toLowerCase().trim());
+        rows = data.slice(1).filter(r => r.some(v => v));
+      }
+
+      // Find columns by name
+      const col = (keys) => {
+        for (const k of keys) {
+          const idx = headers.findIndex(h => h.includes(k));
+          if (idx >= 0) return idx;
+        }
+        return -1;
+      };
+      const idIdx      = col(["id","property id","prop id","zg","code"]);
+      const nameIdx    = col(["name","property name","listing"]);
+      const addressIdx = col(["address","location","street"]);
+      const areaIdx    = col(["area","suburb","neighbourhood","city"]);
+      const typeIdx    = col(["type","property type","unit type"]);
+      const portIdx    = col(["portfolio","port"]);
+      const ownerIdx   = col(["owner","landlord"]);
+      const emailIdx   = col(["email","owner email"]);
+      const phoneIdx   = col(["phone","contact","owner phone"]);
+
+      if (nameIdx < 0) {
+        toast("Could not find a 'Name' column in your file. Please check the column headers.", "error");
+        return;
+      }
+
+      let added = 0; let skipped = 0;
+      const existingIds = new Set(state.properties.map(p => p.id));
+      const existingNames = new Set(state.properties.map(p => p.name.toLowerCase()));
+
+      rows.forEach(row => {
+        const name = String(row[nameIdx]||"").trim();
+        if (!name) { skipped++; return; }
+        if (existingNames.has(name.toLowerCase())) { skipped++; return; }
+
+        const id = idIdx >= 0 && row[idIdx]
+          ? String(row[idIdx]).trim().toUpperCase()
+          : "ZG-" + String(state.properties.length + added + 1).padStart(3,"0");
+
+        if (existingIds.has(id)) { skipped++; return; }
+
+        const newProp = {
+          id,
+          name,
+          address:  addressIdx >= 0 ? String(row[addressIdx]||"").trim() : "",
+          area:     areaIdx    >= 0 ? String(row[areaIdx]||"").trim()    : "",
+          type:     typeIdx    >= 0 ? String(row[typeIdx]||"").trim()    : "Apartment",
+          portfolio: portIdx   >= 0 ? Number(row[portIdx])||1            : 1,
+          ownerName:  ownerIdx >= 0 ? String(row[ownerIdx]||"").trim()  : "",
+          ownerEmail: emailIdx >= 0 ? String(row[emailIdx]||"").trim()  : "",
+          ownerPhone: phoneIdx >= 0 ? String(row[phoneIdx]||"").trim()  : "",
+          managementFee: 20,
+          flag: null,
+          status: "Active",
+        };
+
+        dispatch({ type:"ADD_PROPERTY", payload:newProp });
+        existingIds.add(id);
+        existingNames.add(name.toLowerCase());
+        added++;
+      });
+
+      setPropImportResult({ added, skipped, file:file.name });
+      toast(`✓ Imported ${added} properties from ${file.name}`);
+    } catch (err) {
+      toast("Import failed: " + err.message, "error");
+    } finally {
+      setPropImporting(false);
+      e.target.value = "";
+    }
+  };
+
   const handleAdd = () => {
     if (!form.name) return toast("Name is required","error");
     const id = "T"+String(state.team.length+1).padStart(3,"0");
@@ -3320,6 +4106,8 @@ function GuestTemplates() {
 
 
 // ─── PROPERTIES ──────────────────────────────────────────────────────────────
+
+// ─── PROPERTY SCORECARD ──────────────────────────────────────────────────────
 function PropertiesModule() {
   const { state, dispatch, toast } = useApp();
   const [search, setSearch] = useState("");
@@ -3329,6 +4117,104 @@ function PropertiesModule() {
   const [showAdd, setShowAdd] = useState(false);
   const [showOffboard, setShowOffboard] = useState(null);
   const [form, setForm] = useState({ id:"", name:"", address:"", area:"", type:"Apartment", portfolio:"1" });
+
+  const propFileRef = useRef(null);
+  const [propImporting, setPropImporting] = useState(false);
+  const [propImportResult, setPropImportResult] = useState(null);
+
+  const handlePropImport = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setPropImporting(true);
+    setPropImportResult(null);
+    try {
+      const ext = file.name.split(".").pop().toLowerCase();
+      let rows = [];
+      let headers = [];
+
+      if (ext === "csv") {
+        const text = await file.text();
+        const lines = text.split("\n").map(l => l.split(",").map(v => v.replace(/^"|"$/g,"").trim()));
+        headers = lines[0].map(h => h.toLowerCase().trim());
+        rows = lines.slice(1).filter(r => r.some(v => v));
+      } else {
+        const XLSX = await import("https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm");
+        const ab = await file.arrayBuffer();
+        const wb = XLSX.read(ab);
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const data = XLSX.utils.sheet_to_json(ws, { header:1, defval:"" });
+        headers = (data[0]||[]).map(h => String(h).toLowerCase().trim());
+        rows = data.slice(1).filter(r => r.some(v => v));
+      }
+
+      // Find columns by name
+      const col = (keys) => {
+        for (const k of keys) {
+          const idx = headers.findIndex(h => h.includes(k));
+          if (idx >= 0) return idx;
+        }
+        return -1;
+      };
+      const idIdx      = col(["id","property id","prop id","zg","code"]);
+      const nameIdx    = col(["name","property name","listing"]);
+      const addressIdx = col(["address","location","street"]);
+      const areaIdx    = col(["area","suburb","neighbourhood","city"]);
+      const typeIdx    = col(["type","property type","unit type"]);
+      const portIdx    = col(["portfolio","port"]);
+      const ownerIdx   = col(["owner","landlord"]);
+      const emailIdx   = col(["email","owner email"]);
+      const phoneIdx   = col(["phone","contact","owner phone"]);
+
+      if (nameIdx < 0) {
+        toast("Could not find a 'Name' column in your file. Please check the column headers.", "error");
+        return;
+      }
+
+      let added = 0; let skipped = 0;
+      const existingIds = new Set(state.properties.map(p => p.id));
+      const existingNames = new Set(state.properties.map(p => p.name.toLowerCase()));
+
+      rows.forEach(row => {
+        const name = String(row[nameIdx]||"").trim();
+        if (!name) { skipped++; return; }
+        if (existingNames.has(name.toLowerCase())) { skipped++; return; }
+
+        const id = idIdx >= 0 && row[idIdx]
+          ? String(row[idIdx]).trim().toUpperCase()
+          : "ZG-" + String(state.properties.length + added + 1).padStart(3,"0");
+
+        if (existingIds.has(id)) { skipped++; return; }
+
+        const newProp = {
+          id,
+          name,
+          address:  addressIdx >= 0 ? String(row[addressIdx]||"").trim() : "",
+          area:     areaIdx    >= 0 ? String(row[areaIdx]||"").trim()    : "",
+          type:     typeIdx    >= 0 ? String(row[typeIdx]||"").trim()    : "Apartment",
+          portfolio: portIdx   >= 0 ? Number(row[portIdx])||1            : 1,
+          ownerName:  ownerIdx >= 0 ? String(row[ownerIdx]||"").trim()  : "",
+          ownerEmail: emailIdx >= 0 ? String(row[emailIdx]||"").trim()  : "",
+          ownerPhone: phoneIdx >= 0 ? String(row[phoneIdx]||"").trim()  : "",
+          managementFee: 20,
+          flag: null,
+          status: "Active",
+        };
+
+        dispatch({ type:"ADD_PROPERTY", payload:newProp });
+        existingIds.add(id);
+        existingNames.add(name.toLowerCase());
+        added++;
+      });
+
+      setPropImportResult({ added, skipped, file:file.name });
+      toast(`✓ Imported ${added} properties from ${file.name}`);
+    } catch (err) {
+      toast("Import failed: " + err.message, "error");
+    } finally {
+      setPropImporting(false);
+      e.target.value = "";
+    }
+  };
 
   const handleAdd = () => {
     if (!form.id || !form.name) return toast("Property ID and Name are required","error");
@@ -3374,8 +4260,43 @@ function PropertiesModule() {
           <SearchBar value={search} onChange={setSearch} placeholder="Search property..." />
           <Select value={portFilter} onChange={setPortFilter} options={["All","1","2"]} style={{ width:110 }} />
           <Select value={statusFilter} onChange={setStatusFilter} options={["Active","Offboarded","All"]} style={{ width:130 }} />
+          <input ref={propFileRef} type="file" accept=".xlsx,.xls,.csv" onChange={handlePropImport} style={{ display:"none" }} />
+          <Btn variant="subtle" icon={Upload} onClick={() => propFileRef.current?.click()} disabled={propImporting}>
+            {propImporting ? "Importing..." : "Import Excel"}
+          </Btn>
           <Btn variant="primary" icon={Plus} onClick={() => setShowAdd(true)}>Add Property</Btn>
         </div>
+      </div>
+
+      {/* Import Result Banner */}
+      {importResult && (
+        <div style={{ background:C.tealBg, border:`1px solid ${C.teal}30`, borderRadius:8,
+          padding:"10px 16px", marginBottom:16, display:"flex", alignItems:"center", gap:12 }}>
+          <CheckCircle size={16} color={C.teal} />
+          <span style={{ fontSize:13, color:C.teal }}>
+            Imported <strong>{importResult.added}</strong> properties from <strong>{importResult.file}</strong>
+            {importResult.skipped > 0 && ` · ${importResult.skipped} skipped (duplicates or empty rows)`}
+          </span>
+          <button onClick={() => setPropImportResult(null)}
+            style={{ marginLeft:"auto", background:"none", border:"none", cursor:"pointer", color:C.text3 }}>
+            <X size={14}/>
+          </button>
+        </div>
+      )}
+
+      {/* Format guide */}
+      <div style={{ background:C.bg1, border:`1px solid ${C.border}`, borderRadius:8, padding:"10px 16px",
+        marginBottom:16, fontSize:12, color:C.text3, display:"flex", alignItems:"center", gap:16, flexWrap:"wrap" }}>
+        <span style={{ color:C.text2, fontWeight:600 }}>Import format:</span>
+        <span>Columns: <span style={{ fontFamily:"'DM Mono',monospace", color:C.teal }}>ID, Name, Address, Area, Type, Portfolio, Owner, Email, Phone</span></span>
+        <button onClick={() => {
+          const csv = "ID,Name,Address,Area,Type,Portfolio,Owner,Email,Phone\nZG-053,205 The Wave,1 Ocean Drive Cape Town 8005,Sea Point,Apartment,1,John Smith,john@email.com,+27821234567\n";
+          const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
+          a.download = "properties_template.csv"; a.click();
+        }} style={{ background:C.tealBg, color:C.teal, border:`1px solid ${C.teal}30`,
+          borderRadius:5, padding:"4px 10px", cursor:"pointer", fontSize:11, fontWeight:600, marginLeft:"auto" }}>
+          ↓ Download Template
+        </button>
       </div>
 
       <div style={{ display:"flex", gap:12, marginBottom:20, flexWrap:"wrap" }}>
@@ -5243,6 +6164,104 @@ function Reservations() {
   const checkedOut = bookings.filter(b => b.status==="Checked Out").length;
   const shortStays = bookings.filter(b => b.nights < 10).length;
   const longStays = bookings.filter(b => b.nights >= 10).length;
+
+  const propFileRef = useRef(null);
+  const [propImporting, setPropImporting] = useState(false);
+  const [propImportResult, setPropImportResult] = useState(null);
+
+  const handlePropImport = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setPropImporting(true);
+    setPropImportResult(null);
+    try {
+      const ext = file.name.split(".").pop().toLowerCase();
+      let rows = [];
+      let headers = [];
+
+      if (ext === "csv") {
+        const text = await file.text();
+        const lines = text.split("\n").map(l => l.split(",").map(v => v.replace(/^"|"$/g,"").trim()));
+        headers = lines[0].map(h => h.toLowerCase().trim());
+        rows = lines.slice(1).filter(r => r.some(v => v));
+      } else {
+        const XLSX = await import("https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm");
+        const ab = await file.arrayBuffer();
+        const wb = XLSX.read(ab);
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const data = XLSX.utils.sheet_to_json(ws, { header:1, defval:"" });
+        headers = (data[0]||[]).map(h => String(h).toLowerCase().trim());
+        rows = data.slice(1).filter(r => r.some(v => v));
+      }
+
+      // Find columns by name
+      const col = (keys) => {
+        for (const k of keys) {
+          const idx = headers.findIndex(h => h.includes(k));
+          if (idx >= 0) return idx;
+        }
+        return -1;
+      };
+      const idIdx      = col(["id","property id","prop id","zg","code"]);
+      const nameIdx    = col(["name","property name","listing"]);
+      const addressIdx = col(["address","location","street"]);
+      const areaIdx    = col(["area","suburb","neighbourhood","city"]);
+      const typeIdx    = col(["type","property type","unit type"]);
+      const portIdx    = col(["portfolio","port"]);
+      const ownerIdx   = col(["owner","landlord"]);
+      const emailIdx   = col(["email","owner email"]);
+      const phoneIdx   = col(["phone","contact","owner phone"]);
+
+      if (nameIdx < 0) {
+        toast("Could not find a 'Name' column in your file. Please check the column headers.", "error");
+        return;
+      }
+
+      let added = 0; let skipped = 0;
+      const existingIds = new Set(state.properties.map(p => p.id));
+      const existingNames = new Set(state.properties.map(p => p.name.toLowerCase()));
+
+      rows.forEach(row => {
+        const name = String(row[nameIdx]||"").trim();
+        if (!name) { skipped++; return; }
+        if (existingNames.has(name.toLowerCase())) { skipped++; return; }
+
+        const id = idIdx >= 0 && row[idIdx]
+          ? String(row[idIdx]).trim().toUpperCase()
+          : "ZG-" + String(state.properties.length + added + 1).padStart(3,"0");
+
+        if (existingIds.has(id)) { skipped++; return; }
+
+        const newProp = {
+          id,
+          name,
+          address:  addressIdx >= 0 ? String(row[addressIdx]||"").trim() : "",
+          area:     areaIdx    >= 0 ? String(row[areaIdx]||"").trim()    : "",
+          type:     typeIdx    >= 0 ? String(row[typeIdx]||"").trim()    : "Apartment",
+          portfolio: portIdx   >= 0 ? Number(row[portIdx])||1            : 1,
+          ownerName:  ownerIdx >= 0 ? String(row[ownerIdx]||"").trim()  : "",
+          ownerEmail: emailIdx >= 0 ? String(row[emailIdx]||"").trim()  : "",
+          ownerPhone: phoneIdx >= 0 ? String(row[phoneIdx]||"").trim()  : "",
+          managementFee: 20,
+          flag: null,
+          status: "Active",
+        };
+
+        dispatch({ type:"ADD_PROPERTY", payload:newProp });
+        existingIds.add(id);
+        existingNames.add(name.toLowerCase());
+        added++;
+      });
+
+      setPropImportResult({ added, skipped, file:file.name });
+      toast(`✓ Imported ${added} properties from ${file.name}`);
+    } catch (err) {
+      toast("Import failed: " + err.message, "error");
+    } finally {
+      setPropImporting(false);
+      e.target.value = "";
+    }
+  };
 
   const handleAdd = () => {
     if (!form.propId || !nbForm.checkIn || !nbForm.checkOut) return toast("Fill required fields","error");
