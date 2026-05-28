@@ -45,6 +45,16 @@ gStyle.textContent = `
   @media(max-width:768px){
     input,select,textarea{font-size:16px!important;}
   }
+  @media print{
+    body{background:#fff!important;}
+    #print-hide{display:none!important;}
+    #print-area{
+      position:fixed;top:0;left:0;width:100%;height:100%;
+      background:#fff;z-index:9999;padding:32px;
+      font-family:'Plus Jakarta Sans',sans-serif;
+    }
+    .print-text{color:#000!important;}
+  }
 `;
 document.head.appendChild(gStyle);
 
@@ -171,6 +181,8 @@ const PROPERTIES = PROP_RAW.map(([id,name,address,area,type]) => ({
   flag: id==="ZG-046"?"Duplicate of ZG-012":id==="ZG-017"?"Duplicate of ZG-001":null,
   portfolio: parseInt(id.replace("ZG-",""))<=30?1:2,
   status:"Active",
+  ownerName:"", ownerEmail:"", ownerPhone:"",
+  managementFee: 20,
 }));
 
 
@@ -2321,70 +2333,319 @@ function HousekeepingScheduler(){
 }
 
 
-// ─── OWNER STATEMENTS ─────────────────────────────────────────────────────────
+// ─── OWNER STATEMENTS ────────────────────────────────────────────────────────
+const MONTHS = ["January","February","March","April","May","June",
+  "July","August","September","October","November","December"];
+
 function OwnerStatements() {
-  const { state } = useApp();
-  const [portfolio, setPortfolio] = useState("All");
-  const [period, setPeriod] = useState("2026-05");
+  const { state, dispatch, toast } = useApp();
+  const now = new Date();
+  const [selectedPropId, setSelectedPropId] = useState("");
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
+  const [editingOwner, setEditingOwner] = useState(false);
+  const [ownerForm, setOwnerForm] = useState({ ownerName:"", ownerEmail:"", ownerPhone:"", managementFee:20 });
 
-  const props = portfolio === "All" ? state.properties : state.properties.filter(p => p.portfolio === Number(portfolio));
-  const statements = props.map(prop => {
-    const bs = state.bookings.filter(b => b.propId === prop.id && b.checkIn.startsWith(period));
-    const revenue = bs.reduce((s,b) => s + b.revenue, 0);
-    const mgmtFee = revenue * 0.2;
-    const netOwner = revenue - mgmtFee;
-    return { prop, bookings: bs.length, revenue, mgmtFee, netOwner, nights: bs.reduce((s,b) => s + b.nights, 0) };
-  }).filter(s => s.bookings > 0 || false);
+  const prop = state.properties.find(p => p.id === selectedPropId);
 
-  const totalRev = statements.reduce((s,x) => s + x.revenue, 0);
-  const totalNet = statements.reduce((s,x) => s + x.netOwner, 0);
+  // Bookings for selected property in selected month/year
+  const bookings = state.bookings.filter(b => {
+    const match = b.propId === selectedPropId || b.propertyName === prop?.name;
+    const bMonth = new Date(b.checkIn).getMonth() + 1;
+    const bYear  = new Date(b.checkIn).getFullYear();
+    return match && bMonth === Number(selectedMonth) && bYear === Number(selectedYear)
+      && b.bookingStatus !== "Cancelled";
+  });
+
+  const grossRevenue     = bookings.reduce((s,b) => s + b.revenue, 0);
+  const platformComm     = grossRevenue * 0.03; // ~3% platform fee
+  const netRevenue       = grossRevenue - platformComm;
+  const mgmtFeeRate      = Number(prop?.managementFee || 20) / 100;
+  const managementFee    = netRevenue * mgmtFeeRate;
+  const netOwnerPayout   = netRevenue - managementFee;
+  const statementMonth   = `${MONTHS[Number(selectedMonth)-1]} ${selectedYear}`;
+
+  const years = [2024, 2025, 2026, 2027].map(y => ({ value:y, label:String(y) }));
+
+  // Open owner edit
+  const startEditOwner = () => {
+    setOwnerForm({
+      ownerName:   prop?.ownerName   || "",
+      ownerEmail:  prop?.ownerEmail  || "",
+      ownerPhone:  prop?.ownerPhone  || "",
+      managementFee: prop?.managementFee || 20,
+    });
+    setEditingOwner(true);
+  };
+
+  const saveOwner = () => {
+    dispatch({ type:"UPDATE_PROPERTY", payload:{ id:prop.id, ...ownerForm }});
+    toast("Owner details saved");
+    setEditingOwner(false);
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleExportPDF = () => {
+    const printContent = document.getElementById("statement-print-area");
+    if (!printContent) return;
+    const w = window.open("", "_blank");
+    w.document.write(`
+      <html>
+        <head>
+          <title>Owner Statement - ${prop?.name} - ${statementMonth}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 40px; color: #000; background: #fff; }
+            h1 { font-size: 22px; margin-bottom: 4px; }
+            h2 { font-size: 15px; color: #444; margin-bottom: 24px; font-weight: 400; }
+            .section { margin-bottom: 28px; }
+            .section-title { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #666; border-bottom: 1px solid #ddd; padding-bottom: 6px; margin-bottom: 12px; }
+            .row { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
+            .row.total { font-weight: 700; font-size: 15px; border-top: 2px solid #000; border-bottom: 2px solid #000; margin-top: 8px; padding: 10px 0; }
+            .row.payout { font-weight: 700; font-size: 17px; color: #1a5c3a; background: #f0faf5; padding: 12px; border-radius: 6px; margin-top: 12px; }
+            .label { color: #333; }
+            .value { font-weight: 500; }
+            .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+            .info-cell { }
+            .info-key { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 0.06em; }
+            .info-val { font-size: 13px; font-weight: 500; }
+            .bookings-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+            .bookings-table th { background: #f5f5f5; padding: 7px 10px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
+            .bookings-table td { padding: 7px 10px; border-bottom: 1px solid #f0f0f0; }
+            .footer { margin-top: 40px; font-size: 11px; color: #888; text-align: center; }
+          </style>
+        </head>
+        <body>${printContent.innerHTML}</body>
+      </html>
+    `);
+    w.document.close();
+    w.focus();
+    setTimeout(() => { w.print(); }, 500);
+  };
+
+  const StatRow = ({ label, value, bold, highlight, dimmed }) => (
+    <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
+      padding:"9px 14px", borderBottom:`1px solid ${C.border}20`,
+      background: highlight ? C.tealBg : "transparent" }}>
+      <span style={{ fontSize:13, color:dimmed?C.text3:C.text2, fontWeight:bold?700:400 }}>{label}</span>
+      <span style={{ fontSize:13, color:highlight?C.teal:bold?C.text1:C.text2,
+        fontWeight:bold?700:500, fontFamily:"'DM Mono',monospace" }}>{value}</span>
+    </div>
+  );
 
   return (
-    <div style={{ animation:"fadeIn 0.25s ease" }}>
-      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:24 }}>
+    <div style={{ animation:"fadeIn 0.25s ease" }} id="print-hide">
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:20 }}>
         <SectionTitle>Owner Statements</SectionTitle>
-        <div style={{ display:"flex", gap:8 }}>
-          <Input type="month" value={period} onChange={setPeriod} style={{ width:160 }} />
-          <Select value={portfolio} onChange={setPortfolio} options={["All","1","2"]} style={{ width:120 }} />
+        {prop && (
+          <div style={{ display:"flex", gap:8 }}>
+            <Btn variant="subtle" icon={Edit} onClick={startEditOwner}>Owner Details</Btn>
+            <Btn variant="subtle" icon={Download} onClick={handleExportPDF}>Export PDF</Btn>
+            <Btn variant="primary" icon={FileText} onClick={handlePrint}>Print</Btn>
+          </div>
+        )}
+      </div>
+
+      {/* Selectors */}
+      <div style={{ display:"grid", gridTemplateColumns:"2fr 1fr 1fr", gap:12, marginBottom:24 }}>
+        <div>
+          <div style={{ fontSize:11, color:C.text3, marginBottom:6, fontWeight:600, textTransform:"uppercase", letterSpacing:"0.06em" }}>Select Property</div>
+          <Select value={selectedPropId} onChange={setSelectedPropId}
+            options={["", ...state.properties.filter(p=>p.status==="Active").map(p=>({ value:p.id, label:p.name }))]} />
+        </div>
+        <div>
+          <div style={{ fontSize:11, color:C.text3, marginBottom:6, fontWeight:600, textTransform:"uppercase", letterSpacing:"0.06em" }}>Month</div>
+          <Select value={selectedMonth} onChange={setSelectedMonth}
+            options={MONTHS.map((m,i) => ({ value:i+1, label:m }))} />
+        </div>
+        <div>
+          <div style={{ fontSize:11, color:C.text3, marginBottom:6, fontWeight:600, textTransform:"uppercase", letterSpacing:"0.06em" }}>Year</div>
+          <Select value={selectedYear} onChange={setSelectedYear} options={years} />
         </div>
       </div>
-      <div style={{ display:"flex", gap:12, marginBottom:20 }}>
-        <KPICard label="Gross Revenue" value={`R ${(totalRev/1000).toFixed(1)}k`} color={C.teal} />
-        <KPICard label="Mgmt Fee (20%)" value={`R ${((totalRev*0.2)/1000).toFixed(1)}k`} color={C.amber} />
-        <KPICard label="Net to Owners" value={`R ${(totalNet/1000).toFixed(1)}k`} color={C.green} />
-        <KPICard label="Properties Active" value={statements.length} color={C.blue} />
-      </div>
-      <Card>
-        <div style={{ display:"grid", gridTemplateColumns:"2fr 80px 100px 100px 100px 100px",
-          padding:"8px 12px", borderBottom:`1px solid ${C.border}`, background:C.bg2, borderRadius:"6px 6px 0 0" }}>
-          {["Property","Bookings","Nights","Gross Rev","Mgmt (20%)","Net Owner"].map(h => (
-            <div key={h} style={{ fontSize:11, color:C.text3, fontWeight:600, letterSpacing:"0.06em" }}>{h}</div>
-          ))}
-        </div>
-        {statements.length === 0 ? <EmptyState icon={FileText} title="No bookings in this period" /> :
-          statements.map(s => (
-            <div key={s.prop.id} style={{ display:"grid", gridTemplateColumns:"2fr 80px 100px 100px 100px 100px",
-              padding:"10px 12px", borderBottom:`1px solid ${C.border}10`, alignItems:"center" }}>
-              <div>
-                <div style={{ fontSize:13, color:C.text1 }}>{s.prop.name}</div>
-                <div style={{ fontSize:10, color:C.text3, fontFamily:"'DM Mono',monospace" }}>{s.prop.id} · {s.prop.area}</div>
+
+      {!selectedPropId ? (
+        <EmptyState icon={FileText} title="Select a property" sub="Choose a property above to generate the owner statement." />
+      ) : (
+        <>
+          {/* Statement Document */}
+          <div id="statement-print-area" style={{ background:C.bg1, border:`1px solid ${C.border}`, borderRadius:12, overflow:"hidden" }}>
+
+            {/* Statement Header */}
+            <div style={{ background:`linear-gradient(135deg, #1a2744, #0f1a30)`, padding:"28px 32px" }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
+                <div>
+                  <div style={{ fontFamily:"'Syne',sans-serif", fontSize:22, fontWeight:800, color:"#fff", marginBottom:4 }}>
+                    OWNER STATEMENT
+                  </div>
+                  <div style={{ fontSize:13, color:"rgba(255,255,255,0.6)", letterSpacing:"0.05em" }}>
+                    {statementMonth} · Zwart Group
+                  </div>
+                </div>
+                <div style={{ textAlign:"right" }}>
+                  <div style={{ fontSize:11, color:"rgba(255,255,255,0.5)", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:4 }}>Statement Date</div>
+                  <div style={{ fontFamily:"'DM Mono',monospace", fontSize:13, color:"#fff" }}>{fmtDate(TODAY)}</div>
+                </div>
               </div>
-              <div style={{ fontFamily:"'DM Mono',monospace", fontSize:12, color:C.text2 }}>{s.bookings}</div>
-              <div style={{ fontFamily:"'DM Mono',monospace", fontSize:12, color:C.text2 }}>{s.nights}</div>
-              <div style={{ fontFamily:"'DM Mono',monospace", fontSize:12, color:C.teal }}>R {(s.revenue/1000).toFixed(1)}k</div>
-              <div style={{ fontFamily:"'DM Mono',monospace", fontSize:12, color:C.amber }}>R {(s.mgmtFee/1000).toFixed(1)}k</div>
-              <div style={{ fontFamily:"'DM Mono',monospace", fontSize:12, color:C.green, fontWeight:600 }}>R {(s.netOwner/1000).toFixed(1)}k</div>
             </div>
-          ))}
-        <div style={{ display:"grid", gridTemplateColumns:"2fr 80px 100px 100px 100px 100px",
-          padding:"10px 12px", background:C.bg2, borderRadius:"0 0 6px 6px", borderTop:`1px solid ${C.border}` }}>
-          <div style={{ fontSize:12, fontWeight:700, color:C.text1 }}>TOTAL</div>
-          <div /><div />
-          <div style={{ fontFamily:"'DM Mono',monospace", fontSize:12, color:C.teal, fontWeight:700 }}>R {(totalRev/1000).toFixed(1)}k</div>
-          <div style={{ fontFamily:"'DM Mono',monospace", fontSize:12, color:C.amber, fontWeight:700 }}>R {(totalRev*0.2/1000).toFixed(1)}k</div>
-          <div style={{ fontFamily:"'DM Mono',monospace", fontSize:12, color:C.green, fontWeight:700 }}>R {(totalNet/1000).toFixed(1)}k</div>
-        </div>
-      </Card>
+
+            <div style={{ padding:"24px 28px" }}>
+
+              {/* Property & Owner Info */}
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20, marginBottom:24,
+                padding:"20px 0", borderBottom:`1px solid ${C.border}` }}>
+                <div>
+                  <div style={{ fontSize:10, color:C.text3, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:10, fontWeight:700 }}>Property</div>
+                  <div style={{ fontSize:16, fontWeight:700, color:C.text1, marginBottom:4 }}>{prop?.name}</div>
+                  <div style={{ fontSize:12, color:C.text3 }}>{prop?.area} · {prop?.type}</div>
+                  {prop?.address && <div style={{ fontSize:11, color:C.text3, marginTop:4 }}>{prop.address}</div>}
+                  <div style={{ fontSize:11, color:C.teal, marginTop:4, fontFamily:"'DM Mono',monospace" }}>{prop?.id}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize:10, color:C.text3, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:10, fontWeight:700 }}>Owner</div>
+                  {prop?.ownerName ? (
+                    <>
+                      <div style={{ fontSize:15, fontWeight:600, color:C.text1, marginBottom:4 }}>{prop.ownerName}</div>
+                      {prop.ownerEmail && <div style={{ fontSize:12, color:C.text3, display:"flex", alignItems:"center", gap:6, marginBottom:2 }}><Mail size={11}/>{prop.ownerEmail}</div>}
+                      {prop.ownerPhone && <div style={{ fontSize:12, color:C.text3, display:"flex", alignItems:"center", gap:6 }}><Phone size={11}/>{prop.ownerPhone}</div>}
+                    </>
+                  ) : (
+                    <div style={{ fontSize:12, color:C.amber }}>
+                      ⚠️ Owner details not set —{" "}
+                      <button onClick={startEditOwner}
+                        style={{ background:"none", border:"none", color:C.teal, cursor:"pointer", fontSize:12, textDecoration:"underline" }}>
+                        Add now
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Revenue Summary */}
+              <div style={{ marginBottom:20 }}>
+                <div style={{ fontSize:11, fontWeight:700, color:C.text3, textTransform:"uppercase",
+                  letterSpacing:"0.1em", marginBottom:10 }}>Revenue Summary — {statementMonth}</div>
+                <div style={{ background:C.bg2, borderRadius:8, overflow:"hidden" }}>
+                  <StatRow label="Total Reservations" value={String(bookings.length)} />
+                  <StatRow label="Gross Revenue" value={fmtCurr(grossRevenue)} />
+                  <StatRow label={`Platform Commission (~3%)`} value={`- ${fmtCurr(platformComm)}`} dimmed />
+                  <StatRow label="Net Revenue (after platform)" value={fmtCurr(netRevenue)} bold />
+                </div>
+              </div>
+
+              {/* Deductions */}
+              <div style={{ marginBottom:20 }}>
+                <div style={{ fontSize:11, fontWeight:700, color:C.text3, textTransform:"uppercase",
+                  letterSpacing:"0.1em", marginBottom:10 }}>Management Deductions</div>
+                <div style={{ background:C.bg2, borderRadius:8, overflow:"hidden" }}>
+                  <StatRow label={`Management Fee (${prop?.managementFee||20}% of net revenue)`}
+                    value={`- ${fmtCurr(managementFee)}`} dimmed />
+                </div>
+              </div>
+
+              {/* Net Payout */}
+              <div style={{ background:`linear-gradient(135deg, rgba(0,212,184,0.12), rgba(0,212,184,0.06))`,
+                border:`1px solid ${C.teal}40`, borderRadius:10, padding:"18px 20px", marginBottom:24 }}>
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                  <div>
+                    <div style={{ fontSize:11, color:C.teal, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:4 }}>NET OWNER PAYOUT</div>
+                    <div style={{ fontSize:11, color:C.text3 }}>{statementMonth} · After all deductions</div>
+                  </div>
+                  <div style={{ fontFamily:"'DM Mono',monospace", fontSize:28, fontWeight:800, color:C.teal }}>
+                    {fmtCurr(netOwnerPayout)}
+                  </div>
+                </div>
+              </div>
+
+              {/* Booking Breakdown */}
+              {bookings.length > 0 && (
+                <div style={{ marginBottom:16 }}>
+                  <div style={{ fontSize:11, fontWeight:700, color:C.text3, textTransform:"uppercase",
+                    letterSpacing:"0.1em", marginBottom:10 }}>Booking Breakdown</div>
+                  <div style={{ background:C.bg2, borderRadius:8, overflow:"hidden" }}>
+                    <div style={{ display:"grid", gridTemplateColumns:"1fr 90px 90px 90px 90px",
+                      padding:"8px 14px", background:C.bg3 }}>
+                      {["Guest","Check-in","Check-out","Nights","Revenue"].map(h => (
+                        <div key={h} style={{ fontSize:10, color:C.text3, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.05em" }}>{h}</div>
+                      ))}
+                    </div>
+                    {bookings.map(b => (
+                      <div key={b.id} style={{ display:"grid", gridTemplateColumns:"1fr 90px 90px 90px 90px",
+                        padding:"10px 14px", borderTop:`1px solid ${C.border}20`, alignItems:"center" }}>
+                        <div style={{ fontSize:12, color:C.text1, fontWeight:500, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                          {b.guestName}
+                          <span style={{ fontSize:10, color:C.text3, marginLeft:6 }}>{b.platform}</span>
+                        </div>
+                        <div style={{ fontSize:11, color:C.text2, fontFamily:"'DM Mono',monospace" }}>{fmtShort(b.checkIn)}</div>
+                        <div style={{ fontSize:11, color:C.text2, fontFamily:"'DM Mono',monospace" }}>{fmtShort(b.checkOut)}</div>
+                        <div style={{ fontSize:11, color:C.text2, fontFamily:"'DM Mono',monospace" }}>{b.nights}</div>
+                        <div style={{ fontSize:12, color:C.teal, fontFamily:"'DM Mono',monospace", fontWeight:600 }}>
+                          {b.revenue > 0 ? fmtCurr(b.revenue) : "—"}
+                        </div>
+                      </div>
+                    ))}
+                    {/* Totals row */}
+                    <div style={{ display:"grid", gridTemplateColumns:"1fr 90px 90px 90px 90px",
+                      padding:"10px 14px", borderTop:`2px solid ${C.border}`, background:C.bg3 }}>
+                      <div style={{ fontSize:12, fontWeight:700, color:C.text1 }}>TOTAL</div>
+                      <div /><div />
+                      <div style={{ fontSize:12, fontWeight:700, color:C.text1, fontFamily:"'DM Mono',monospace" }}>
+                        {bookings.reduce((s,b)=>s+b.nights,0)}n
+                      </div>
+                      <div style={{ fontSize:12, fontWeight:700, color:C.teal, fontFamily:"'DM Mono',monospace" }}>
+                        {fmtCurr(grossRevenue)}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {bookings.length === 0 && (
+                <div style={{ textAlign:"center", padding:"24px", color:C.text3, fontSize:13 }}>
+                  No bookings found for {statementMonth}
+                </div>
+              )}
+
+              {/* Footer */}
+              <div style={{ borderTop:`1px solid ${C.border}`, paddingTop:16, marginTop:8,
+                display:"flex", justifyContent:"space-between", fontSize:11, color:C.text3 }}>
+                <span>Zwart Group · Ops & Portfolio Command</span>
+                <span>Generated {fmtDate(TODAY)}</span>
+              </div>
+
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Owner Details Modal */}
+      <Modal open={editingOwner} onClose={() => setEditingOwner(false)} title="Owner Details" width={460}>
+        {prop && (
+          <div>
+            <div style={{ background:C.bg2, borderRadius:8, padding:"10px 14px", marginBottom:16, fontSize:12, color:C.text2 }}>
+              Editing owner info for <strong style={{ color:C.text1 }}>{prop.name}</strong>
+            </div>
+            <FormRow label="Owner Full Name">
+              <Input value={ownerForm.ownerName} onChange={v => setOwnerForm(f=>({...f,ownerName:v}))} placeholder="e.g. John Smith" />
+            </FormRow>
+            <FormRow label="Owner Email">
+              <Input value={ownerForm.ownerEmail} onChange={v => setOwnerForm(f=>({...f,ownerEmail:v}))} placeholder="owner@email.com" />
+            </FormRow>
+            <FormRow label="Owner Phone">
+              <Input value={ownerForm.ownerPhone} onChange={v => setOwnerForm(f=>({...f,ownerPhone:v}))} placeholder="+27 82 000 0000" />
+            </FormRow>
+            <FormRow label="Management Fee (%)">
+              <Input type="number" value={ownerForm.managementFee} onChange={v => setOwnerForm(f=>({...f,managementFee:Number(v)}))} placeholder="20" />
+            </FormRow>
+            <div style={{ display:"flex", gap:8 }}>
+              <Btn variant="primary" icon={Save} onClick={saveOwner}>Save Details</Btn>
+              <Btn variant="ghost" onClick={() => setEditingOwner(false)}>Cancel</Btn>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }
