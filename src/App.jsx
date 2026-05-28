@@ -345,6 +345,8 @@ function reducer(state, action) {
     case 'ADD_HK_SCHEDULE': return { ...state, housekeeping: [...(state.housekeeping||[]), action.payload] };
     case 'UPDATE_HK_SCHEDULE': return { ...state, housekeeping: (state.housekeeping||[]).map(h => h.id===action.payload.id?{...h,...action.payload}:h) };
     case 'DELETE_HK_SCHEDULE': return { ...state, housekeeping: (state.housekeeping||[]).filter(h => h.id!==action.payload) };
+    case "ADD_TEAM_MEMBER": return { ...state, team: [...state.team, action.payload] };
+    case "REMOVE_TEAM_MEMBER": return { ...state, team: state.team.filter(m => m.id !== action.payload) };
     default: return state;
   }
 }
