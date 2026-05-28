@@ -1907,560 +1907,230 @@ function Complaints() {
 // ─── REVIEWS ─────────────────────────────────────────────────────────────────
 function Reviews() {
   const { state, dispatch, toast } = useApp();
-  const avgRating = (state.reviews.reduce((s,r) => s + r.rating, 0) / state.reviews.length).toFixed(1);
+  const [tab, setTab] = useState("pending");
+  const [showAdd, setShowAdd] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [form, setForm] = useState({ rating:5, comment:"", platform:"Airbnb", date:TODAY });
+
+  // All checked-out bookings (not cancelled)
+  const checkedOut = state.bookings.filter(b =>
+    b.status === "Checked Out" && b.bookingStatus !== "Cancelled"
+  );
+
+  // Bookings that already have a review
+  const reviewedBookingIds = new Set(state.reviews.map(r => r.bookingId).filter(Boolean));
+
+  // Pending = checked out but no review yet
+  const pending = checkedOut.filter(b => !reviewedBookingIds.has(b.id));
+
+  const avgRating = state.reviews.length
+    ? (state.reviews.reduce((s,r) => s + r.rating, 0) / state.reviews.length).toFixed(1)
+    : "—";
+
+  const openAddReview = (booking) => {
+    setSelectedBooking(booking);
+    setForm({ rating:5, comment:"", platform:booking.platform||"Airbnb", date:TODAY });
+    setShowAdd(true);
+  };
+
+  const handleAdd = () => {
+    if (!selectedBooking) return;
+    const id = "REV-" + String(state.reviews.length + 1).padStart(3,"0");
+    dispatch({ type:"ADD_REVIEW", payload:{
+      id,
+      bookingId: selectedBooking.id,
+      propertyId: selectedBooking.propId,
+      propertyName: selectedBooking.propertyName,
+      guestName: selectedBooking.guestName,
+      date: form.date,
+      rating: Number(form.rating),
+      platform: form.platform,
+      comment: form.comment,
+      responded: false,
+    }});
+    toast("Review saved");
+    setShowAdd(false);
+    setSelectedBooking(null);
+  };
+
   return (
     <div style={{ animation:"fadeIn 0.25s ease" }}>
       <SectionTitle>Reviews</SectionTitle>
-      <div style={{ display:"flex", gap:12, marginBottom:20 }}>
-        <KPICard label="Avg Rating" value={`${avgRating} ⭐`} color={C.amber} />
+
+      {/* KPIs */}
+      <div style={{ display:"flex", gap:12, marginBottom:20, flexWrap:"wrap" }}>
+        <KPICard label="Avg Rating" value={state.reviews.length ? `${avgRating} ⭐` : "—"} color={C.amber} />
         <KPICard label="Total Reviews" value={state.reviews.length} color={C.teal} />
-        <KPICard label="Unresponded" value={state.reviews.filter(r => !r.responded).length} color={C.crimson} />
+        <KPICard label="Pending Reviews" value={pending.length} color={pending.length > 0 ? C.crimson : C.green} />
         <KPICard label="5-Star" value={state.reviews.filter(r => r.rating === 5).length} color={C.green} />
+        <KPICard label="Unresponded" value={state.reviews.filter(r => !r.responded).length} color={C.blue} />
       </div>
-      <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-        {state.reviews.sort((a,b) => b.date.localeCompare(a.date)).map(r => (
-          <Card key={r.id} hover>
-            <div style={{ display:"flex", gap:16, alignItems:"flex-start" }}>
-              <div style={{ flex:1 }}>
-                <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:8, flexWrap:"wrap" }}>
-                  <span style={{ fontSize:16 }}>{"⭐".repeat(r.rating)}</span>
-                  <Badge label={r.platform} size="xs" />
-                  <span style={{ fontSize:11, color:C.text3 }}>{fmtDate(r.date)}</span>
-                  {!r.responded && <Badge label="Overdue" size="xs" />}
-                  {r.responded && <span style={{ fontSize:11, color:C.green }}>✓ Responded</span>}
-                </div>
-                <div style={{ fontSize:14, fontWeight:600, color:C.text1, marginBottom:2 }}>{r.propertyName}</div>
-                <div style={{ fontSize:12, color:C.text3, marginBottom:6 }}>{r.guestName}</div>
-                <div style={{ fontSize:13, color:C.text2, fontStyle:"italic" }}>"{r.comment}"</div>
-              </div>
-              {!r.responded && (
-                <Btn size="sm" variant="subtle" onClick={() => {
-                  dispatch({ type:"UPDATE_REVIEW", payload:{ id:r.id, responded:true }});
-                  toast("Marked as responded");
-                }}>Mark Responded</Btn>
-              )}
-            </div>
-          </Card>
+
+      {/* Tabs */}
+      <div style={{ display:"flex", borderBottom:`1px solid ${C.border}`, marginBottom:20 }}>
+        {[["pending",`Pending (${pending.length})`],["all",`All Reviews (${state.reviews.length})`]].map(([id,label]) => (
+          <button key={id} onClick={() => setTab(id)}
+            style={{ padding:"8px 24px", background:"none", border:"none",
+              borderBottom:`2px solid ${tab===id ? C.teal : "transparent"}`,
+              color: tab===id ? C.teal : C.text2, cursor:"pointer",
+              fontSize:13, fontWeight: tab===id ? 600 : 400 }}>
+            {label}
+          </button>
         ))}
       </div>
-    </div>
-  );
-}
 
-// ─── OWNER STATEMENTS ─────────────────────────────────────────────────────────
-function OwnerStatements() {
-  const { state } = useApp();
-  const [portfolio, setPortfolio] = useState("All");
-  const [period, setPeriod] = useState("2026-05");
-
-  const props = portfolio === "All" ? state.properties : state.properties.filter(p => p.portfolio === Number(portfolio));
-  const statements = props.map(prop => {
-    const bs = state.bookings.filter(b => b.propId === prop.id && b.checkIn.startsWith(period));
-    const revenue = bs.reduce((s,b) => s + b.revenue, 0);
-    const mgmtFee = revenue * 0.2;
-    const netOwner = revenue - mgmtFee;
-    return { prop, bookings: bs.length, revenue, mgmtFee, netOwner, nights: bs.reduce((s,b) => s + b.nights, 0) };
-  }).filter(s => s.bookings > 0 || false);
-
-  const totalRev = statements.reduce((s,x) => s + x.revenue, 0);
-  const totalNet = statements.reduce((s,x) => s + x.netOwner, 0);
-
-  return (
-    <div style={{ animation:"fadeIn 0.25s ease" }}>
-      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:24 }}>
-        <SectionTitle>Owner Statements</SectionTitle>
-        <div style={{ display:"flex", gap:8 }}>
-          <Input type="month" value={period} onChange={setPeriod} style={{ width:160 }} />
-          <Select value={portfolio} onChange={setPortfolio} options={["All","1","2"]} style={{ width:120 }} />
-        </div>
-      </div>
-      <div style={{ display:"flex", gap:12, marginBottom:20 }}>
-        <KPICard label="Gross Revenue" value={`R ${(totalRev/1000).toFixed(1)}k`} color={C.teal} />
-        <KPICard label="Mgmt Fee (20%)" value={`R ${((totalRev*0.2)/1000).toFixed(1)}k`} color={C.amber} />
-        <KPICard label="Net to Owners" value={`R ${(totalNet/1000).toFixed(1)}k`} color={C.green} />
-        <KPICard label="Properties Active" value={statements.length} color={C.blue} />
-      </div>
-      <Card>
-        <div style={{ display:"grid", gridTemplateColumns:"2fr 80px 100px 100px 100px 100px",
-          padding:"8px 12px", borderBottom:`1px solid ${C.border}`, background:C.bg2, borderRadius:"6px 6px 0 0" }}>
-          {["Property","Bookings","Nights","Gross Rev","Mgmt (20%)","Net Owner"].map(h => (
-            <div key={h} style={{ fontSize:11, color:C.text3, fontWeight:600, letterSpacing:"0.06em" }}>{h}</div>
-          ))}
-        </div>
-        {statements.length === 0 ? <EmptyState icon={FileText} title="No bookings in this period" /> :
-          statements.map(s => (
-            <div key={s.prop.id} style={{ display:"grid", gridTemplateColumns:"2fr 80px 100px 100px 100px 100px",
-              padding:"10px 12px", borderBottom:`1px solid ${C.border}10`, alignItems:"center" }}>
-              <div>
-                <div style={{ fontSize:13, color:C.text1 }}>{s.prop.name}</div>
-                <div style={{ fontSize:10, color:C.text3, fontFamily:"'DM Mono',monospace" }}>{s.prop.id} · {s.prop.area}</div>
-              </div>
-              <div style={{ fontFamily:"'DM Mono',monospace", fontSize:12, color:C.text2 }}>{s.bookings}</div>
-              <div style={{ fontFamily:"'DM Mono',monospace", fontSize:12, color:C.text2 }}>{s.nights}</div>
-              <div style={{ fontFamily:"'DM Mono',monospace", fontSize:12, color:C.teal }}>R {(s.revenue/1000).toFixed(1)}k</div>
-              <div style={{ fontFamily:"'DM Mono',monospace", fontSize:12, color:C.amber }}>R {(s.mgmtFee/1000).toFixed(1)}k</div>
-              <div style={{ fontFamily:"'DM Mono',monospace", fontSize:12, color:C.green, fontWeight:600 }}>R {(s.netOwner/1000).toFixed(1)}k</div>
+      {/* PENDING TAB — pulled from Reservations checkouts */}
+      {tab === "pending" && (
+        <div>
+          {pending.length === 0 ? (
+            <div style={{ background:C.greenBg, border:`1px solid ${C.green}30`, borderRadius:8,
+              padding:"16px 20px", display:"flex", alignItems:"center", gap:10 }}>
+              <CheckCircle size={18} color={C.green} />
+              <span style={{ fontSize:14, color:C.green, fontWeight:600 }}>
+                All caught up — every checkout has been reviewed!
+              </span>
             </div>
-          ))}
-        <div style={{ display:"grid", gridTemplateColumns:"2fr 80px 100px 100px 100px 100px",
-          padding:"10px 12px", background:C.bg2, borderRadius:"0 0 6px 6px", borderTop:`1px solid ${C.border}` }}>
-          <div style={{ fontSize:12, fontWeight:700, color:C.text1 }}>TOTAL</div>
-          <div /><div />
-          <div style={{ fontFamily:"'DM Mono',monospace", fontSize:12, color:C.teal, fontWeight:700 }}>R {(totalRev/1000).toFixed(1)}k</div>
-          <div style={{ fontFamily:"'DM Mono',monospace", fontSize:12, color:C.amber, fontWeight:700 }}>R {(totalRev*0.2/1000).toFixed(1)}k</div>
-          <div style={{ fontFamily:"'DM Mono',monospace", fontSize:12, color:C.green, fontWeight:700 }}>R {(totalNet/1000).toFixed(1)}k</div>
-        </div>
-      </Card>
-    </div>
-  );
-}
-
-// ─── TEAM & VENDORS ───────────────────────────────────────────────────────────
-function TeamVendors() {
-  const { state, dispatch, toast } = useApp();
-  const [showAdd, setShowAdd] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(null);
-  const [form, setForm] = useState({ name:"", role:"Housekeeper", phone:"", notes:"", portfolio:["1","2"] });
-
-  const handleAdd = () => {
-    if (!form.name || !form.role) return toast("Name and role are required","error");
-    const id = "T" + String(state.team.length + 1).padStart(3,"0");
-    dispatch({ type:"ADD_TEAM_MEMBER", payload:{
-      id, name:form.name, role:form.role, phone:form.phone,
-      notes:form.notes, portfolio:form.portfolio.map(Number),
-      rating:0, completedCleans:0, active:true,
-    }});
-    toast(form.name + " added to team");
-    setShowAdd(false);
-    setForm({ name:"", role:"Housekeeper", phone:"", notes:"", portfolio:["1","2"] });
-  };
-
-  const handleDelete = (member) => {
-    dispatch({ type:"REMOVE_TEAM_MEMBER", payload:member.id });
-    toast(member.name + " removed");
-    setConfirmDelete(null);
-  };
-
-  const togglePort = (p) => setForm(f => ({
-    ...f, portfolio: f.portfolio.includes(p) ? f.portfolio.filter(x=>x!==p) : [...f.portfolio,p]
-  }));
-
-  // Make sure reducer has these cases
-  const roles = ["Housekeeper","Senior Housekeeper","Maintenance Contractor","Internet & Tech",
-    "Plumber","Electrician","Pool Service","Garden Service","Other"];
-
-  return (
-    <div style={{ animation:"fadeIn 0.25s ease" }}>
-      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:20 }}>
-        <SectionTitle>Team & Vendors</SectionTitle>
-        <Btn variant="primary" icon={Plus} onClick={() => setShowAdd(true)}>Add Member</Btn>
-      </div>
-
-      <div style={{ display:"flex", gap:12, marginBottom:20 }}>
-        <KPICard label="Total Members" value={state.team.length} color={C.teal} icon={Users} />
-        <KPICard label="Housekeepers" value={state.team.filter(m=>m.role==="Housekeeper"||m.role==="Senior Housekeeper").length} color={C.blue} />
-        <KPICard label="Vendors" value={state.team.filter(m=>m.role!=="Housekeeper"&&m.role!=="Senior Housekeeper").length} color={C.amber} />
-      </div>
-
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
-        {state.team.map(m => (
-          <Card key={m.id} hover>
-            <div style={{ display:"flex", gap:14, alignItems:"flex-start" }}>
-              <div style={{ width:44, height:44, borderRadius:"50%", background:C.tealBg, display:"flex",
-                alignItems:"center", justifyContent:"center", fontSize:16, fontWeight:700, color:C.teal, flexShrink:0 }}>
-                {m.name.slice(0,2).toUpperCase()}
+          ) : (
+            <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+              {/* Info strip */}
+              <div style={{ background:C.tealBg, border:`1px solid ${C.teal}30`, borderRadius:8,
+                padding:"10px 16px", fontSize:12, color:C.teal, marginBottom:4,
+                display:"flex", alignItems:"center", gap:8 }}>
+                <Info size={14} />
+                These are pulled from your Reservations page — all checked-out bookings awaiting a review.
               </div>
-              <div style={{ flex:1 }}>
-                <div style={{ display:"flex", gap:8, alignItems:"center", justifyContent:"space-between", marginBottom:4 }}>
-                  <div style={{ display:"flex", gap:8, alignItems:"center" }}>
-                    <span style={{ fontSize:14, fontWeight:700, color:C.text1 }}>{m.name}</span>
-                    <Badge label="Active" size="xs" />
+
+              {pending.map(b => (
+                <Card key={b.id} hover>
+                  <div style={{ display:"flex", alignItems:"center", gap:16 }}>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:6, flexWrap:"wrap" }}>
+                        <Badge label={b.platform} size="xs" />
+                        <span style={{ fontFamily:"'DM Mono',monospace", fontSize:10, color:C.text3 }}>{b.id}</span>
+                        <span style={{ fontSize:11, color:C.text3 }}>Checked out {fmtDate(b.checkOut)}</span>
+                      </div>
+                      <div style={{ fontSize:14, fontWeight:700, color:C.text1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                        {b.propertyName}
+                      </div>
+                      <div style={{ fontSize:12, color:C.text3, marginTop:2 }}>
+                        {b.guestName} · {b.nights} night{b.nights!==1?"s":""}
+                      </div>
+                    </div>
+                    <Btn variant="primary" size="sm" icon={Star} onClick={() => openAddReview(b)}>
+                      Add Review
+                    </Btn>
                   </div>
-                  <button onClick={() => setConfirmDelete(m)}
-                    style={{ background:"none", border:`1px solid ${C.border}`, borderRadius:5,
-                      padding:"3px 7px", cursor:"pointer", color:C.crimson, display:"flex", alignItems:"center" }}>
-                    <Trash2 size={12} />
-                  </button>
-                </div>
-                <div style={{ fontSize:12, color:C.text3, marginBottom:8 }}>{m.role}</div>
-                <div style={{ display:"flex", gap:16, fontSize:11, color:C.text2, flexWrap:"wrap" }}>
-                  {m.phone && <span style={{ display:"flex", alignItems:"center", gap:4 }}><Phone size={11}/>{m.phone}</span>}
-                  {m.rating > 0 && <span>⭐ {m.rating}</span>}
-                  {m.completedCleans > 0 && <span>{m.completedCleans} cleans</span>}
-                </div>
-                {m.notes && <div style={{ marginTop:6, fontSize:11, color:C.text3 }}>{m.notes}</div>}
-                <div style={{ marginTop:6, fontSize:11, color:C.text3 }}>
-                  Portfolio: {m.portfolio?.includes(1) && m.portfolio?.includes(2) ? "P1 + P2" : m.portfolio?.includes(1) ? "P1 only" : "P2 only"}
-                </div>
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
-
-      {/* Add Member Modal */}
-      <Modal open={showAdd} onClose={() => setShowAdd(false)} title="Add Team Member / Vendor">
-        <FormRow label="Full Name" required>
-          <Input value={form.name} onChange={v => setForm(f => ({...f,name:v}))} placeholder="e.g. Thandiwe Mokoena" />
-        </FormRow>
-        <FormRow label="Role" required>
-          <Select value={form.role} onChange={v => setForm(f => ({...f,role:v}))} options={roles} />
-        </FormRow>
-        <FormRow label="Phone Number">
-          <Input value={form.phone} onChange={v => setForm(f => ({...f,phone:v}))} placeholder="+27 82 000 0000" />
-        </FormRow>
-        <FormRow label="Notes">
-          <Input value={form.notes} onChange={v => setForm(f => ({...f,notes:v}))} placeholder="Speciality, availability, etc." />
-        </FormRow>
-        <FormRow label="Portfolio Assignment">
-          <div style={{ display:"flex", gap:10 }}>
-            {["1","2"].map(p => (
-              <div key={p} onClick={() => togglePort(p)}
-                style={{ padding:"8px 20px", borderRadius:6, cursor:"pointer", fontSize:13, fontWeight:500,
-                  background: form.portfolio.includes(p) ? C.tealBg : C.bg2,
-                  border:`1px solid ${form.portfolio.includes(p) ? C.teal : C.border}`,
-                  color: form.portfolio.includes(p) ? C.teal : C.text2, transition:"all 0.15s" }}>
-                Portfolio {p}
-              </div>
-            ))}
-          </div>
-        </FormRow>
-        <div style={{ display:"flex", gap:8 }}>
-          <Btn variant="primary" icon={Plus} onClick={handleAdd}>Add Member</Btn>
-          <Btn variant="ghost" onClick={() => setShowAdd(false)}>Cancel</Btn>
-        </div>
-      </Modal>
-
-      {/* Confirm Delete */}
-      <Modal open={!!confirmDelete} onClose={() => setConfirmDelete(null)} title="Remove Team Member" width={400}>
-        {confirmDelete && (
-          <div style={{ textAlign:"center", padding:"10px 0 20px" }}>
-            <div style={{ width:52, height:52, borderRadius:"50%", background:C.crimsonBg, display:"flex",
-              alignItems:"center", justifyContent:"center", margin:"0 auto 16px" }}>
-              <Trash2 size={22} color={C.crimson} />
-            </div>
-            <div style={{ fontSize:15, fontWeight:600, color:C.text1, marginBottom:8 }}>Remove {confirmDelete.name}?</div>
-            <div style={{ fontSize:13, color:C.text3, marginBottom:24 }}>
-              This will permanently remove them from the team list.
-            </div>
-            <div style={{ display:"flex", gap:8, justifyContent:"center" }}>
-              <Btn variant="danger" icon={Trash2} onClick={() => handleDelete(confirmDelete)}>Yes, Remove</Btn>
-              <Btn variant="ghost" onClick={() => setConfirmDelete(null)}>Cancel</Btn>
-            </div>
-          </div>
-        )}
-      </Modal>
-    </div>
-  );
-}
-
-// ─── SOPS ─────────────────────────────────────────────────────────────────────
-function SOPs() {
-  const { state } = useApp();
-  const [selected, setSelected] = useState(null);
-  const cats = [...new Set(state.sops.map(s => s.category))];
-
-  return (
-    <div style={{ animation:"fadeIn 0.25s ease" }}>
-      <SectionTitle>Standard Operating Procedures</SectionTitle>
-      <div style={{ display:"grid", gridTemplateColumns:"280px 1fr", gap:16 }}>
-        <div>
-          {cats.map(cat => (
-            <div key={cat} style={{ marginBottom:16 }}>
-              <div style={{ fontSize:10, color:C.text3, fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:8 }}>{cat}</div>
-              {state.sops.filter(s => s.category === cat).map(sop => (
-                <div key={sop.id} onClick={() => setSelected(sop)}
-                  style={{ padding:"9px 12px", borderRadius:6, cursor:"pointer", marginBottom:4,
-                    background: selected?.id === sop.id ? C.tealBg : "transparent",
-                    border:`1px solid ${selected?.id === sop.id ? C.teal+"40" : "transparent"}`,
-                    color: selected?.id === sop.id ? C.teal : C.text1, fontSize:13, transition:"all 0.12s" }}>
-                  {sop.title}
-                </div>
+                </Card>
               ))}
             </div>
-          ))}
+          )}
         </div>
-        <Card>
-          {selected ? (
-            <>
-              <div style={{ fontSize:11, color:C.teal, fontWeight:600, letterSpacing:"0.08em", textTransform:"uppercase", marginBottom:8 }}>{selected.category}</div>
-              <h3 style={{ fontFamily:"'Syne',sans-serif", fontSize:18, fontWeight:700, color:C.platinum, marginBottom:20 }}>{selected.title}</h3>
-              <div style={{ whiteSpace:"pre-line", fontSize:13, color:C.text1, lineHeight:1.8 }}>{selected.content}</div>
-            </>
-          ) : <EmptyState icon={BookOpen} title="Select a procedure" sub="Click any SOP from the list" />}
-        </Card>
-      </div>
-    </div>
-  );
-}
+      )}
 
-// ─── GUEST COMMS TEMPLATES ────────────────────────────────────────────────────
-function GuestTemplates() {
-  const { state } = useApp();
-  const [selected, setSelected] = useState(null);
-  const [copied, setCopied] = useState(false);
-  const cats = [...new Set(state.templates.map(t => t.category))];
-
-  const copy = () => {
-    navigator.clipboard.writeText(selected.content).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
-  };
-
-  return (
-    <div style={{ animation:"fadeIn 0.25s ease" }}>
-      <SectionTitle>Guest Comms Templates</SectionTitle>
-      <div style={{ display:"grid", gridTemplateColumns:"260px 1fr", gap:16 }}>
-        <div>
-          {cats.map(cat => (
-            <div key={cat} style={{ marginBottom:16 }}>
-              <div style={{ fontSize:10, color:C.text3, fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:8 }}>{cat}</div>
-              {state.templates.filter(t => t.category === cat).map(tpl => (
-                <div key={tpl.id} onClick={() => { setSelected(tpl); setCopied(false); }}
-                  style={{ padding:"9px 12px", borderRadius:6, cursor:"pointer", marginBottom:4,
-                    background: selected?.id === tpl.id ? C.amberBg : "transparent",
-                    border:`1px solid ${selected?.id === tpl.id ? C.amber+"40" : "transparent"}`,
-                    color: selected?.id === tpl.id ? C.amber : C.text1, fontSize:13, transition:"all 0.12s" }}>
-                  {tpl.name}
-                </div>
-              ))}
-            </div>
-          ))}
-        </div>
-        <Card>
-          {selected ? (
-            <>
-              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:16 }}>
-                <div>
-                  <div style={{ fontSize:11, color:C.amber, fontWeight:600, letterSpacing:"0.08em", textTransform:"uppercase" }}>{selected.category}</div>
-                  <h3 style={{ fontFamily:"'Syne',sans-serif", fontSize:16, fontWeight:700, color:C.platinum }}>{selected.name}</h3>
-                </div>
-                <Btn variant={copied ? "primary" : "subtle"} icon={copied ? Check : Copy} onClick={copy}>
-                  {copied ? "Copied!" : "Copy"}
-                </Btn>
-              </div>
-              <div style={{ background:C.bg2, borderRadius:8, padding:16 }}>
-                <pre style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:13, color:C.text1, whiteSpace:"pre-wrap", lineHeight:1.7 }}>{selected.content}</pre>
-              </div>
-              <div style={{ marginTop:12, fontSize:12, color:C.text3 }}>Variables in brackets should be replaced before sending.</div>
-            </>
-          ) : <EmptyState icon={MessageCircle} title="Select a template" sub="Click any template to view and copy" />}
-        </Card>
-      </div>
-    </div>
-  );
-}
-
-
-// ─── PROPERTIES ──────────────────────────────────────────────────────────────
-function PropertiesModule() {
-  const { state, dispatch, toast } = useApp();
-  const [search, setSearch] = useState("");
-  const [portFilter, setPortFilter] = useState("All");
-  const [statusFilter, setStatusFilter] = useState("Active");
-  const [selected, setSelected] = useState(null);
-  const [showAdd, setShowAdd] = useState(false);
-  const [showOffboard, setShowOffboard] = useState(null);
-  const [form, setForm] = useState({ id:"", name:"", address:"", area:"", type:"Apartment", portfolio:"1" });
-
-  const handleAdd = () => {
-    if (!form.id || !form.name) return toast("Property ID and Name are required","error");
-    if (state.properties.find(p => p.id === form.id.toUpperCase())) return toast("Property ID already exists","error");
-    dispatch({ type:"ADD_PROPERTY", payload:{
-      id:form.id.toUpperCase(), name:form.name, address:form.address,
-      area:form.area, type:form.type, portfolio:Number(form.portfolio),
-      flag:null, status:"Active",
-    }});
-    toast("Property added");
-    setShowAdd(false);
-    setForm({ id:"", name:"", address:"", area:"", type:"Apartment", portfolio:"1" });
-  };
-
-  const handleOffboard = (prop) => {
-    dispatch({ type:"UPDATE_PROPERTY", payload:{ id:prop.id, status:"Offboarded" }});
-    toast(prop.name + " offboarded");
-    setShowOffboard(null);
-    setSelected(null);
-  };
-
-  const handleReactivate = (prop) => {
-    dispatch({ type:"UPDATE_PROPERTY", payload:{ id:prop.id, status:"Active" }});
-    toast(prop.name + " reactivated");
-  };
-
-  const filtered = state.properties.filter(p => {
-    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.id.toLowerCase().includes(search.toLowerCase()) ||
-      (p.area||"").toLowerCase().includes(search.toLowerCase());
-    const matchPort = portFilter==="All" || p.portfolio===Number(portFilter);
-    const matchStatus = statusFilter==="All" || p.status===statusFilter;
-    return matchSearch && matchPort && matchStatus;
-  });
-
-  const getPropBookings = (id, name) => state.bookings.filter(b => b.propId===id || b.propertyName===name);
-  const getPropRevenue = (id, name) => getPropBookings(id,name).reduce((s,b)=>s+b.revenue,0);
-
-  const active = state.properties.filter(p=>p.status==="Active").length;
-  const offboarded = state.properties.filter(p=>p.status==="Offboarded").length;
-
-  return (
-    <div style={{ animation:"fadeIn 0.25s ease" }}>
-      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:20 }}>
-        <SectionTitle>Properties</SectionTitle>
-        <div style={{ display:"flex", gap:8 }}>
-          <SearchBar value={search} onChange={setSearch} placeholder="Search property..." />
-          <Select value={portFilter} onChange={setPortFilter} options={["All","1","2"]} style={{ width:110 }} />
-          <Select value={statusFilter} onChange={setStatusFilter} options={["Active","Offboarded","All"]} style={{ width:130 }} />
-          <Btn variant="primary" icon={Plus} onClick={()=>setShowAdd(true)}>Add Property</Btn>
-        </div>
-      </div>
-
-      <div style={{ display:"flex", gap:12, marginBottom:20 }}>
-        <KPICard label="Total Properties" value={state.properties.length} color={C.teal} />
-        <KPICard label="Active" value={active} color={C.green} />
-        <KPICard label="Offboarded" value={offboarded} color={offboarded>0?C.crimson:C.text3} />
-        <KPICard label="Portfolio 1" value={state.properties.filter(p=>p.portfolio===1&&p.status==="Active").length} color={C.blue} />
-        <KPICard label="Portfolio 2" value={state.properties.filter(p=>p.portfolio===2&&p.status==="Active").length} color={C.amber} />
-      </div>
-
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))", gap:12 }}>
-        {filtered.map(p => {
-          const propBookings = getPropBookings(p.id, p.name);
-          const propRevenue = getPropRevenue(p.id, p.name);
-          const currentBooking = state.bookings.find(b => (b.propId===p.id||b.propertyName===p.name) && b.status==="In-House");
-          const isOffboarded = p.status==="Offboarded";
-          return (
-            <div key={p.id} onClick={()=>setSelected(p)}
-              style={{ background:C.bg1, border:`1px solid ${isOffboarded?C.crimson+"30":C.border}`,
-                borderRadius:10, padding:16, cursor:"pointer", opacity:isOffboarded?0.65:1,
-                transition:"border-color 0.15s" }}>
-              <div style={{ display:"flex", gap:12, alignItems:"flex-start" }}>
-                <div style={{ width:36, height:36, borderRadius:8, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center",
-                  background:isOffboarded?C.crimsonBg:p.portfolio===1?C.tealBg:C.amberBg }}>
-                  <Building size={16} color={isOffboarded?C.crimson:p.portfolio===1?C.teal:C.amber} />
-                </div>
+      {/* ALL REVIEWS TAB */}
+      {tab === "all" && (
+        <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+          {state.reviews.length === 0 && (
+            <EmptyState icon={Star} title="No reviews yet"
+              sub="Reviews will appear here once added from the Pending tab." />
+          )}
+          {[...state.reviews].sort((a,b) => b.date.localeCompare(a.date)).map(r => (
+            <Card key={r.id} hover>
+              <div style={{ display:"flex", gap:16, alignItems:"flex-start" }}>
                 <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ display:"flex", gap:6, alignItems:"center", marginBottom:3, flexWrap:"wrap" }}>
-                    <span style={{ fontFamily:"'DM Mono',monospace", fontSize:10, color:C.text3 }}>{p.id}</span>
-                    <span style={{ fontSize:10, padding:"1px 5px", borderRadius:3, fontWeight:600,
-                      background:p.portfolio===1?C.tealBg:C.amberBg,
-                      color:p.portfolio===1?C.teal:C.amber }}>P{p.portfolio}</span>
-                    {currentBooking && <Badge label="In-House" size="xs" />}
-                    {isOffboarded && <Badge label="Overdue" size="xs" />}
+                  <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:8, flexWrap:"wrap" }}>
+                    {/* Star display */}
+                    <div style={{ display:"flex", gap:2 }}>
+                      {[1,2,3,4,5].map(n => (
+                        <span key={n} style={{ fontSize:16, color: n <= r.rating ? C.amber : C.border }}>★</span>
+                      ))}
+                    </div>
+                    <span style={{ fontFamily:"'DM Mono',monospace", fontSize:13, color:C.amber, fontWeight:700 }}>
+                      {r.rating}/5
+                    </span>
+                    <Badge label={r.platform} size="xs" />
+                    <span style={{ fontSize:11, color:C.text3 }}>{fmtDate(r.date)}</span>
+                    {!r.responded
+                      ? <span style={{ fontSize:11, background:C.amberBg, color:C.amber, padding:"2px 8px", borderRadius:4, fontWeight:600 }}>Awaiting response</span>
+                      : <span style={{ fontSize:11, color:C.green, fontWeight:600 }}>✓ Responded</span>
+                    }
                   </div>
-                  <div style={{ fontSize:13, fontWeight:600, color:C.text1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{p.name}</div>
-                  <div style={{ fontSize:11, color:C.text3, marginTop:2 }}>{p.area} · {p.type}</div>
-                  <div style={{ display:"flex", gap:12, marginTop:6, fontSize:11 }}>
-                    <span style={{ color:C.text2 }}>{propBookings.length} bookings</span>
-                    <span style={{ color:C.teal, fontFamily:"'DM Mono',monospace" }}>R {(propRevenue/1000).toFixed(1)}k</span>
-                  </div>
+                  <div style={{ fontSize:14, fontWeight:700, color:C.text1, marginBottom:2 }}>{r.propertyName}</div>
+                  <div style={{ fontSize:12, color:C.text3, marginBottom:8 }}>{r.guestName}</div>
+                  {r.comment && (
+                    <div style={{ fontSize:13, color:C.text2, fontStyle:"italic",
+                      background:C.bg2, borderRadius:6, padding:"10px 14px",
+                      borderLeft:`3px solid ${r.rating >= 4 ? C.green : r.rating >= 3 ? C.amber : C.crimson}` }}>
+                      "{r.comment}"
+                    </div>
+                  )}
                 </div>
+                {!r.responded && (
+                  <Btn size="sm" variant="subtle" onClick={() => {
+                    dispatch({ type:"UPDATE_REVIEW", payload:{ id:r.id, responded:true }});
+                    toast("Marked as responded");
+                  }}>Mark Responded</Btn>
+                )}
               </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {filtered.length===0 && <EmptyState icon={Building} title="No properties found" sub="Try adjusting your filters." />}
-
-      {/* Property Detail Modal */}
-      <Modal open={!!selected} onClose={()=>setSelected(null)} title={selected?.name||""} width={580}>
-        {selected && (() => {
-          const propBs = getPropBookings(selected.id, selected.name);
-          const propRev = getPropRevenue(selected.id, selected.name);
-          const curr = propBs.find(b=>b.status==="In-House");
-          const isOff = selected.status==="Offboarded";
-          return (
-            <div>
-              {selected.flag && <div style={{ background:C.amberBg, border:`1px solid ${C.amber}30`, borderRadius:6, padding:"8px 12px", marginBottom:16, fontSize:12, color:C.amber }}>{selected.flag}</div>}
-              {isOff && <div style={{ background:C.crimsonBg, border:`1px solid ${C.crimson}30`, borderRadius:6, padding:"8px 12px", marginBottom:16, fontSize:12, color:C.crimson }}>⚠️ This property is offboarded</div>}
-              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:10, marginBottom:16 }}>
-                {[["ID",selected.id],["Area",selected.area],["Portfolio","Portfolio "+selected.portfolio],
-                  ["Type",selected.type],["Status",selected.status],["Revenue","R "+(propRev/1000).toFixed(1)+"k"]].map(([k,v])=>(
-                  <div key={k} style={{ background:C.bg2, borderRadius:6, padding:"10px 12px" }}>
-                    <div style={{ fontSize:10, color:C.text3, marginBottom:2 }}>{k}</div>
-                    <div style={{ fontSize:13, color:C.text1, fontWeight:500 }}>{v}</div>
-                  </div>
-                ))}
-              </div>
-              {selected.address && <div style={{ fontSize:12, color:C.text3, marginBottom:16 }}>{selected.address}</div>}
-              {curr && (
-                <div style={{ background:C.tealBg, border:`1px solid ${C.teal}30`, borderRadius:8, padding:"10px 14px", marginBottom:16 }}>
-                  <div style={{ fontSize:11, color:C.teal, fontWeight:600, marginBottom:4 }}>CURRENTLY IN-HOUSE</div>
-                  <div style={{ fontSize:13, color:C.text1 }}>{curr.guestName} · {curr.nights} nights · {fmtDate(curr.checkIn)} → {fmtDate(curr.checkOut)}</div>
-                </div>
-              )}
-              <div style={{ fontSize:12, fontWeight:600, color:C.text2, marginBottom:8 }}>Recent Bookings ({propBs.length})</div>
-              {propBs.slice(0,5).map(b=>(
-                <div key={b.id} style={{ display:"flex", gap:10, alignItems:"center", padding:"6px 0", borderBottom:`1px solid ${C.border}20`, fontSize:12 }}>
-                  <span style={{ flex:1, color:C.text1 }}>{b.guestName}</span>
-                  <span style={{ color:C.text3, fontFamily:"'DM Mono',monospace" }}>{fmtShort(b.checkIn)} → {fmtShort(b.checkOut)}</span>
-                  <Badge label={b.status} size="xs" />
-                </div>
-              ))}
-              <div style={{ display:"flex", gap:8, marginTop:20 }}>
-                {isOff
-                  ? <Btn variant="primary" icon={CheckCircle} onClick={()=>handleReactivate(selected)}>Reactivate Property</Btn>
-                  : <Btn variant="danger" icon={XCircle} onClick={()=>setShowOffboard(selected)}>Offboard Property</Btn>
-                }
-                <Btn variant="ghost" onClick={()=>setSelected(null)}>Close</Btn>
-              </div>
-            </div>
-          );
-        })()}
-      </Modal>
-
-      {/* Add Property Modal */}
-      <Modal open={showAdd} onClose={()=>setShowAdd(false)} title="Add New Property" width={500}>
-        <FormRow label="Property ID (e.g. ZG-053)" required>
-          <Input value={form.id} onChange={v=>setForm(f=>({...f,id:v}))} placeholder="ZG-053" />
-        </FormRow>
-        <FormRow label="Property Name" required>
-          <Input value={form.name} onChange={v=>setForm(f=>({...f,name:v}))} placeholder="e.g. 201 The Suro" />
-        </FormRow>
-        <FormRow label="Full Address">
-          <Input value={form.address} onChange={v=>setForm(f=>({...f,address:v}))} placeholder="Street, Cape Town, 8000" />
-        </FormRow>
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
-          <FormRow label="Area">
-            <Input value={form.area} onChange={v=>setForm(f=>({...f,area:v}))} placeholder="e.g. Sea Point" />
-          </FormRow>
-          <FormRow label="Type">
-            <Select value={form.type} onChange={v=>setForm(f=>({...f,type:v}))}
-              options={["Apartment","House","Cottage","Villa","Studio"]} />
-          </FormRow>
+            </Card>
+          ))}
         </div>
-        <FormRow label="Portfolio">
-          <Select value={form.portfolio} onChange={v=>setForm(f=>({...f,portfolio:v}))}
-            options={[{value:"1",label:"Portfolio 1"},{value:"2",label:"Portfolio 2"}]} />
-        </FormRow>
-        <div style={{ display:"flex", gap:8 }}>
-          <Btn variant="primary" icon={Plus} onClick={handleAdd}>Add Property</Btn>
-          <Btn variant="ghost" onClick={()=>setShowAdd(false)}>Cancel</Btn>
-        </div>
-      </Modal>
+      )}
 
-      {/* Offboard Confirmation Modal */}
-      <Modal open={!!showOffboard} onClose={()=>setShowOffboard(null)} title="Offboard Property" width={420}>
-        {showOffboard && (
-          <div style={{ textAlign:"center", padding:"10px 0 20px" }}>
-            <div style={{ width:52, height:52, borderRadius:"50%", background:C.crimsonBg, display:"flex",
-              alignItems:"center", justifyContent:"center", margin:"0 auto 16px" }}>
-              <XCircle size={24} color={C.crimson} />
-            </div>
-            <div style={{ fontSize:15, fontWeight:600, color:C.text1, marginBottom:8 }}>Offboard {showOffboard.name}?</div>
-            <div style={{ fontSize:13, color:C.text3, marginBottom:24, lineHeight:1.6 }}>
-              This will mark the property as offboarded. It will no longer appear in active listings
-              but all historical data will be kept. You can reactivate it at any time.
-            </div>
-            <div style={{ display:"flex", gap:8, justifyContent:"center" }}>
-              <Btn variant="danger" icon={XCircle} onClick={()=>handleOffboard(showOffboard)}>Yes, Offboard</Btn>
-              <Btn variant="ghost" onClick={()=>setShowOffboard(null)}>Cancel</Btn>
+      {/* Add Review Modal */}
+      <Modal open={showAdd} onClose={() => { setShowAdd(false); setSelectedBooking(null); }} title="Add Guest Review" width={500}>
+        {selectedBooking && (
+          <div style={{ background:C.bg2, borderRadius:8, padding:"12px 16px", marginBottom:20 }}>
+            <div style={{ fontSize:14, fontWeight:700, color:C.text1 }}>{selectedBooking.propertyName}</div>
+            <div style={{ fontSize:12, color:C.text3, marginTop:2 }}>
+              {selectedBooking.guestName} · Checked out {fmtDate(selectedBooking.checkOut)}
             </div>
           </div>
         )}
+
+        <FormRow label="Guest Star Rating" required>
+          <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:4 }}>
+            {[1,2,3,4,5].map(n => (
+              <span key={n} onClick={() => setForm(f => ({...f, rating:n}))}
+                style={{ fontSize:36, cursor:"pointer", transition:"transform 0.1s",
+                  color: n <= form.rating ? C.amber : C.border,
+                  transform: n <= form.rating ? "scale(1.1)" : "scale(1)" }}>★</span>
+            ))}
+            <span style={{ fontSize:16, color:C.text2, marginLeft:8, fontFamily:"'DM Mono',monospace", fontWeight:600 }}>
+              {form.rating} / 5
+            </span>
+          </div>
+          <div style={{ fontSize:11, color:C.text3 }}>
+            {["","⭐ Very Poor","⭐⭐ Poor","⭐⭐⭐ Average","⭐⭐⭐⭐ Good","⭐⭐⭐⭐⭐ Excellent"][form.rating]}
+          </div>
+        </FormRow>
+
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+          <FormRow label="Platform">
+            <Select value={form.platform} onChange={v => setForm(f => ({...f, platform:v}))}
+              options={["Airbnb","Booking.com","Direct","Google"]} />
+          </FormRow>
+          <FormRow label="Review Date">
+            <Input type="date" value={form.date} onChange={v => setForm(f => ({...f, date:v}))} />
+          </FormRow>
+        </div>
+
+        <FormRow label="Guest Comment (optional)">
+          <textarea value={form.comment}
+            onChange={e => setForm(f => ({...f, comment:e.target.value}))}
+            placeholder="Paste or type the guest's review comment here..."
+            rows={4} style={{ ...inputStyle, resize:"vertical" }} />
+        </FormRow>
+
+        <div style={{ display:"flex", gap:8 }}>
+          <Btn variant="primary" icon={Star} onClick={handleAdd}>Save Review</Btn>
+          <Btn variant="ghost" onClick={() => { setShowAdd(false); setSelectedBooking(null); }}>Cancel</Btn>
+        </div>
       </Modal>
     </div>
   );
 }
+
 
 // ─── PROPERTY SCORECARD ──────────────────────────────────────────────────────
 function PropertyScorecard() {
@@ -2469,15 +2139,19 @@ function PropertyScorecard() {
   const [areaFilter, setAreaFilter] = useState("All");
 
   const scorecards = state.properties.map(prop => {
-    const propReviews = state.reviews.filter(r => r.propertyName === prop.name || r.propertyId === prop.id);
-    const propBookings = state.bookings.filter(b => b.propertyName === prop.name || b.propId === prop.id);
+    const propReviews = state.reviews.filter(r =>
+      r.propertyName === prop.name || r.propertyId === prop.id
+    );
+    const propBookings = state.bookings.filter(b =>
+      b.propertyName === prop.name || b.propId === prop.id
+    );
     const avgRating = propReviews.length
       ? (propReviews.reduce((s,r) => s + r.rating, 0) / propReviews.length) : null;
     const revenue = propBookings.reduce((s,b) => s + b.revenue, 0);
     const fiveStars = propReviews.filter(r => r.rating === 5).length;
     const lowRatings = propReviews.filter(r => r.rating <= 3).length;
     return { prop, reviews: propReviews, bookings: propBookings, avgRating, revenue, fiveStars, lowRatings };
-  }).filter(s => s.reviews.length > 0 || s.bookings.length > 0);
+  }).filter(s => s.bookings.length > 0);
 
   const areas = ["All", ...new Set(state.properties.map(p => p.area).filter(Boolean))];
   const filtered = scorecards
@@ -2646,6 +2320,487 @@ function HousekeepingScheduler(){
   </div>);
 }
 
+
+// ─── OWNER STATEMENTS ─────────────────────────────────────────────────────────
+function OwnerStatements() {
+  const { state } = useApp();
+  const [portfolio, setPortfolio] = useState("All");
+  const [period, setPeriod] = useState("2026-05");
+
+  const props = portfolio === "All" ? state.properties : state.properties.filter(p => p.portfolio === Number(portfolio));
+  const statements = props.map(prop => {
+    const bs = state.bookings.filter(b => b.propId === prop.id && b.checkIn.startsWith(period));
+    const revenue = bs.reduce((s,b) => s + b.revenue, 0);
+    const mgmtFee = revenue * 0.2;
+    const netOwner = revenue - mgmtFee;
+    return { prop, bookings: bs.length, revenue, mgmtFee, netOwner, nights: bs.reduce((s,b) => s + b.nights, 0) };
+  }).filter(s => s.bookings > 0 || false);
+
+  const totalRev = statements.reduce((s,x) => s + x.revenue, 0);
+  const totalNet = statements.reduce((s,x) => s + x.netOwner, 0);
+
+  return (
+    <div style={{ animation:"fadeIn 0.25s ease" }}>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:24 }}>
+        <SectionTitle>Owner Statements</SectionTitle>
+        <div style={{ display:"flex", gap:8 }}>
+          <Input type="month" value={period} onChange={setPeriod} style={{ width:160 }} />
+          <Select value={portfolio} onChange={setPortfolio} options={["All","1","2"]} style={{ width:120 }} />
+        </div>
+      </div>
+      <div style={{ display:"flex", gap:12, marginBottom:20 }}>
+        <KPICard label="Gross Revenue" value={`R ${(totalRev/1000).toFixed(1)}k`} color={C.teal} />
+        <KPICard label="Mgmt Fee (20%)" value={`R ${((totalRev*0.2)/1000).toFixed(1)}k`} color={C.amber} />
+        <KPICard label="Net to Owners" value={`R ${(totalNet/1000).toFixed(1)}k`} color={C.green} />
+        <KPICard label="Properties Active" value={statements.length} color={C.blue} />
+      </div>
+      <Card>
+        <div style={{ display:"grid", gridTemplateColumns:"2fr 80px 100px 100px 100px 100px",
+          padding:"8px 12px", borderBottom:`1px solid ${C.border}`, background:C.bg2, borderRadius:"6px 6px 0 0" }}>
+          {["Property","Bookings","Nights","Gross Rev","Mgmt (20%)","Net Owner"].map(h => (
+            <div key={h} style={{ fontSize:11, color:C.text3, fontWeight:600, letterSpacing:"0.06em" }}>{h}</div>
+          ))}
+        </div>
+        {statements.length === 0 ? <EmptyState icon={FileText} title="No bookings in this period" /> :
+          statements.map(s => (
+            <div key={s.prop.id} style={{ display:"grid", gridTemplateColumns:"2fr 80px 100px 100px 100px 100px",
+              padding:"10px 12px", borderBottom:`1px solid ${C.border}10`, alignItems:"center" }}>
+              <div>
+                <div style={{ fontSize:13, color:C.text1 }}>{s.prop.name}</div>
+                <div style={{ fontSize:10, color:C.text3, fontFamily:"'DM Mono',monospace" }}>{s.prop.id} · {s.prop.area}</div>
+              </div>
+              <div style={{ fontFamily:"'DM Mono',monospace", fontSize:12, color:C.text2 }}>{s.bookings}</div>
+              <div style={{ fontFamily:"'DM Mono',monospace", fontSize:12, color:C.text2 }}>{s.nights}</div>
+              <div style={{ fontFamily:"'DM Mono',monospace", fontSize:12, color:C.teal }}>R {(s.revenue/1000).toFixed(1)}k</div>
+              <div style={{ fontFamily:"'DM Mono',monospace", fontSize:12, color:C.amber }}>R {(s.mgmtFee/1000).toFixed(1)}k</div>
+              <div style={{ fontFamily:"'DM Mono',monospace", fontSize:12, color:C.green, fontWeight:600 }}>R {(s.netOwner/1000).toFixed(1)}k</div>
+            </div>
+          ))}
+        <div style={{ display:"grid", gridTemplateColumns:"2fr 80px 100px 100px 100px 100px",
+          padding:"10px 12px", background:C.bg2, borderRadius:"0 0 6px 6px", borderTop:`1px solid ${C.border}` }}>
+          <div style={{ fontSize:12, fontWeight:700, color:C.text1 }}>TOTAL</div>
+          <div /><div />
+          <div style={{ fontFamily:"'DM Mono',monospace", fontSize:12, color:C.teal, fontWeight:700 }}>R {(totalRev/1000).toFixed(1)}k</div>
+          <div style={{ fontFamily:"'DM Mono',monospace", fontSize:12, color:C.amber, fontWeight:700 }}>R {(totalRev*0.2/1000).toFixed(1)}k</div>
+          <div style={{ fontFamily:"'DM Mono',monospace", fontSize:12, color:C.green, fontWeight:700 }}>R {(totalNet/1000).toFixed(1)}k</div>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+
+// ─── TEAM & VENDORS ──────────────────────────────────────────────────────────
+function TeamVendors() {
+  const { state, dispatch, toast } = useApp();
+  const [showAdd, setShowAdd] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(null);
+  const [form, setForm] = useState({ name:"", role:"Housekeeper", phone:"", notes:"", portfolio:["1","2"] });
+
+  const handleAdd = () => {
+    if (!form.name) return toast("Name is required","error");
+    const id = "T"+String(state.team.length+1).padStart(3,"0");
+    dispatch({ type:"ADD_TEAM_MEMBER", payload:{
+      id, name:form.name, role:form.role, phone:form.phone,
+      notes:form.notes, portfolio:form.portfolio.map(Number),
+      rating:0, completedCleans:0, active:true,
+    }});
+    toast(form.name+" added");
+    setShowAdd(false);
+    setForm({ name:"", role:"Housekeeper", phone:"", notes:"", portfolio:["1","2"] });
+  };
+
+  const togglePort = (p) => setForm(f => ({
+    ...f, portfolio: f.portfolio.includes(p) ? f.portfolio.filter(x=>x!==p) : [...f.portfolio,p]
+  }));
+
+  return (
+    <div style={{ animation:"fadeIn 0.25s ease" }}>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:20 }}>
+        <SectionTitle>Team & Vendors</SectionTitle>
+        <Btn variant="primary" icon={Plus} onClick={() => setShowAdd(true)}>Add Member</Btn>
+      </div>
+      <div style={{ display:"flex", gap:12, marginBottom:20 }}>
+        <KPICard label="Total Members" value={state.team.length} color={C.teal} icon={Users} />
+        <KPICard label="Housekeepers" value={state.team.filter(m=>m.role==="Housekeeper"||m.role==="Senior Housekeeper").length} color={C.blue} />
+        <KPICard label="Vendors" value={state.team.filter(m=>m.role!=="Housekeeper"&&m.role!=="Senior Housekeeper").length} color={C.amber} />
+      </div>
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))", gap:12 }}>
+        {state.team.map(m => (
+          <Card key={m.id} hover>
+            <div style={{ display:"flex", gap:14, alignItems:"flex-start" }}>
+              <div style={{ width:44, height:44, borderRadius:"50%", background:C.tealBg,
+                display:"flex", alignItems:"center", justifyContent:"center",
+                fontSize:16, fontWeight:700, color:C.teal, flexShrink:0 }}>
+                {m.name.slice(0,2).toUpperCase()}
+              </div>
+              <div style={{ flex:1 }}>
+                <div style={{ display:"flex", gap:8, alignItems:"center", justifyContent:"space-between", marginBottom:4 }}>
+                  <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+                    <span style={{ fontSize:14, fontWeight:700, color:C.text1 }}>{m.name}</span>
+                    <Badge label="Active" size="xs" />
+                  </div>
+                  <button onClick={() => setConfirmDelete(m)}
+                    style={{ background:"none", border:`1px solid ${C.border}`, borderRadius:5,
+                      padding:"3px 7px", cursor:"pointer", color:C.crimson, display:"flex", alignItems:"center" }}>
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+                <div style={{ fontSize:12, color:C.text3, marginBottom:6 }}>{m.role}</div>
+                <div style={{ display:"flex", gap:12, fontSize:11, color:C.text2, flexWrap:"wrap" }}>
+                  {m.phone && <span style={{ display:"flex", alignItems:"center", gap:4 }}><Phone size={11}/>{m.phone}</span>}
+                  {m.rating > 0 && <span>⭐ {m.rating}</span>}
+                </div>
+                {m.notes && <div style={{ marginTop:4, fontSize:11, color:C.text3 }}>{m.notes}</div>}
+                <div style={{ marginTop:4, fontSize:11, color:C.text3 }}>
+                  Portfolio: {m.portfolio?.includes(1)&&m.portfolio?.includes(2)?"P1 + P2":m.portfolio?.includes(1)?"P1 only":"P2 only"}
+                </div>
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+      <Modal open={showAdd} onClose={() => setShowAdd(false)} title="Add Team Member / Vendor">
+        <FormRow label="Full Name" required><Input value={form.name} onChange={v=>setForm(f=>({...f,name:v}))} placeholder="e.g. Thandiwe Mokoena" /></FormRow>
+        <FormRow label="Role"><Select value={form.role} onChange={v=>setForm(f=>({...f,role:v}))}
+          options={["Housekeeper","Senior Housekeeper","Maintenance Contractor","Internet & Tech","Plumber","Electrician","Pool Service","Garden Service","Other"]} /></FormRow>
+        <FormRow label="Phone"><Input value={form.phone} onChange={v=>setForm(f=>({...f,phone:v}))} placeholder="+27 82 000 0000" /></FormRow>
+        <FormRow label="Notes"><Input value={form.notes} onChange={v=>setForm(f=>({...f,notes:v}))} placeholder="Speciality, availability..." /></FormRow>
+        <FormRow label="Portfolio">
+          <div style={{ display:"flex", gap:10 }}>
+            {["1","2"].map(p => (
+              <div key={p} onClick={() => togglePort(p)}
+                style={{ padding:"8px 20px", borderRadius:6, cursor:"pointer", fontSize:13, fontWeight:500,
+                  background:form.portfolio.includes(p)?C.tealBg:C.bg2,
+                  border:`1px solid ${form.portfolio.includes(p)?C.teal:C.border}`,
+                  color:form.portfolio.includes(p)?C.teal:C.text2 }}>
+                Portfolio {p}
+              </div>
+            ))}
+          </div>
+        </FormRow>
+        <div style={{ display:"flex", gap:8 }}>
+          <Btn variant="primary" icon={Plus} onClick={handleAdd}>Add Member</Btn>
+          <Btn variant="ghost" onClick={() => setShowAdd(false)}>Cancel</Btn>
+        </div>
+      </Modal>
+      <Modal open={!!confirmDelete} onClose={() => setConfirmDelete(null)} title="Remove Member" width={380}>
+        {confirmDelete && (
+          <div style={{ textAlign:"center", padding:"10px 0 20px" }}>
+            <div style={{ width:48, height:48, borderRadius:"50%", background:C.crimsonBg,
+              display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 14px" }}>
+              <Trash2 size={20} color={C.crimson} />
+            </div>
+            <div style={{ fontSize:14, fontWeight:600, color:C.text1, marginBottom:6 }}>Remove {confirmDelete.name}?</div>
+            <div style={{ fontSize:12, color:C.text3, marginBottom:20 }}>This will permanently remove them from the team list.</div>
+            <div style={{ display:"flex", gap:8, justifyContent:"center" }}>
+              <Btn variant="danger" onClick={() => { dispatch({type:"REMOVE_TEAM_MEMBER",payload:confirmDelete.id}); toast(confirmDelete.name+" removed"); setConfirmDelete(null); }}>Yes, Remove</Btn>
+              <Btn variant="ghost" onClick={() => setConfirmDelete(null)}>Cancel</Btn>
+            </div>
+          </div>
+        )}
+      </Modal>
+    </div>
+  );
+}
+
+// ─── SOPS ─────────────────────────────────────────────────────────────────────
+function SOPs() {
+  const { state } = useApp();
+  const [selected, setSelected] = useState(null);
+  const cats = [...new Set(state.sops.map(s => s.category))];
+
+  return (
+    <div style={{ animation:"fadeIn 0.25s ease" }}>
+      <SectionTitle>Standard Operating Procedures</SectionTitle>
+      <div style={{ display:"grid", gridTemplateColumns:"280px 1fr", gap:16 }}>
+        <div>
+          {cats.map(cat => (
+            <div key={cat} style={{ marginBottom:16 }}>
+              <div style={{ fontSize:10, color:C.text3, fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:8 }}>{cat}</div>
+              {state.sops.filter(s => s.category === cat).map(sop => (
+                <div key={sop.id} onClick={() => setSelected(sop)}
+                  style={{ padding:"9px 12px", borderRadius:6, cursor:"pointer", marginBottom:4,
+                    background: selected?.id === sop.id ? C.tealBg : "transparent",
+                    border:`1px solid ${selected?.id === sop.id ? C.teal+"40" : "transparent"}`,
+                    color: selected?.id === sop.id ? C.teal : C.text1, fontSize:13, transition:"all 0.12s" }}>
+                  {sop.title}
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+        <Card>
+          {selected ? (
+            <>
+              <div style={{ fontSize:11, color:C.teal, fontWeight:600, letterSpacing:"0.08em", textTransform:"uppercase", marginBottom:8 }}>{selected.category}</div>
+              <h3 style={{ fontFamily:"'Syne',sans-serif", fontSize:18, fontWeight:700, color:C.platinum, marginBottom:20 }}>{selected.title}</h3>
+              <div style={{ whiteSpace:"pre-line", fontSize:13, color:C.text1, lineHeight:1.8 }}>{selected.content}</div>
+            </>
+          ) : <EmptyState icon={BookOpen} title="Select a procedure" sub="Click any SOP from the list" />}
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+
+// ─── GUEST COMMS TEMPLATES ────────────────────────────────────────────────────
+function GuestTemplates() {
+  const { state } = useApp();
+  const [selected, setSelected] = useState(null);
+  const [copied, setCopied] = useState(false);
+  const cats = [...new Set(state.templates.map(t => t.category))];
+
+  const copy = () => {
+    navigator.clipboard.writeText(selected.content).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
+  };
+
+  return (
+    <div style={{ animation:"fadeIn 0.25s ease" }}>
+      <SectionTitle>Guest Comms Templates</SectionTitle>
+      <div style={{ display:"grid", gridTemplateColumns:"260px 1fr", gap:16 }}>
+        <div>
+          {cats.map(cat => (
+            <div key={cat} style={{ marginBottom:16 }}>
+              <div style={{ fontSize:10, color:C.text3, fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:8 }}>{cat}</div>
+              {state.templates.filter(t => t.category === cat).map(tpl => (
+                <div key={tpl.id} onClick={() => { setSelected(tpl); setCopied(false); }}
+                  style={{ padding:"9px 12px", borderRadius:6, cursor:"pointer", marginBottom:4,
+                    background: selected?.id === tpl.id ? C.amberBg : "transparent",
+                    border:`1px solid ${selected?.id === tpl.id ? C.amber+"40" : "transparent"}`,
+                    color: selected?.id === tpl.id ? C.amber : C.text1, fontSize:13, transition:"all 0.12s" }}>
+                  {tpl.name}
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+        <Card>
+          {selected ? (
+            <>
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:16 }}>
+                <div>
+                  <div style={{ fontSize:11, color:C.amber, fontWeight:600, letterSpacing:"0.08em", textTransform:"uppercase" }}>{selected.category}</div>
+                  <h3 style={{ fontFamily:"'Syne',sans-serif", fontSize:16, fontWeight:700, color:C.platinum }}>{selected.name}</h3>
+                </div>
+                <Btn variant={copied ? "primary" : "subtle"} icon={copied ? Check : Copy} onClick={copy}>
+                  {copied ? "Copied!" : "Copy"}
+                </Btn>
+              </div>
+              <div style={{ background:C.bg2, borderRadius:8, padding:16 }}>
+                <pre style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:13, color:C.text1, whiteSpace:"pre-wrap", lineHeight:1.7 }}>{selected.content}</pre>
+              </div>
+              <div style={{ marginTop:12, fontSize:12, color:C.text3 }}>Variables in brackets should be replaced before sending.</div>
+            </>
+          ) : <EmptyState icon={MessageCircle} title="Select a template" sub="Click any template to view and copy" />}
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+
+
+// ─── PROPERTIES ──────────────────────────────────────────────────────────────
+function PropertiesModule() {
+  const { state, dispatch, toast } = useApp();
+  const [search, setSearch] = useState("");
+  const [portFilter, setPortFilter] = useState("All");
+  const [statusFilter, setStatusFilter] = useState("Active");
+  const [selected, setSelected] = useState(null);
+  const [showAdd, setShowAdd] = useState(false);
+  const [showOffboard, setShowOffboard] = useState(null);
+  const [form, setForm] = useState({ id:"", name:"", address:"", area:"", type:"Apartment", portfolio:"1" });
+
+  const handleAdd = () => {
+    if (!form.id || !form.name) return toast("Property ID and Name are required","error");
+    if (state.properties.find(p => p.id === form.id.toUpperCase())) return toast("Property ID already exists","error");
+    dispatch({ type:"ADD_PROPERTY", payload:{
+      id:form.id.toUpperCase(), name:form.name, address:form.address,
+      area:form.area, type:form.type, portfolio:Number(form.portfolio),
+      flag:null, status:"Active",
+    }});
+    toast("Property added");
+    setShowAdd(false);
+    setForm({ id:"", name:"", address:"", area:"", type:"Apartment", portfolio:"1" });
+  };
+
+  const handleOffboard = (prop) => {
+    dispatch({ type:"UPDATE_PROPERTY", payload:{ id:prop.id, status:"Offboarded" }});
+    toast(prop.name + " offboarded");
+    setShowOffboard(null); setSelected(null);
+  };
+
+  const handleReactivate = (prop) => {
+    dispatch({ type:"UPDATE_PROPERTY", payload:{ id:prop.id, status:"Active" }});
+    toast(prop.name + " reactivated");
+  };
+
+  const filtered = state.properties.filter(p => {
+    const ms = p.name.toLowerCase().includes(search.toLowerCase()) ||
+      p.id.toLowerCase().includes(search.toLowerCase()) ||
+      (p.area||"").toLowerCase().includes(search.toLowerCase());
+    const mp = portFilter==="All" || p.portfolio===Number(portFilter);
+    const mst = statusFilter==="All" || p.status===statusFilter;
+    return ms && mp && mst;
+  });
+
+  const getPropBookings = (id, name) => state.bookings.filter(b => b.propId===id || b.propertyName===name);
+  const getPropRevenue  = (id, name) => getPropBookings(id,name).reduce((s,b)=>s+b.revenue,0);
+
+  return (
+    <div style={{ animation:"fadeIn 0.25s ease" }}>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:20 }}>
+        <SectionTitle>Properties</SectionTitle>
+        <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
+          <SearchBar value={search} onChange={setSearch} placeholder="Search property..." />
+          <Select value={portFilter} onChange={setPortFilter} options={["All","1","2"]} style={{ width:110 }} />
+          <Select value={statusFilter} onChange={setStatusFilter} options={["Active","Offboarded","All"]} style={{ width:130 }} />
+          <Btn variant="primary" icon={Plus} onClick={() => setShowAdd(true)}>Add Property</Btn>
+        </div>
+      </div>
+
+      <div style={{ display:"flex", gap:12, marginBottom:20, flexWrap:"wrap" }}>
+        <KPICard label="Total" value={state.properties.length} color={C.teal} />
+        <KPICard label="Active" value={state.properties.filter(p=>p.status==="Active").length} color={C.green} />
+        <KPICard label="Offboarded" value={state.properties.filter(p=>p.status==="Offboarded").length} color={C.crimson} />
+        <KPICard label="Portfolio 1" value={state.properties.filter(p=>p.portfolio===1&&p.status==="Active").length} color={C.blue} />
+        <KPICard label="Portfolio 2" value={state.properties.filter(p=>p.portfolio===2&&p.status==="Active").length} color={C.amber} />
+      </div>
+
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))", gap:12 }}>
+        {filtered.map(p => {
+          const bks = getPropBookings(p.id, p.name);
+          const rev = getPropRevenue(p.id, p.name);
+          const curr = bks.find(b => b.status==="In-House");
+          const isOff = p.status==="Offboarded";
+          return (
+            <div key={p.id} onClick={() => setSelected(p)}
+              style={{ background:C.bg1, border:`1px solid ${isOff?C.crimson+"30":C.border}`,
+                borderRadius:10, padding:16, cursor:"pointer", opacity:isOff?0.65:1 }}>
+              <div style={{ display:"flex", gap:10, alignItems:"flex-start" }}>
+                <div style={{ width:36, height:36, borderRadius:8, flexShrink:0, display:"flex",
+                  alignItems:"center", justifyContent:"center",
+                  background:isOff?C.crimsonBg:p.portfolio===1?C.tealBg:C.amberBg }}>
+                  <Building size={16} color={isOff?C.crimson:p.portfolio===1?C.teal:C.amber} />
+                </div>
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ display:"flex", gap:6, alignItems:"center", marginBottom:3, flexWrap:"wrap" }}>
+                    <span style={{ fontSize:10, padding:"1px 5px", borderRadius:3, fontWeight:600,
+                      background:p.portfolio===1?C.tealBg:C.amberBg,
+                      color:p.portfolio===1?C.teal:C.amber }}>P{p.portfolio}</span>
+                    {curr && <Badge label="In-House" size="xs" />}
+                    {isOff && <span style={{ fontSize:10, color:C.crimson, fontWeight:600 }}>Offboarded</span>}
+                  </div>
+                  <div style={{ fontSize:13, fontWeight:600, color:C.text1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{p.name}</div>
+                  <div style={{ fontSize:11, color:C.text3 }}>{p.area} · {p.type}</div>
+                  <div style={{ display:"flex", gap:12, marginTop:6, fontSize:11 }}>
+                    <span style={{ color:C.text2 }}>{bks.length} bookings</span>
+                    <span style={{ color:C.teal, fontFamily:"'DM Mono',monospace" }}>R {(rev/1000).toFixed(1)}k</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+        {filtered.length === 0 && <EmptyState icon={Building} title="No properties found" sub="Adjust your filters." />}
+      </div>
+
+      {/* Property Detail Modal */}
+      <Modal open={!!selected} onClose={() => setSelected(null)} title={selected?.name||""} width={560}>
+        {selected && (() => {
+          const bks = getPropBookings(selected.id, selected.name);
+          const rev = getPropRevenue(selected.id, selected.name);
+          const curr = bks.find(b => b.status==="In-House");
+          const isOff = selected.status==="Offboarded";
+          return (
+            <div>
+              {isOff && <div style={{ background:C.crimsonBg, border:`1px solid ${C.crimson}30`, borderRadius:6, padding:"8px 12px", marginBottom:12, fontSize:12, color:C.crimson }}>⚠️ This property is offboarded</div>}
+              {selected.flag && <div style={{ background:C.amberBg, border:`1px solid ${C.amber}30`, borderRadius:6, padding:"8px 12px", marginBottom:12, fontSize:12, color:C.amber }}>{selected.flag}</div>}
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:10, marginBottom:14 }}>
+                {[["ID",selected.id],["Area",selected.area],["Portfolio","Portfolio "+selected.portfolio],
+                  ["Type",selected.type],["Status",selected.status],["Revenue","R "+(rev/1000).toFixed(1)+"k"]].map(([k,v])=>(
+                  <div key={k} style={{ background:C.bg2, borderRadius:6, padding:"10px 12px" }}>
+                    <div style={{ fontSize:10, color:C.text3, marginBottom:2 }}>{k}</div>
+                    <div style={{ fontSize:13, color:C.text1, fontWeight:500 }}>{v}</div>
+                  </div>
+                ))}
+              </div>
+              {selected.address && <div style={{ fontSize:12, color:C.text3, marginBottom:12 }}>{selected.address}</div>}
+              {curr && (
+                <div style={{ background:C.tealBg, border:`1px solid ${C.teal}30`, borderRadius:8, padding:"10px 14px", marginBottom:12 }}>
+                  <div style={{ fontSize:11, color:C.teal, fontWeight:600, marginBottom:4 }}>CURRENTLY IN-HOUSE</div>
+                  <div style={{ fontSize:13, color:C.text1 }}>{curr.guestName} · {curr.nights} nights · {fmtDate(curr.checkIn)} → {fmtDate(curr.checkOut)}</div>
+                </div>
+              )}
+              <div style={{ fontSize:12, fontWeight:600, color:C.text2, marginBottom:8 }}>Recent Bookings ({bks.length})</div>
+              {bks.slice(0,5).map(b => (
+                <div key={b.id} style={{ display:"flex", gap:10, alignItems:"center", padding:"6px 0", borderBottom:`1px solid ${C.border}20`, fontSize:12 }}>
+                  <span style={{ flex:1, color:C.text1 }}>{b.guestName}</span>
+                  <span style={{ color:C.text3, fontFamily:"'DM Mono',monospace" }}>{fmtShort(b.checkIn)} → {fmtShort(b.checkOut)}</span>
+                  <Badge label={b.status} size="xs" />
+                </div>
+              ))}
+              <div style={{ display:"flex", gap:8, marginTop:16 }}>
+                {isOff
+                  ? <Btn variant="primary" icon={CheckCircle} onClick={() => handleReactivate(selected)}>Reactivate</Btn>
+                  : <Btn variant="danger" icon={XCircle} onClick={() => setShowOffboard(selected)}>Offboard Property</Btn>
+                }
+                <Btn variant="ghost" onClick={() => setSelected(null)}>Close</Btn>
+              </div>
+            </div>
+          );
+        })()}
+      </Modal>
+
+      {/* Add Property Modal */}
+      <Modal open={showAdd} onClose={() => setShowAdd(false)} title="Add New Property" width={500}>
+        <FormRow label="Property ID (e.g. ZG-053)" required>
+          <Input value={form.id} onChange={v => setForm(f=>({...f,id:v}))} placeholder="ZG-053" />
+        </FormRow>
+        <FormRow label="Property Name" required>
+          <Input value={form.name} onChange={v => setForm(f=>({...f,name:v}))} placeholder="e.g. 201 The Suro" />
+        </FormRow>
+        <FormRow label="Full Address">
+          <Input value={form.address} onChange={v => setForm(f=>({...f,address:v}))} placeholder="Street, Cape Town, 8000" />
+        </FormRow>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+          <FormRow label="Area"><Input value={form.area} onChange={v => setForm(f=>({...f,area:v}))} placeholder="e.g. Sea Point" /></FormRow>
+          <FormRow label="Type"><Select value={form.type} onChange={v => setForm(f=>({...f,type:v}))} options={["Apartment","House","Cottage","Villa","Studio"]} /></FormRow>
+        </div>
+        <FormRow label="Portfolio">
+          <Select value={form.portfolio} onChange={v => setForm(f=>({...f,portfolio:v}))}
+            options={[{value:"1",label:"Portfolio 1"},{value:"2",label:"Portfolio 2"}]} />
+        </FormRow>
+        <div style={{ display:"flex", gap:8 }}>
+          <Btn variant="primary" icon={Plus} onClick={handleAdd}>Add Property</Btn>
+          <Btn variant="ghost" onClick={() => setShowAdd(false)}>Cancel</Btn>
+        </div>
+      </Modal>
+
+      {/* Offboard Confirmation */}
+      <Modal open={!!showOffboard} onClose={() => setShowOffboard(null)} title="Offboard Property" width={420}>
+        {showOffboard && (
+          <div style={{ textAlign:"center", padding:"10px 0 20px" }}>
+            <div style={{ width:52, height:52, borderRadius:"50%", background:C.crimsonBg,
+              display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 16px" }}>
+              <XCircle size={24} color={C.crimson} />
+            </div>
+            <div style={{ fontSize:15, fontWeight:600, color:C.text1, marginBottom:8 }}>Offboard {showOffboard.name}?</div>
+            <div style={{ fontSize:13, color:C.text3, marginBottom:24, lineHeight:1.6 }}>
+              This marks the property as offboarded. All historical data is kept. You can reactivate at any time.
+            </div>
+            <div style={{ display:"flex", gap:8, justifyContent:"center" }}>
+              <Btn variant="danger" icon={XCircle} onClick={() => handleOffboard(showOffboard)}>Yes, Offboard</Btn>
+              <Btn variant="ghost" onClick={() => setShowOffboard(null)}>Cancel</Btn>
+            </div>
+          </div>
+        )}
+      </Modal>
+    </div>
+  );
+}
 
 // ─── DAILY HISTORY ────────────────────────────────────────────────────────────
 function DailyHistory() {
