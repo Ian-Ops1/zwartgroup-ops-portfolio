@@ -621,6 +621,7 @@ const NAV = [
   { id:"sops",          icon:BookOpen,     label:"SOPs",               badge:null },
   { id:"templates",     icon:MessageCircle,label:"Guest Comms",        badge:null },
   { id:"properties",    icon:Building,     label:"Properties",         badge:null },
+  { id:"mgmtreport",    icon:FileText,     label:"Management Report",  badge:null },
   { id:"history",       icon:BookMarked,   label:"Daily History",      badge:null },
   { id:"settings",      icon:Settings,     label:"Settings",           badge:null },
 ];
