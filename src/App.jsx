@@ -3850,6 +3850,7 @@ function ModuleContent({ active, onNav }) {
     housekeeping: <HousekeepingScheduler />,
     financials:  <Financials />,
     metrics:     <AdvancedMetrics />,
+    occupancy:   <OccupancyCalendar />,
     revenue:     <RevenueStrategy />,
     incidents:   <IncidentRegister />,
     reviews:     <Reviews />,
