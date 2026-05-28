@@ -3840,6 +3840,505 @@ function OccupancyCalendar() {
   );
 }
 
+// ─── MANAGEMENT REPORT ───────────────────────────────────────────────────────
+function ManagementReport() {
+  const { state } = useApp();
+  const now = new Date();
+  const [reportProp, setReportProp] = useState("All");
+  const [fromDate, setFromDate] = useState(`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-01`);
+  const [toDate, setToDate] = useState(TODAY);
+  const [sections, setSections] = useState({
+    summary: true,
+    reservations: true,
+    cleans: true,
+    incidents: true,
+    complaints: true,
+    reviews: true,
+    housekeeping: true,
+    financials: true,
+    maintenance: true,
+  });
+
+  const toggleSection = (key) => setSections(s => ({...s, [key]: !s[key]}));
+
+  // Filter helpers
+  const inRange = (dateStr) => dateStr >= fromDate && dateStr <= toDate;
+  const matchProp = (propName, propId) =>
+    reportProp === "All" || propName === reportProp || propId === reportProp;
+
+  // Filtered data
+  const filteredBookings = state.bookings.filter(b =>
+    inRange(b.checkIn) && matchProp(b.propertyName, b.propId) && b.bookingStatus !== "Cancelled"
+  );
+  const filteredCheckouts = state.bookings.filter(b =>
+    inRange(b.checkOut) && matchProp(b.propertyName, b.propId) && b.bookingStatus !== "Cancelled"
+  );
+  const filteredIncidents = state.incidents.filter(i =>
+    inRange(i.date) && matchProp(i.propertyName, i.propertyId)
+  );
+  const filteredComplaints = state.complaints.filter(c =>
+    inRange(c.date) && matchProp(c.propertyName, c.propertyId)
+  );
+  const filteredReviews = state.reviews.filter(r =>
+    inRange(r.date) && matchProp(r.propertyName, r.propertyId)
+  );
+  const filteredHK = (state.housekeeping||[]).filter(h =>
+    inRange(h.date) && (reportProp === "All" || h.properties.some(p => p.propertyName === reportProp))
+  );
+  const allCleans = filteredBookings.flatMap(b =>
+    b.cleans.map(c => ({...c, booking:b}))
+  );
+  const totalRevenue = filteredBookings.reduce((s,b) => s + b.revenue, 0);
+  const avgRating = filteredReviews.length
+    ? (filteredReviews.reduce((s,r) => s+r.rating,0) / filteredReviews.length).toFixed(1) : "—";
+  const hkIssues = filteredHK.flatMap(h=>h.properties)
+    .flatMap(p=>(p.keysCollected==="Issue"||p.guestKeys==="Issue"||p.electricityUnits==="Issue"||p.photos==="Issue"||p.keysReturned==="Issue")?[p]:[]);
+
+  const propName = reportProp === "All" ? "All Properties" :
+    state.properties.find(p => p.id === reportProp || p.name === reportProp)?.name || reportProp;
+
+  // Export PDF
+  const handleExport = () => {
+    const el = document.getElementById("mgmt-report-body");
+    if (!el) return;
+    const w = window.open("", "_blank");
+    w.document.write(`<!DOCTYPE html><html><head>
+      <title>Management Report - ${propName} - ${fromDate} to ${toDate}</title>
+      <style>
+        *{box-sizing:border-box;margin:0;padding:0;}
+        body{font-family:Arial,sans-serif;padding:36px;color:#000;font-size:12px;background:#fff;}
+        h1{font-size:22px;font-weight:700;margin-bottom:4px;}
+        .meta{font-size:12px;color:#666;margin-bottom:28px;}
+        .section{margin-bottom:24px;page-break-inside:avoid;}
+        .section-title{font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;
+          color:#444;border-bottom:2px solid #ddd;padding-bottom:5px;margin-bottom:10px;}
+        .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
+        .kpi{background:#f8f8f8;border-radius:6px;padding:10px 12px;border-left:3px solid #888;}
+        .kpi-val{font-size:20px;font-weight:700;color:#333;}
+        .kpi-label{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.05em;margin-top:2px;}
+        table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:8px;}
+        th{background:#f0f0f0;padding:6px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:0.05em;font-weight:700;}
+        td{padding:6px 10px;border-bottom:1px solid #f0f0f0;}
+        .resolved{color:#1a7a4a;font-weight:600;}
+        .open{color:#c0392b;font-weight:600;}
+        .footer{margin-top:32px;font-size:10px;color:#aaa;text-align:center;border-top:1px solid #eee;padding-top:12px;}
+        @media print{body{padding:24px;}}
+      </style></head><body>
+      <h1>MANAGEMENT REPORT</h1>
+      <div class="meta">${propName} &nbsp;·&nbsp; ${fmtDate(fromDate)} – ${fmtDate(toDate)} &nbsp;·&nbsp; Generated ${fmtDate(TODAY)} &nbsp;·&nbsp; Zwart Group</div>
+      ${el.innerHTML}
+      <div class="footer">Zwart Group · Ops & Portfolio Command · Confidential Management Report</div>
+    </body></html>`);
+    w.document.close();
+    w.focus();
+    setTimeout(() => w.print(), 600);
+  };
+
+  // Section component
+  const Section = ({ id, title, children, count }) => {
+    if (!sections[id]) return null;
+    return (
+      <div style={{ marginBottom:20, background:C.bg1, border:`1px solid ${C.border}`, borderRadius:10, overflow:"hidden" }}>
+        <div style={{ padding:"12px 20px", background:C.bg2, borderBottom:`1px solid ${C.border}`,
+          display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+          <span style={{ fontFamily:"'Syne',sans-serif", fontSize:13, fontWeight:700, color:C.text1 }}>{title}</span>
+          {count !== undefined && (
+            <span style={{ fontFamily:"'DM Mono',monospace", fontSize:12, color:C.teal, fontWeight:600 }}>
+              {count} record{count!==1?"s":""}
+            </span>
+          )}
+        </div>
+        <div style={{ padding:"16px 20px" }}>{children}</div>
+      </div>
+    );
+  };
+
+  return (
+    <div style={{ animation:"fadeIn 0.25s ease" }}>
+      {/* Controls */}
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:20, flexWrap:"wrap", gap:12 }}>
+        <SectionTitle>Management Report</SectionTitle>
+        <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
+          <Btn variant="subtle" icon={Download} onClick={handleExport}>Export PDF</Btn>
+          <Btn variant="primary" icon={FileText} onClick={() => window.print()}>Print</Btn>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div style={{ background:C.bg1, border:`1px solid ${C.border}`, borderRadius:10, padding:"16px 20px", marginBottom:20 }}>
+        <div style={{ fontSize:11, fontWeight:700, color:C.text3, textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:12 }}>Report Settings</div>
+        <div style={{ display:"grid", gridTemplateColumns:"2fr 1fr 1fr", gap:12, marginBottom:16 }}>
+          <div>
+            <div style={{ fontSize:11, color:C.text3, marginBottom:5, fontWeight:600 }}>Property</div>
+            <Select value={reportProp} onChange={setReportProp}
+              options={["All", ...state.properties.filter(p=>p.status==="Active").map(p=>({ value:p.name, label:p.name }))]} />
+          </div>
+          <div>
+            <div style={{ fontSize:11, color:C.text3, marginBottom:5, fontWeight:600 }}>From Date</div>
+            <Input type="date" value={fromDate} onChange={setFromDate} />
+          </div>
+          <div>
+            <div style={{ fontSize:11, color:C.text3, marginBottom:5, fontWeight:600 }}>To Date</div>
+            <Input type="date" value={toDate} onChange={setToDate} />
+          </div>
+        </div>
+
+        {/* Section toggles */}
+        <div style={{ fontSize:11, color:C.text3, marginBottom:8, fontWeight:600, textTransform:"uppercase", letterSpacing:"0.06em" }}>Include in Report</div>
+        <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
+          {[
+            { key:"summary",      label:"Executive Summary" },
+            { key:"reservations", label:"Reservations" },
+            { key:"cleans",       label:"Mid-Stay Cleans" },
+            { key:"incidents",    label:"Incidents" },
+            { key:"complaints",   label:"Complaints" },
+            { key:"reviews",      label:"Reviews" },
+            { key:"housekeeping", label:"Housekeeping QC" },
+            { key:"financials",   label:"Financials" },
+          ].map(({ key, label }) => (
+            <button key={key} onClick={() => toggleSection(key)}
+              style={{ padding:"5px 12px", borderRadius:6, cursor:"pointer", fontSize:12, fontWeight:500,
+                background: sections[key] ? C.tealBg : C.bg2,
+                border: `1px solid ${sections[key] ? C.teal : C.border}`,
+                color: sections[key] ? C.teal : C.text3, transition:"all 0.15s" }}>
+              {sections[key] ? "✓ " : ""}{label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Report Body */}
+      <div id="mgmt-report-body">
+
+        {/* Report Header */}
+        <div style={{ background:"linear-gradient(135deg,#1a2744,#0f1a30)", borderRadius:12,
+          padding:"24px 28px", marginBottom:20 }}>
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
+            <div>
+              <div style={{ fontFamily:"'Syne',sans-serif", fontSize:20, fontWeight:800, color:"#fff", marginBottom:4 }}>
+                MANAGEMENT REPORT
+              </div>
+              <div style={{ fontSize:12, color:"rgba(255,255,255,0.5)" }}>
+                {propName} · {fmtDate(fromDate)} – {fmtDate(toDate)}
+              </div>
+            </div>
+            <div style={{ textAlign:"right" }}>
+              <div style={{ fontSize:10, color:"rgba(255,255,255,0.4)", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:3 }}>Generated</div>
+              <div style={{ fontFamily:"'DM Mono',monospace", fontSize:12, color:"rgba(255,255,255,0.8)" }}>{fmtDate(TODAY)}</div>
+              <div style={{ fontSize:10, color:"rgba(255,255,255,0.4)", marginTop:2 }}>Zwart Group</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Executive Summary */}
+        {sections.summary && (
+          <Section id="summary" title="Executive Summary">
+            <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(130px,1fr))", gap:10, marginBottom:16 }}>
+              {[
+                { label:"Check-ins", value:filteredBookings.length, color:C.teal },
+                { label:"Revenue", value:`R ${(totalRevenue/1000).toFixed(1)}k`, color:C.amber },
+                { label:"Avg Rating", value:avgRating==="—"?avgRating:`${avgRating}⭐`, color:C.green },
+                { label:"Open Incidents", value:filteredIncidents.filter(i=>i.status==="Open").length, color:filteredIncidents.some(i=>i.status==="Open")?C.crimson:C.green },
+                { label:"Open Complaints", value:filteredComplaints.filter(c=>c.status==="Open").length, color:filteredComplaints.some(c=>c.status==="Open")?C.crimson:C.green },
+                { label:"HK QC Issues", value:hkIssues.length, color:hkIssues.length>0?C.amber:C.green },
+                { label:"Reviews", value:filteredReviews.length, color:C.blue },
+                { label:"Cleans", value:allCleans.length, color:C.teal },
+              ].map(k => (
+                <div key={k.label} style={{ background:C.bg2, borderRadius:8, padding:"12px 14px", borderLeft:`3px solid ${k.color}` }}>
+                  <div style={{ fontFamily:"'DM Mono',monospace", fontSize:20, fontWeight:700, color:k.color }}>{k.value}</div>
+                  <div style={{ fontSize:10, color:C.text3, marginTop:3, textTransform:"uppercase", letterSpacing:"0.05em" }}>{k.label}</div>
+                </div>
+              ))}
+            </div>
+            {/* Narrative */}
+            <div style={{ background:C.bg2, borderRadius:8, padding:"14px 16px", fontSize:13, color:C.text2, lineHeight:1.8 }}>
+              {`During the period ${fmtDate(fromDate)} to ${fmtDate(toDate)}, ${propName} recorded `}
+              <strong style={{ color:C.text1 }}>{filteredBookings.length} check-in{filteredBookings.length!==1?"s":""}</strong>
+              {` generating `}
+              <strong style={{ color:C.teal }}>{fmtCurr(totalRevenue)}</strong>
+              {` in gross revenue. `}
+              {filteredReviews.length > 0 && `Guest satisfaction averaged ${avgRating}/5 across ${filteredReviews.length} review${filteredReviews.length!==1?"s":""}. `}
+              {filteredIncidents.filter(i=>i.status==="Open").length > 0
+                ? <span style={{ color:C.crimson }}>{`${filteredIncidents.filter(i=>i.status==="Open").length} incident${filteredIncidents.filter(i=>i.status==="Open").length!==1?"s":""} remain${filteredIncidents.filter(i=>i.status==="Open").length===1?"s":""} open and require attention.`}</span>
+                : <span style={{ color:C.green }}>All incidents have been resolved.</span>
+              }
+            </div>
+          </Section>
+        )}
+
+        {/* Reservations */}
+        {sections.reservations && (
+          <Section id="reservations" title="Reservations" count={filteredBookings.length}>
+            {filteredBookings.length === 0
+              ? <div style={{ fontSize:12, color:C.text3, fontStyle:"italic" }}>No check-ins in this period.</div>
+              : <div style={{ overflowX:"auto" }}>
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 100px 100px 50px 90px 100px", gap:0, minWidth:520,
+                  padding:"7px 12px", background:C.bg2, borderRadius:"6px 6px 0 0" }}>
+                  {["Property","Check-in","Check-out","Nts","Revenue","Status"].map(h => (
+                    <div key={h} style={{ fontSize:10, color:C.text3, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.05em" }}>{h}</div>
+                  ))}
+                </div>
+                {filteredBookings.map(b => (
+                  <div key={b.id} style={{ display:"grid", gridTemplateColumns:"1fr 100px 100px 50px 90px 100px",
+                    minWidth:520, padding:"9px 12px", borderBottom:`1px solid ${C.border}20`, alignItems:"center" }}>
+                    <div>
+                      <div style={{ fontSize:12, color:C.text1, fontWeight:500 }}>{b.propertyName}</div>
+                      <div style={{ fontSize:10, color:C.text3 }}>{b.guestName} · {b.platform}</div>
+                    </div>
+                    <div style={{ fontSize:11, color:C.text2, fontFamily:"'DM Mono',monospace" }}>{fmtShort(b.checkIn)}</div>
+                    <div style={{ fontSize:11, color:C.text2, fontFamily:"'DM Mono',monospace" }}>{fmtShort(b.checkOut)}</div>
+                    <div style={{ fontSize:11, color:C.text2, fontFamily:"'DM Mono',monospace" }}>{b.nights}</div>
+                    <div style={{ fontSize:11, color:C.teal, fontFamily:"'DM Mono',monospace" }}>{b.revenue>0?fmtCurr(b.revenue):"—"}</div>
+                    <Badge label={b.status} size="xs" />
+                  </div>
+                ))}
+                <div style={{ padding:"9px 12px", background:C.bg2, borderRadius:"0 0 6px 6px",
+                  display:"flex", justifyContent:"space-between", fontSize:12, fontWeight:700, color:C.text1 }}>
+                  <span>Total ({filteredBookings.length} bookings)</span>
+                  <span style={{ fontFamily:"'DM Mono',monospace", color:C.teal }}>{fmtCurr(totalRevenue)}</span>
+                </div>
+              </div>
+            }
+          </Section>
+        )}
+
+        {/* Mid-Stay Cleans */}
+        {sections.cleans && (
+          <Section id="cleans" title="Mid-Stay Cleans" count={allCleans.length}>
+            {allCleans.length === 0
+              ? <div style={{ fontSize:12, color:C.text3, fontStyle:"italic" }}>No mid-stay cleans scheduled for bookings in this period.</div>
+              : <div>
+                {["Completed","Due Today","Due Tomorrow","Overdue","Upcoming","Rescheduled"].map(status => {
+                  const group = allCleans.filter(c => (c.status===status||getCleanStatus(c)===status));
+                  if (!group.length) return null;
+                  return (
+                    <div key={status} style={{ marginBottom:12 }}>
+                      <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:6 }}>
+                        <CleanStatusBadge status={status} />
+                        <span style={{ fontSize:11, color:C.text3 }}>{group.length} clean{group.length!==1?"s":""}</span>
+                      </div>
+                      {group.map((c,i) => (
+                        <div key={i} style={{ display:"flex", gap:12, padding:"6px 12px", background:C.bg2,
+                          borderRadius:6, marginBottom:4, fontSize:12, alignItems:"center" }}>
+                          <span style={{ color:C.text1, flex:1 }}>{c.booking.propertyName}</span>
+                          <span style={{ color:C.text3 }}>{c.booking.guestName}</span>
+                          <span style={{ fontFamily:"'DM Mono',monospace", color:C.text2 }}>Due: {fmtDate(c.dueDate)}</span>
+                          {c.assignedHousekeeper && <span style={{ color:C.teal }}>👤 {c.assignedHousekeeper}</span>}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+              </div>
+            }
+          </Section>
+        )}
+
+        {/* Incidents */}
+        {sections.incidents && (
+          <Section id="incidents" title="Incidents & Resolution" count={filteredIncidents.length}>
+            {filteredIncidents.length === 0
+              ? <div style={{ fontSize:12, color:C.text3, fontStyle:"italic" }}>No incidents recorded in this period.</div>
+              : filteredIncidents.map(inc => (
+                <div key={inc.id} style={{ marginBottom:14, padding:"14px 16px", background:C.bg2, borderRadius:8,
+                  borderLeft:`3px solid ${inc.status==="Resolved"?C.green:C.crimson}` }}>
+                  <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:8, flexWrap:"wrap" }}>
+                    <span style={{ fontFamily:"'DM Mono',monospace", fontSize:11, color:C.text3 }}>{inc.id}</span>
+                    <span style={{ fontSize:11, fontWeight:700, color:inc.status==="Resolved"?C.green:C.crimson,
+                      background:inc.status==="Resolved"?C.greenBg:C.crimsonBg,
+                      padding:"2px 8px", borderRadius:4 }}>{inc.status}</span>
+                    <span style={{ fontSize:11, color:C.text3 }}>{inc.type}</span>
+                    <span style={{ fontSize:11, background:inc.severity==="High"?C.crimsonBg:inc.severity==="Medium"?C.amberBg:C.blueBg,
+                      color:inc.severity==="High"?C.crimson:inc.severity==="Medium"?C.amber:C.blue,
+                      padding:"2px 8px", borderRadius:4, fontWeight:600 }}>{inc.severity}</span>
+                  </div>
+                  <div style={{ fontSize:13, fontWeight:600, color:C.text1, marginBottom:3 }}>{inc.propertyName}</div>
+                  <div style={{ fontSize:12, color:C.text2, marginBottom:6 }}>{inc.description}</div>
+                  <div style={{ display:"flex", gap:16, fontSize:11, color:C.text3, marginBottom: inc.resolution?8:0 }}>
+                    <span>Guest: {inc.guest||"—"}</span>
+                    <span>Date: {fmtDate(inc.date)}</span>
+                    {inc.resolvedDate && <span>Resolved: {fmtDate(inc.resolvedDate)}</span>}
+                  </div>
+                  {inc.resolution && (
+                    <div style={{ background:C.greenBg, border:`1px solid ${C.green}30`, borderRadius:6,
+                      padding:"8px 12px", fontSize:12, color:C.green }}>
+                      <strong>Resolution:</strong> {inc.resolution}
+                    </div>
+                  )}
+                </div>
+              ))
+            }
+          </Section>
+        )}
+
+        {/* Complaints */}
+        {sections.complaints && (
+          <Section id="complaints" title="Complaints & Resolution" count={filteredComplaints.length}>
+            {filteredComplaints.length === 0
+              ? <div style={{ fontSize:12, color:C.text3, fontStyle:"italic" }}>No complaints recorded in this period.</div>
+              : filteredComplaints.map(c => (
+                <div key={c.id} style={{ marginBottom:12, padding:"14px 16px", background:C.bg2, borderRadius:8,
+                  borderLeft:`3px solid ${c.status==="Resolved"?C.green:C.amber}` }}>
+                  <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:6, flexWrap:"wrap" }}>
+                    <span style={{ fontFamily:"'DM Mono',monospace", fontSize:11, color:C.text3 }}>{c.id}</span>
+                    <span style={{ fontSize:11, fontWeight:700,
+                      color:c.status==="Resolved"?C.green:C.amber,
+                      background:c.status==="Resolved"?C.greenBg:C.amberBg,
+                      padding:"2px 8px", borderRadius:4 }}>{c.status}</span>
+                    <span style={{ fontSize:11, color:C.text3 }}>{c.type}</span>
+                  </div>
+                  <div style={{ fontSize:13, fontWeight:600, color:C.text1, marginBottom:3 }}>{c.propertyName}</div>
+                  <div style={{ fontSize:12, color:C.text2, marginBottom:4 }}>{c.description}</div>
+                  <div style={{ fontSize:11, color:C.text3 }}>
+                    Guest: {c.guestName||"—"} · Date: {fmtDate(c.date)}
+                    {c.resolvedDate && ` · Resolved: ${fmtDate(c.resolvedDate)}`}
+                  </div>
+                </div>
+              ))
+            }
+          </Section>
+        )}
+
+        {/* Reviews */}
+        {sections.reviews && (
+          <Section id="reviews" title="Guest Reviews" count={filteredReviews.length}>
+            {filteredReviews.length === 0
+              ? <div style={{ fontSize:12, color:C.text3, fontStyle:"italic" }}>No reviews in this period.</div>
+              : <div>
+                <div style={{ display:"flex", gap:16, marginBottom:14, flexWrap:"wrap" }}>
+                  <div style={{ background:C.bg2, borderRadius:8, padding:"12px 16px", textAlign:"center" }}>
+                    <div style={{ fontFamily:"'DM Mono',monospace", fontSize:24, fontWeight:700, color:C.amber }}>{avgRating}</div>
+                    <div style={{ fontSize:10, color:C.text3, textTransform:"uppercase", letterSpacing:"0.05em" }}>Avg Rating</div>
+                  </div>
+                  {[5,4,3,2,1].map(star => {
+                    const count = filteredReviews.filter(r=>r.rating===star).length;
+                    return (
+                      <div key={star} style={{ display:"flex", alignItems:"center", gap:8, fontSize:12 }}>
+                        <span style={{ color:C.amber }}>{"★".repeat(star)}</span>
+                        <div style={{ width:80, height:6, background:C.border, borderRadius:3, overflow:"hidden" }}>
+                          <div style={{ height:"100%", width:`${filteredReviews.length?(count/filteredReviews.length*100):0}%`, background:C.amber, borderRadius:3 }} />
+                        </div>
+                        <span style={{ color:C.text3 }}>{count}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                {filteredReviews.map(r => (
+                  <div key={r.id} style={{ marginBottom:10, padding:"12px 14px", background:C.bg2, borderRadius:8,
+                    borderLeft:`3px solid ${r.rating>=4?C.green:r.rating>=3?C.amber:C.crimson}` }}>
+                    <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:4, flexWrap:"wrap" }}>
+                      <span style={{ color:C.amber, fontSize:14 }}>{"★".repeat(r.rating)}{"☆".repeat(5-r.rating)}</span>
+                      <span style={{ fontFamily:"'DM Mono',monospace", fontSize:12, color:C.amber, fontWeight:700 }}>{r.rating}/5</span>
+                      <Badge label={r.platform} size="xs" />
+                      <span style={{ fontSize:11, color:C.text3 }}>{fmtDate(r.date)}</span>
+                    </div>
+                    <div style={{ fontSize:13, fontWeight:600, color:C.text1, marginBottom:2 }}>{r.propertyName}</div>
+                    <div style={{ fontSize:11, color:C.text3, marginBottom:r.comment?6:0 }}>{r.guestName}</div>
+                    {r.comment && <div style={{ fontSize:12, color:C.text2, fontStyle:"italic" }}>"{r.comment}"</div>}
+                  </div>
+                ))}
+              </div>
+            }
+          </Section>
+        )}
+
+        {/* Housekeeping QC */}
+        {sections.housekeeping && (
+          <Section id="housekeeping" title="Housekeeping Quality Control" count={filteredHK.length}>
+            {filteredHK.length === 0
+              ? <div style={{ fontSize:12, color:C.text3, fontStyle:"italic" }}>No housekeeping records in this period.</div>
+              : <div>
+                {/* QC Summary */}
+                <div style={{ display:"flex", gap:12, marginBottom:14, flexWrap:"wrap" }}>
+                  {[
+                    { label:"Sessions", value:filteredHK.length, color:C.teal },
+                    { label:"Properties Cleaned", value:filteredHK.flatMap(h=>h.properties).length, color:C.blue },
+                    { label:"QC Issues", value:hkIssues.length, color:hkIssues.length>0?C.crimson:C.green },
+                    { label:"Avg QC Rating", value:(() => {
+                        const rated = filteredHK.flatMap(h=>h.properties).filter(p=>p.qcRating>0);
+                        return rated.length?(rated.reduce((s,p)=>s+p.qcRating,0)/rated.length).toFixed(1)+"⭐":"—";
+                      })(), color:C.amber },
+                  ].map(k => (
+                    <div key={k.label} style={{ background:C.bg2, borderRadius:8, padding:"10px 14px", borderLeft:`3px solid ${k.color}` }}>
+                      <div style={{ fontFamily:"'DM Mono',monospace", fontSize:18, fontWeight:700, color:k.color }}>{k.value}</div>
+                      <div style={{ fontSize:10, color:C.text3, textTransform:"uppercase", letterSpacing:"0.05em", marginTop:2 }}>{k.label}</div>
+                    </div>
+                  ))}
+                </div>
+                {filteredHK.map(h => (
+                  <div key={h.id} style={{ marginBottom:10, padding:"12px 14px", background:C.bg2, borderRadius:8 }}>
+                    <div style={{ display:"flex", gap:10, alignItems:"center", marginBottom:8 }}>
+                      <div style={{ width:32, height:32, borderRadius:"50%", background:C.tealBg,
+                        display:"flex", alignItems:"center", justifyContent:"center",
+                        fontSize:12, fontWeight:700, color:C.teal }}>
+                        {h.housekeeper.slice(0,2).toUpperCase()}
+                      </div>
+                      <div>
+                        <div style={{ fontSize:13, fontWeight:600, color:C.text1 }}>{h.housekeeper}</div>
+                        <div style={{ fontSize:11, color:C.text3 }}>{fmtDate(h.date)} · {h.properties.length} propert{h.properties.length!==1?"ies":"y"}</div>
+                      </div>
+                    </div>
+                    <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
+                      {h.properties.map((p,i) => {
+                        const hasIssue = ["keysCollected","guestKeys","electricityUnits","photos","keysReturned"].some(k=>p[k]==="Issue");
+                        return (
+                          <div key={i} style={{ background:hasIssue?C.crimsonBg:C.greenBg,
+                            border:`1px solid ${hasIssue?C.crimson+"40":C.green+"40"}`,
+                            borderRadius:6, padding:"6px 10px", fontSize:11 }}>
+                            <span style={{ color:C.text1, fontWeight:600 }}>{p.propertyName}</span>
+                            <span style={{ color:hasIssue?C.crimson:C.green, marginLeft:6 }}>{hasIssue?"⚠️ Issue":"✓ OK"}</span>
+                            {p.qcRating>0 && <span style={{ color:C.amber, marginLeft:6 }}>{"★".repeat(p.qcRating)}</span>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            }
+          </Section>
+        )}
+
+        {/* Financials */}
+        {sections.financials && (
+          <Section id="financials" title="Financial Summary">
+            <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))", gap:10, marginBottom:14 }}>
+              {[
+                { label:"Gross Revenue", value:fmtCurr(totalRevenue), color:C.teal },
+                { label:"Bookings", value:filteredBookings.length, color:C.blue },
+                { label:"Avg per Booking", value:filteredBookings.length?fmtCurr(totalRevenue/filteredBookings.length):"—", color:C.amber },
+                { label:"Total Nights", value:filteredBookings.reduce((s,b)=>s+b.nights,0), color:C.text2 },
+              ].map(k => (
+                <div key={k.label} style={{ background:C.bg2, borderRadius:8, padding:"12px 14px", borderLeft:`3px solid ${k.color}` }}>
+                  <div style={{ fontFamily:"'DM Mono',monospace", fontSize:16, fontWeight:700, color:k.color }}>{k.value}</div>
+                  <div style={{ fontSize:10, color:C.text3, textTransform:"uppercase", letterSpacing:"0.05em", marginTop:3 }}>{k.label}</div>
+                </div>
+              ))}
+            </div>
+            {/* Platform breakdown */}
+            <div style={{ fontSize:11, color:C.text3, fontWeight:600, marginBottom:8, textTransform:"uppercase", letterSpacing:"0.06em" }}>By Platform</div>
+            <div style={{ display:"flex", gap:10, flexWrap:"wrap" }}>
+              {["Airbnb","Booking.com","Direct"].map(plat => {
+                const platBks = filteredBookings.filter(b=>b.platform===plat);
+                const platRev = platBks.reduce((s,b)=>s+b.revenue,0);
+                if (!platBks.length) return null;
+                return (
+                  <div key={plat} style={{ background:C.bg2, borderRadius:8, padding:"10px 14px", flex:1, minWidth:120 }}>
+                    <div style={{ fontSize:12, fontWeight:600, color:C.text1, marginBottom:4 }}>{plat}</div>
+                    <div style={{ fontFamily:"'DM Mono',monospace", fontSize:14, color:C.teal }}>{fmtCurr(platRev)}</div>
+                    <div style={{ fontSize:11, color:C.text3 }}>{platBks.length} booking{platBks.length!==1?"s":""}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </Section>
+        )}
+
+      </div>
+    </div>
+  );
+}
+
 // ─── MODULE ROUTER ────────────────────────────────────────────────────────────
 function ModuleContent({ active, onNav }) {
   const map = {
@@ -3860,6 +4359,7 @@ function ModuleContent({ active, onNav }) {
     sops:        <SOPs />,
     templates:   <GuestTemplates />,
     properties:  <PropertiesModule />,
+    mgmtreport:  <ManagementReport />,
     history:     <DailyHistory />,
     settings:    <SettingsModule />,
   };
