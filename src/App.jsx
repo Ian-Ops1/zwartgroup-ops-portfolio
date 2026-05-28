@@ -611,6 +611,7 @@ const NAV = [
   { id:"housekeeping",  icon:Users,        label:"Housekeeping",        badge:null },
   { id:"financials",    icon:DollarSign,   label:"Financials",         badge:null },
   { id:"metrics",       icon:BarChart2,    label:"Advanced Metrics",   badge:null },
+  { id:"occupancy",     icon:Activity,     label:"Occupancy Calendar",  badge:null },
   { id:"revenue",       icon:TrendingUp,   label:"Revenue Strategy",   badge:null },
   { id:"incidents",     icon:AlertTriangle,label:"Incidents & Complaints", badge:"incidents" },
   { id:"reviews",       icon:Star,         label:"Reviews",            badge:"reviews" },
@@ -3491,6 +3492,353 @@ function SettingsModule() {
   );
 }
 
+
+// ─── OCCUPANCY CALENDAR ──────────────────────────────────────────────────────
+function OccupancyCalendar() {
+  const { state } = useApp();
+  const now = new Date();
+  const [viewMonth, setViewMonth] = useState(now.getMonth());
+  const [viewYear, setViewYear]   = useState(now.getFullYear());
+  const [selectedProp, setSelectedProp] = useState("All");
+  const [view, setView]           = useState("calendar"); // calendar | heatmap
+
+  const MONTH_NAMES = ["January","February","March","April","May","June",
+    "July","August","September","October","November","December"];
+  const DAY_NAMES = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
+  // Get days in month
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const firstDayOfWeek = new Date(viewYear, viewMonth, 1).getDay();
+
+  // Build a set of occupied dates for selected property/all
+  const activeBookings = state.bookings.filter(b =>
+    b.bookingStatus !== "Cancelled" &&
+    (selectedProp === "All" || b.propertyName === selectedProp || b.propId === selectedProp)
+  );
+
+  // For each day build occupancy info
+  const getDayInfo = (day) => {
+    const dateStr = `${viewYear}-${String(viewMonth+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+    const occupied = activeBookings.filter(b => b.checkIn <= dateStr && b.checkOut > dateStr);
+    const checkIns  = activeBookings.filter(b => b.checkIn === dateStr);
+    const checkOuts = activeBookings.filter(b => b.checkOut === dateStr);
+    const cleans    = activeBookings.flatMap(b =>
+      b.cleans.filter(c => c.dueDate === dateStr)
+    );
+    return { dateStr, occupied, checkIns, checkOuts, cleans, isToday: dateStr === TODAY };
+  };
+
+  // Monthly occupancy stats
+  const totalDays = daysInMonth;
+  const activeProps = selectedProp === "All"
+    ? state.properties.filter(p => p.status === "Active")
+    : state.properties.filter(p => p.name === selectedProp || p.id === selectedProp);
+  const propCount = activeProps.length || 1;
+
+  let occupiedDayCount = 0;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const info = getDayInfo(d);
+    if (info.occupied.length > 0) occupiedDayCount++;
+  }
+
+  // Per-property occupancy for the month
+  const propOccupancy = useMemo(() => {
+    return state.properties
+      .filter(p => p.status === "Active")
+      .map(prop => {
+        let occ = 0;
+        for (let d = 1; d <= daysInMonth; d++) {
+          const dateStr = `${viewYear}-${String(viewMonth+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+          const isOccupied = state.bookings.some(b =>
+            (b.propId === prop.id || b.propertyName === prop.name) &&
+            b.bookingStatus !== "Cancelled" &&
+            b.checkIn <= dateStr && b.checkOut > dateStr
+          );
+          if (isOccupied) occ++;
+        }
+        const rate = Math.round((occ / daysInMonth) * 100);
+        return { prop, occupiedDays: occ, rate };
+      })
+      .sort((a,b) => b.rate - a.rate);
+  }, [state.bookings, state.properties, viewMonth, viewYear, daysInMonth]);
+
+  const avgOccupancy = propOccupancy.length
+    ? Math.round(propOccupancy.reduce((s,p) => s+p.rate, 0) / propOccupancy.length)
+    : 0;
+
+  const getRateColor = (rate) => {
+    if (rate >= 80) return C.teal;
+    if (rate >= 60) return C.green;
+    if (rate >= 40) return C.amber;
+    if (rate >= 20) return "#F97316";
+    return C.crimson;
+  };
+
+  const getRateBg = (rate) => {
+    if (rate >= 80) return "rgba(0,212,184,0.15)";
+    if (rate >= 60) return "rgba(34,197,94,0.13)";
+    if (rate >= 40) return "rgba(245,166,35,0.13)";
+    if (rate >= 20) return "rgba(249,115,22,0.13)";
+    return "rgba(255,59,92,0.13)";
+  };
+
+  const prevMonth = () => {
+    if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y-1); }
+    else setViewMonth(m => m-1);
+  };
+  const nextMonth = () => {
+    if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y+1); }
+    else setViewMonth(m => m+1);
+  };
+
+  // Calendar grid cells
+  const calendarCells = [];
+  for (let i = 0; i < firstDayOfWeek; i++) calendarCells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) calendarCells.push(d);
+
+  return (
+    <div style={{ animation:"fadeIn 0.25s ease" }}>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:20 }}>
+        <SectionTitle>Occupancy Calendar</SectionTitle>
+        <div style={{ display:"flex", gap:8, alignItems:"center", flexWrap:"wrap" }}>
+          {/* Property filter */}
+          <Select value={selectedProp} onChange={setSelectedProp}
+            options={["All", ...state.properties.filter(p=>p.status==="Active").map(p => p.name)]}
+            style={{ width:200 }} />
+          {/* View toggle */}
+          <div style={{ display:"flex", background:C.bg2, borderRadius:7, padding:3, border:`1px solid ${C.border}` }}>
+            {[["calendar","Calendar"],["heatmap","Heatmap"]].map(([id,label]) => (
+              <button key={id} onClick={() => setView(id)}
+                style={{ padding:"5px 14px", borderRadius:5, border:"none", cursor:"pointer", fontSize:12,
+                  fontWeight:500, background:view===id?C.teal:"transparent",
+                  color:view===id?"#000":C.text2, transition:"all 0.15s" }}>
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* KPIs */}
+      <div style={{ display:"flex", gap:12, marginBottom:20, flexWrap:"wrap" }}>
+        <KPICard label="Portfolio Avg Occupancy" value={`${avgOccupancy}%`} color={getRateColor(avgOccupancy)} icon={Activity} />
+        <KPICard label="Month" value={`${MONTH_NAMES[viewMonth]} ${viewYear}`} color={C.teal} />
+        <KPICard label="Occupied Days (portfolio)" value={`${occupiedDayCount}/${daysInMonth}`} color={C.blue} />
+        <KPICard label="Active Properties" value={state.properties.filter(p=>p.status==="Active").length} color={C.text2} />
+      </div>
+
+      {/* Month navigator */}
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between",
+        marginBottom:16, padding:"10px 16px", background:C.bg1, borderRadius:10, border:`1px solid ${C.border}` }}>
+        <button onClick={prevMonth} style={{ background:"none", border:`1px solid ${C.border}`,
+          borderRadius:6, padding:"6px 12px", cursor:"pointer", color:C.text1, fontSize:13 }}>
+          ← Prev
+        </button>
+        <div style={{ fontFamily:"'Syne',sans-serif", fontSize:18, fontWeight:700, color:C.platinum }}>
+          {MONTH_NAMES[viewMonth]} {viewYear}
+        </div>
+        <button onClick={nextMonth} style={{ background:"none", border:`1px solid ${C.border}`,
+          borderRadius:6, padding:"6px 12px", cursor:"pointer", color:C.text1, fontSize:13 }}>
+          Next →
+        </button>
+      </div>
+
+      {view === "calendar" ? (
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 300px", gap:16 }}>
+          {/* Calendar */}
+          <div>
+            <div style={{ background:C.bg1, border:`1px solid ${C.border}`, borderRadius:10, overflow:"hidden" }}>
+              {/* Day headers */}
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(7,1fr)", background:C.bg2 }}>
+                {DAY_NAMES.map(d => (
+                  <div key={d} style={{ padding:"10px 0", textAlign:"center", fontSize:11,
+                    fontWeight:700, color:C.text3, letterSpacing:"0.06em" }}>{d}</div>
+                ))}
+              </div>
+              {/* Calendar grid */}
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(7,1fr)" }}>
+                {calendarCells.map((day, i) => {
+                  if (!day) return <div key={`empty-${i}`} style={{ minHeight:80, borderRight:`1px solid ${C.border}20`, borderBottom:`1px solid ${C.border}20` }} />;
+                  const info = getDayInfo(day);
+                  const occCount = info.occupied.length;
+                  const hasCheckIn  = info.checkIns.length  > 0;
+                  const hasCheckOut = info.checkOuts.length > 0;
+                  const hasClean    = info.cleans.length > 0;
+                  const bgColor = occCount > 0
+                    ? selectedProp === "All"
+                      ? `rgba(0,212,184,${Math.min(0.08 + (occCount / propCount) * 0.25, 0.4)})`
+                      : "rgba(0,212,184,0.15)"
+                    : "transparent";
+
+                  return (
+                    <div key={day} style={{ minHeight:80, padding:"6px 8px", borderRight:`1px solid ${C.border}20`,
+                      borderBottom:`1px solid ${C.border}20`, background:bgColor,
+                      borderLeft: info.isToday ? `3px solid ${C.teal}` : "3px solid transparent",
+                      position:"relative" }}>
+                      <div style={{ fontSize:13, fontWeight: info.isToday ? 700 : 400,
+                        color: info.isToday ? C.teal : C.text2, marginBottom:4 }}>{day}</div>
+                      <div style={{ display:"flex", flexDirection:"column", gap:2 }}>
+                        {hasCheckIn && (
+                          <div style={{ fontSize:9, background:C.greenBg, color:C.green,
+                            padding:"1px 4px", borderRadius:3, fontWeight:600, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
+                            ↑ {info.checkIns.map(b=>b.guestName.split(" ")[0]).join(", ")}
+                          </div>
+                        )}
+                        {hasCheckOut && (
+                          <div style={{ fontSize:9, background:C.blueBg, color:C.blue,
+                            padding:"1px 4px", borderRadius:3, fontWeight:600, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
+                            ↓ {info.checkOuts.map(b=>b.guestName.split(" ")[0]).join(", ")}
+                          </div>
+                        )}
+                        {hasClean && (
+                          <div style={{ fontSize:9, background:C.amberBg, color:C.amber,
+                            padding:"1px 4px", borderRadius:3, fontWeight:600 }}>
+                            🧹 Clean
+                          </div>
+                        )}
+                        {selectedProp === "All" && occCount > 0 && (
+                          <div style={{ fontSize:9, color:C.teal, fontWeight:600 }}>
+                            {occCount} occ.
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Legend */}
+            <div style={{ display:"flex", gap:16, marginTop:12, flexWrap:"wrap", fontSize:11, color:C.text3 }}>
+              {[
+                { color:C.tealBg, border:C.teal, label:"Occupied" },
+                { color:C.greenBg, border:C.green, label:"↑ Check-in" },
+                { color:C.blueBg, border:C.blue, label:"↓ Check-out" },
+                { color:C.amberBg, border:C.amber, label:"🧹 Clean due" },
+              ].map(s => (
+                <div key={s.label} style={{ display:"flex", alignItems:"center", gap:5 }}>
+                  <div style={{ width:14, height:14, borderRadius:3, background:s.color, border:`1px solid ${s.border}40` }} />
+                  <span>{s.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Monthly Summary sidebar */}
+          <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+            {/* Monthly bookings */}
+            <Card>
+              <div style={{ fontSize:11, fontWeight:700, color:C.text3, textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:12 }}>
+                {MONTH_NAMES[viewMonth]} Bookings
+              </div>
+              {activeBookings.filter(b => {
+                const ci = new Date(b.checkIn);
+                const co = new Date(b.checkOut);
+                const mStart = new Date(viewYear, viewMonth, 1);
+                const mEnd   = new Date(viewYear, viewMonth+1, 0);
+                return ci <= mEnd && co >= mStart;
+              }).slice(0,8).map(b => (
+                <div key={b.id} style={{ display:"flex", gap:8, alignItems:"center", padding:"7px 0",
+                  borderBottom:`1px solid ${C.border}20` }}>
+                  <div style={{ width:4, height:36, borderRadius:2, background:C.teal, flexShrink:0 }} />
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ fontSize:12, fontWeight:600, color:C.text1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                      {b.propertyName}
+                    </div>
+                    <div style={{ fontSize:10, color:C.text3 }}>
+                      {b.guestName} · {fmtShort(b.checkIn)} → {fmtShort(b.checkOut)}
+                    </div>
+                  </div>
+                  <Badge label={b.status} size="xs" />
+                </div>
+              ))}
+              {activeBookings.length === 0 && (
+                <div style={{ fontSize:12, color:C.text3, textAlign:"center", padding:"12px 0" }}>No bookings this month</div>
+              )}
+            </Card>
+
+            {/* Top properties */}
+            <Card>
+              <div style={{ fontSize:11, fontWeight:700, color:C.text3, textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:12 }}>
+                Top Occupancy
+              </div>
+              {propOccupancy.filter(p => p.occupiedDays > 0).slice(0,8).map(({ prop, rate }) => (
+                <div key={prop.id} style={{ marginBottom:10 }}>
+                  <div style={{ display:"flex", justifyContent:"space-between", marginBottom:4 }}>
+                    <span style={{ fontSize:11, color:C.text2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", flex:1 }}>{prop.name}</span>
+                    <span style={{ fontSize:11, fontFamily:"'DM Mono',monospace", color:getRateColor(rate), fontWeight:600, flexShrink:0, marginLeft:8 }}>{rate}%</span>
+                  </div>
+                  <div style={{ height:4, background:C.border, borderRadius:2, overflow:"hidden" }}>
+                    <div style={{ height:"100%", width:`${rate}%`, background:getRateColor(rate), borderRadius:2, transition:"width 0.3s" }} />
+                  </div>
+                </div>
+              ))}
+            </Card>
+          </div>
+        </div>
+      ) : (
+        /* HEATMAP VIEW */
+        <div>
+          <div style={{ marginBottom:16, padding:"10px 16px", background:C.bg2, borderRadius:8, fontSize:12, color:C.text3 }}>
+            Showing occupancy rate per property for {MONTH_NAMES[viewMonth]} {viewYear}. Darker = higher occupancy.
+          </div>
+          {/* Rate legend */}
+          <div style={{ display:"flex", gap:8, marginBottom:16, alignItems:"center", flexWrap:"wrap" }}>
+            <span style={{ fontSize:11, color:C.text3, fontWeight:600 }}>Rate:</span>
+            {[[">80%",C.teal],[">60%",C.green],[">40%",C.amber],[">20%","#F97316"],["<20%",C.crimson]].map(([label,color]) => (
+              <div key={label} style={{ display:"flex", alignItems:"center", gap:5 }}>
+                <div style={{ width:14, height:14, borderRadius:3, background:color, opacity:0.7 }} />
+                <span style={{ fontSize:11, color:C.text3 }}>{label}</span>
+              </div>
+            ))}
+          </div>
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))", gap:10 }}>
+            {propOccupancy.map(({ prop, occupiedDays, rate }) => (
+              <div key={prop.id} style={{ background:C.bg1, border:`1px solid ${C.border}`,
+                borderRadius:10, padding:"14px 16px", borderLeft:`4px solid ${getRateColor(rate)}` }}>
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:10 }}>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ fontSize:13, fontWeight:600, color:C.text1, overflow:"hidden",
+                      textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{prop.name}</div>
+                    <div style={{ fontSize:11, color:C.text3, marginTop:2 }}>{prop.area} · P{prop.portfolio}</div>
+                  </div>
+                  <div style={{ fontFamily:"'DM Mono',monospace", fontSize:22, fontWeight:800,
+                    color:getRateColor(rate), flexShrink:0, marginLeft:8, lineHeight:1 }}>{rate}%</div>
+                </div>
+                {/* Mini calendar heatmap */}
+                <div style={{ display:"grid", gridTemplateColumns:"repeat(7,1fr)", gap:2, marginBottom:8 }}>
+                  {DAY_NAMES.map(d => (
+                    <div key={d} style={{ fontSize:7, color:C.text3, textAlign:"center", fontWeight:600 }}>{d[0]}</div>
+                  ))}
+                  {Array(new Date(viewYear, viewMonth, 1).getDay()).fill(null).map((_,i) => (
+                    <div key={`e${i}`} style={{ height:10 }} />
+                  ))}
+                  {Array.from({length:daysInMonth},(_,i)=>i+1).map(day => {
+                    const dateStr = `${viewYear}-${String(viewMonth+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+                    const occ = state.bookings.some(b =>
+                      (b.propId === prop.id || b.propertyName === prop.name) &&
+                      b.bookingStatus !== "Cancelled" &&
+                      b.checkIn <= dateStr && b.checkOut > dateStr
+                    );
+                    const isToday = dateStr === TODAY;
+                    return (
+                      <div key={day} title={dateStr} style={{ height:10, borderRadius:2,
+                        background: isToday ? C.teal : occ ? getRateColor(rate) : C.bg3,
+                        opacity: isToday ? 1 : occ ? 0.8 : 0.4 }} />
+                    );
+                  })}
+                </div>
+                <div style={{ fontSize:11, color:C.text3 }}>
+                  {occupiedDays} of {daysInMonth} days · {MONTH_NAMES[viewMonth]}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ─── MODULE ROUTER ────────────────────────────────────────────────────────────
 function ModuleContent({ active, onNav }) {
