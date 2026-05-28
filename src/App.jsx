@@ -332,6 +332,7 @@ const initialState = {
   templates: TEMPLATES,
   dailyOps: {},
   housekeeping: [],
+  financialLedger: [],
   settings: {
     companyName: "Zwart Group",
     managerName: "Operations Manager",
@@ -369,6 +370,9 @@ function reducer(state, action) {
     case 'ADD_HK_SCHEDULE': return { ...state, housekeeping: [...(state.housekeeping||[]), action.payload] };
     case 'UPDATE_HK_SCHEDULE': return { ...state, housekeeping: (state.housekeeping||[]).map(h => h.id===action.payload.id?{...h,...action.payload}:h) };
     case 'DELETE_HK_SCHEDULE': return { ...state, housekeeping: (state.housekeeping||[]).filter(h => h.id!==action.payload) };
+    case "ADD_FINANCIAL": return { ...state, financialLedger: [...(state.financialLedger||[]), action.payload] };
+    case "DELETE_FINANCIAL": return { ...state, financialLedger: (state.financialLedger||[]).filter(f => f.id !== action.payload) };
+    case "UPDATE_FINANCIAL": return { ...state, financialLedger: (state.financialLedger||[]).map(f => f.id===action.payload.id?{...f,...action.payload}:f) };
     case "ADD_TEAM_MEMBER": return { ...state, team: [...state.team, action.payload] };
     case "REMOVE_TEAM_MEMBER": return { ...state, team: state.team.filter(m => m.id !== action.payload) };
     default: return state;
@@ -1497,81 +1501,361 @@ function DailyOps() {
   );
 }
 
-// ─── FINANCIALS ───────────────────────────────────────────────────────────────
+// ─── FINANCIALS ──────────────────────────────────────────────────────────────
+const FIN_INCOME_CATS = ["Rental Income","Damage Claims","Deposits","Other Income"];
+const FIN_EXPENSE_CATS = ["Cleaning","Maintenance","Linen & Laundry","Management Fee",
+  "Platform Commission","Utilities","Supplies","Admin & Marketing","Other Expense"];
+
 function Financials() {
-  const { state } = useApp();
-  const [period, setPeriod] = useState("month");
+  const { state, dispatch, toast } = useApp();
+  const [tab, setTab] = useState("ledger");
+  const [search, setSearch] = useState("");
+  const [propFilter, setPropFilter] = useState("All");
+  const [typeFilter, setTypeFilter] = useState("All");
+  const [catFilter, setCatFilter] = useState("All");
+  const [fromDate, setFromDate] = useState(`${new Date().getFullYear()}-01-01`);
+  const [toDate, setToDate] = useState(TODAY);
+  const [showAdd, setShowAdd] = useState(false);
+  const [form, setForm] = useState({
+    date:TODAY, propertyName:"", type:"Income", category:"Rental Income",
+    platform:"", reservationId:"", amount:"", notes:""
+  });
 
-  const byMonth = useMemo(() => {
-    const months = {};
-    state.bookings.forEach(b => {
-      const m = b.checkIn.slice(0,7);
-      if (!months[m]) months[m] = { revenue:0, bookings:0, nights:0 };
-      months[m].revenue += b.revenue;
-      months[m].bookings += 1;
-      months[m].nights += b.nights;
-    });
-    return Object.entries(months).sort().map(([month, v]) => ({ month: month.slice(5) + " '" + month.slice(2,4), ...v }));
-  }, [state.bookings]);
+  const ledger = Array.isArray(state.financialLedger) ? state.financialLedger : [];
 
-  const total = state.bookings.reduce((s,b) => s + b.revenue, 0);
-  const mayRevenue = state.bookings.filter(b => b.checkIn.startsWith("2026-05")).reduce((s,b) => s + b.revenue, 0);
-  const airbnbRev = state.bookings.filter(b => b.platform === "Airbnb").reduce((s,b) => s + b.revenue, 0);
-  const bookingComRev = state.bookings.filter(b => b.platform === "Booking.com").reduce((s,b) => s + b.revenue, 0);
-  const directRev = state.bookings.filter(b => b.platform === "Direct").reduce((s,b) => s + b.revenue, 0);
+  // Auto-calc VAT (15% on income only) and net
+  const calcVAT = (type, amount) => type === "Income" ? Number(amount) * 0.15 : 0;
+  const calcNet = (type, amount) => Number(amount) - calcVAT(type, amount);
+
+  // Filtered ledger
+  const filtered = ledger.filter(f => {
+    const matchSearch = !search || f.propertyName?.toLowerCase().includes(search.toLowerCase()) ||
+      f.category?.toLowerCase().includes(search.toLowerCase()) || f.reservationId?.toLowerCase().includes(search.toLowerCase());
+    const matchProp = propFilter === "All" || f.propertyName === propFilter;
+    const matchType = typeFilter === "All" || f.type === typeFilter;
+    const matchCat  = catFilter === "All" || f.category === catFilter;
+    const matchDate = (!fromDate || f.date >= fromDate) && (!toDate || f.date <= toDate);
+    return matchSearch && matchProp && matchType && matchCat && matchDate;
+  }).sort((a,b) => b.date.localeCompare(a.date));
+
+  const totalIncome   = filtered.filter(f=>f.type==="Income").reduce((s,f)=>s+Number(f.amount),0);
+  const totalExpense  = filtered.filter(f=>f.type==="Expense").reduce((s,f)=>s+Number(f.amount),0);
+  const netProfit     = totalIncome - totalExpense;
+  const totalVAT      = filtered.filter(f=>f.type==="Income").reduce((s,f)=>s+calcVAT(f.type,f.amount),0);
+
+  const handleAdd = () => {
+    if (!form.propertyName || !form.amount || !form.date) return toast("Fill required fields","error");
+    const id = "FIN-"+String(ledger.length+1).padStart(4,"0");
+    const entry = {
+      id, date:form.date, propertyName:form.propertyName,
+      portfolio: state.properties.find(p=>p.name===form.propertyName)?.portfolio || 1,
+      type:form.type, category:form.category, platform:form.platform,
+      reservationId:form.reservationId, amount:Number(form.amount),
+      vat:calcVAT(form.type,form.amount), net:calcNet(form.type,form.amount),
+      notes:form.notes, month:new Date(form.date).toLocaleString("default",{month:"short"}),
+      year:new Date(form.date).getFullYear(),
+    };
+    dispatch({ type:"ADD_FINANCIAL", payload:entry });
+    toast("Transaction added");
+    setShowAdd(false);
+    setForm({ date:TODAY, propertyName:"", type:"Income", category:"Rental Income", platform:"", reservationId:"", amount:"", notes:"" });
+  };
+
+  // Category totals for charts
+  const byCat = {};
+  filtered.forEach(f => {
+    if (!byCat[f.category]) byCat[f.category] = { income:0, expense:0 };
+    if (f.type==="Income") byCat[f.category].income += Number(f.amount);
+    else byCat[f.category].expense += Number(f.amount);
+  });
+
+  // By property
+  const byProp = {};
+  filtered.forEach(f => {
+    if (!byProp[f.propertyName]) byProp[f.propertyName] = { income:0, expense:0, net:0 };
+    if (f.type==="Income") byProp[f.propertyName].income += Number(f.amount);
+    else byProp[f.propertyName].expense += Number(f.amount);
+    byProp[f.propertyName].net = byProp[f.propertyName].income - byProp[f.propertyName].expense;
+  });
+
+  // Monthly chart data
+  const monthlyData = {};
+  filtered.forEach(f => {
+    const key = f.date.slice(0,7);
+    if (!monthlyData[key]) monthlyData[key] = { month:key.slice(5)+"/"+key.slice(2,4), income:0, expense:0 };
+    if (f.type==="Income") monthlyData[key].income += Number(f.amount);
+    else monthlyData[key].expense += Number(f.amount);
+  });
+  const chartData = Object.values(monthlyData).sort((a,b)=>a.month.localeCompare(b.month));
+
+  const propNames = state.properties.filter(p=>p.status==="Active").map(p=>p.name);
+  const allCats = [...FIN_INCOME_CATS, ...FIN_EXPENSE_CATS];
 
   return (
     <div style={{ animation:"fadeIn 0.25s ease" }}>
-      <SectionTitle>Financials</SectionTitle>
-      <div style={{ display:"flex", gap:12, marginBottom:24, flexWrap:"wrap" }}>
-        <KPICard label="Total Revenue (All)" value={`R ${(total/1000).toFixed(0)}k`} color={C.teal} icon={DollarSign} />
-        <KPICard label="May 2026" value={`R ${(mayRevenue/1000).toFixed(0)}k`} color={C.amber} icon={TrendingUp} />
-        <KPICard label="Airbnb Revenue" value={`R ${(airbnbRev/1000).toFixed(0)}k`} color="#FF5A5F" icon={DollarSign} />
-        <KPICard label="Booking.com" value={`R ${(bookingComRev/1000).toFixed(0)}k`} color="#0065DD" icon={DollarSign} />
-        <KPICard label="Direct Revenue" value={`R ${(directRev/1000).toFixed(0)}k`} color={C.teal} icon={DollarSign} />
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:20 }}>
+        <SectionTitle>Financial Tracker</SectionTitle>
+        <Btn variant="primary" icon={Plus} onClick={() => setShowAdd(true)}>Add Transaction</Btn>
       </div>
-      <div style={{ display:"grid", gridTemplateColumns:"2fr 1fr", gap:16 }}>
-        <Card>
-          <div style={{ fontSize:13, fontWeight:600, color:C.text2, marginBottom:16 }}>Revenue by Month</div>
-          <ResponsiveContainer width="100%" height={240}>
-            <BarChart data={byMonth}>
-              <CartesianGrid strokeDasharray="3 3" stroke={C.border} />
-              <XAxis dataKey="month" tick={{ fill:C.text3, fontSize:11 }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fill:C.text3, fontSize:11 }} axisLine={false} tickLine={false} tickFormatter={v => `R${(v/1000).toFixed(0)}k`} />
-              <Tooltip formatter={v => fmtCurr(v)} contentStyle={{ background:C.bg2, border:`1px solid ${C.border}`, borderRadius:6, fontSize:12 }} />
-              <Bar dataKey="revenue" fill={C.teal} radius={[4,4,0,0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
-        <Card>
-          <div style={{ fontSize:13, fontWeight:600, color:C.text2, marginBottom:16 }}>Platform Split</div>
-          <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
-            {[{ label:"Airbnb", v:airbnbRev, c:"#FF5A5F" },{ label:"Booking.com", v:bookingComRev, c:"#0065DD" },{ label:"Direct", v:directRev, c:C.teal }].map(p => (
-              <div key={p.label}>
-                <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, marginBottom:6 }}>
-                  <span style={{ color:C.text2 }}>{p.label}</span>
-                  <span style={{ fontFamily:"'DM Mono',monospace", color:p.c }}>{fmtCurr(p.v)}</span>
-                </div>
-                <div style={{ height:5, background:C.border, borderRadius:3, overflow:"hidden" }}>
-                  <div style={{ height:"100%", width:`${total ? (p.v/total)*100 : 0}%`, background:p.c, borderRadius:3 }} />
-                </div>
-              </div>
-            ))}
-          </div>
-          <div style={{ marginTop:20 }}>
-            <div style={{ fontSize:11, color:C.text3, marginBottom:8 }}>By Booking</div>
-            {state.bookings.sort((a,b) => b.revenue - a.revenue).slice(0,5).map(b => (
-              <div key={b.id} style={{ display:"flex", justifyContent:"space-between", padding:"6px 0", borderBottom:`1px solid ${C.border}20`, fontSize:12 }}>
-                <span style={{ color:C.text2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", maxWidth:160 }}>{b.propertyName}</span>
-                <span style={{ fontFamily:"'DM Mono',monospace", color:C.teal, flexShrink:0 }}>R {(b.revenue/1000).toFixed(1)}k</span>
-              </div>
-            ))}
-          </div>
-        </Card>
+
+      {/* KPIs */}
+      <div style={{ display:"flex", gap:12, marginBottom:20, flexWrap:"wrap" }}>
+        <KPICard label="Total Income" value={`R ${(totalIncome/1000).toFixed(1)}k`} color={C.teal} icon={ArrowUp} />
+        <KPICard label="Total Expenses" value={`R ${(totalExpense/1000).toFixed(1)}k`} color={C.crimson} icon={ArrowDown} />
+        <KPICard label="Net Profit" value={`R ${(netProfit/1000).toFixed(1)}k`}
+          color={netProfit>=0?C.green:C.crimson} icon={DollarSign} />
+        <KPICard label="VAT Collected" value={`R ${(totalVAT/1000).toFixed(1)}k`} color={C.amber} />
+        <KPICard label="Transactions" value={filtered.length} color={C.blue} />
       </div>
+
+      {/* Filters */}
+      <div style={{ background:C.bg1, border:`1px solid ${C.border}`, borderRadius:10, padding:"14px 16px", marginBottom:20 }}>
+        <div style={{ display:"flex", gap:10, flexWrap:"wrap", alignItems:"flex-end" }}>
+          <SearchBar value={search} onChange={setSearch} placeholder="Search property, category, ref..." />
+          <Select value={propFilter} onChange={setPropFilter} options={["All",...propNames]} style={{ width:180 }} />
+          <Select value={typeFilter} onChange={setTypeFilter} options={["All","Income","Expense"]} style={{ width:120 }} />
+          <Select value={catFilter} onChange={setCatFilter} options={["All",...allCats]} style={{ width:170 }} />
+          <div>
+            <div style={{ fontSize:10, color:C.text3, marginBottom:3 }}>From</div>
+            <Input type="date" value={fromDate} onChange={setFromDate} style={{ width:150 }} />
+          </div>
+          <div>
+            <div style={{ fontSize:10, color:C.text3, marginBottom:3 }}>To</div>
+            <Input type="date" value={toDate} onChange={setToDate} style={{ width:150 }} />
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div style={{ display:"flex", borderBottom:`1px solid ${C.border}`, marginBottom:20 }}>
+        {[["ledger","Transaction Ledger"],["summary","By Property"],["charts","Charts"]].map(([id,label]) => (
+          <button key={id} onClick={() => setTab(id)}
+            style={{ padding:"8px 20px", background:"none", border:"none", fontSize:13,
+              borderBottom:`2px solid ${tab===id?C.teal:"transparent"}`,
+              color:tab===id?C.teal:C.text2, cursor:"pointer", fontWeight:tab===id?600:400 }}>
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* LEDGER TAB */}
+      {tab === "ledger" && (
+        <div>
+          {filtered.length === 0
+            ? <EmptyState icon={DollarSign} title="No transactions yet" sub="Click Add Transaction to record income or expenses." />
+            : <div style={{ background:C.bg1, border:`1px solid ${C.border}`, borderRadius:10, overflow:"hidden", overflowX:"auto" }}>
+              <div style={{ display:"grid", gridTemplateColumns:"95px 1fr 80px 130px 100px 70px 90px 90px 90px 40px",
+                minWidth:900, padding:"9px 14px", background:C.bg2 }}>
+                {["Date","Property","Portfolio","Category","Platform","Ref","Amount","VAT","Net",""].map(h => (
+                  <div key={h} style={{ fontSize:10, color:C.text3, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.05em" }}>{h}</div>
+                ))}
+              </div>
+              {filtered.map(f => (
+                <div key={f.id} style={{ display:"grid", gridTemplateColumns:"95px 1fr 80px 130px 100px 70px 90px 90px 90px 40px",
+                  minWidth:900, padding:"10px 14px", borderTop:`1px solid ${C.border}20`, alignItems:"center",
+                  borderLeft:`3px solid ${f.type==="Income"?C.teal:C.crimson}` }}>
+                  <div style={{ fontSize:11, color:C.text2, fontFamily:"'DM Mono',monospace" }}>{fmtShort(f.date)}</div>
+                  <div style={{ minWidth:0 }}>
+                    <div style={{ fontSize:12, color:C.text1, fontWeight:500, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{f.propertyName}</div>
+                    {f.notes && <div style={{ fontSize:10, color:C.text3, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{f.notes}</div>}
+                  </div>
+                  <div style={{ fontSize:11, color:C.text3 }}>P{f.portfolio}</div>
+                  <div>
+                    <span style={{ fontSize:11, padding:"2px 7px", borderRadius:4, fontWeight:600,
+                      background:f.type==="Income"?C.tealBg:C.crimsonBg,
+                      color:f.type==="Income"?C.teal:C.crimson }}>{f.category}</span>
+                  </div>
+                  <div style={{ fontSize:11, color:C.text3 }}>{f.platform||"—"}</div>
+                  <div style={{ fontSize:10, color:C.text3, fontFamily:"'DM Mono',monospace", overflow:"hidden", textOverflow:"ellipsis" }}>{f.reservationId||"—"}</div>
+                  <div style={{ fontFamily:"'DM Mono',monospace", fontSize:12,
+                    color:f.type==="Income"?C.teal:C.crimson, fontWeight:600 }}>
+                    {f.type==="Income"?"+":"-"} {fmtCurr(Number(f.amount))}
+                  </div>
+                  <div style={{ fontFamily:"'DM Mono',monospace", fontSize:11, color:C.amber }}>
+                    {f.vat>0?fmtCurr(f.vat):"—"}
+                  </div>
+                  <div style={{ fontFamily:"'DM Mono',monospace", fontSize:12, color:C.text1, fontWeight:500 }}>
+                    {fmtCurr(f.net)}
+                  </div>
+                  <button onClick={() => { if(window.confirm("Delete this transaction?")) { dispatch({type:"DELETE_FINANCIAL",payload:f.id}); toast("Deleted"); }}}
+                    style={{ background:"none", border:"none", cursor:"pointer", color:C.crimson, padding:4 }}>
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              ))}
+              {/* Totals row */}
+              <div style={{ display:"grid", gridTemplateColumns:"95px 1fr 80px 130px 100px 70px 90px 90px 90px 40px",
+                minWidth:900, padding:"10px 14px", background:C.bg2, borderTop:`2px solid ${C.border}` }}>
+                <div style={{ fontSize:11, fontWeight:700, color:C.text1, gridColumn:"1/7" }}>TOTAL ({filtered.length} transactions)</div>
+                <div style={{ fontFamily:"'DM Mono',monospace", fontSize:12,
+                  color:netProfit>=0?C.teal:C.crimson, fontWeight:700 }}>
+                  Net: {fmtCurr(netProfit)}
+                </div>
+                <div style={{ fontFamily:"'DM Mono',monospace", fontSize:12, color:C.amber }}>{fmtCurr(totalVAT)}</div>
+                <div />
+              </div>
+            </div>
+          }
+        </div>
+      )}
+
+      {/* BY PROPERTY TAB */}
+      {tab === "summary" && (
+        <div>
+          {Object.entries(byProp).length === 0
+            ? <EmptyState icon={Building} title="No data" sub="Add transactions to see per-property breakdown." />
+            : Object.entries(byProp)
+              .sort((a,b) => b[1].income - a[1].income)
+              .map(([propName, data]) => (
+                <Card key={propName} style={{ marginBottom:12 }}>
+                  <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
+                    <div>
+                      <div style={{ fontSize:14, fontWeight:700, color:C.text1 }}>{propName}</div>
+                      <div style={{ fontSize:11, color:C.text3 }}>
+                        {ledger.filter(f=>f.propertyName===propName).length} transactions
+                      </div>
+                    </div>
+                    <div style={{ textAlign:"right" }}>
+                      <div style={{ fontFamily:"'DM Mono',monospace", fontSize:18, fontWeight:800,
+                        color:data.net>=0?C.teal:C.crimson }}>{fmtCurr(data.net)}</div>
+                      <div style={{ fontSize:10, color:C.text3, textTransform:"uppercase", letterSpacing:"0.06em" }}>Net Profit</div>
+                    </div>
+                  </div>
+                  <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:10 }}>
+                    {[
+                      { label:"Income", value:fmtCurr(data.income), color:C.teal },
+                      { label:"Expenses", value:fmtCurr(data.expense), color:C.crimson },
+                      { label:"Net", value:fmtCurr(data.net), color:data.net>=0?C.green:C.crimson },
+                    ].map(s => (
+                      <div key={s.label} style={{ background:C.bg2, borderRadius:6, padding:"10px 12px", textAlign:"center" }}>
+                        <div style={{ fontFamily:"'DM Mono',monospace", fontSize:14, fontWeight:700, color:s.color }}>{s.value}</div>
+                        <div style={{ fontSize:10, color:C.text3, marginTop:3 }}>{s.label}</div>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Income/Expense bar */}
+                  <div style={{ marginTop:12 }}>
+                    <div style={{ height:6, background:C.border, borderRadius:3, overflow:"hidden" }}>
+                      <div style={{ height:"100%", borderRadius:3,
+                        width:`${(data.income/(data.income+data.expense||1))*100}%`,
+                        background:C.teal }} />
+                    </div>
+                    <div style={{ display:"flex", justifyContent:"space-between", fontSize:10, color:C.text3, marginTop:3 }}>
+                      <span style={{ color:C.teal }}>Income {data.income>0?Math.round(data.income/(data.income+data.expense)*100):0}%</span>
+                      <span style={{ color:C.crimson }}>Expense {data.expense>0?Math.round(data.expense/(data.income+data.expense)*100):0}%</span>
+                    </div>
+                  </div>
+                </Card>
+              ))
+          }
+        </div>
+      )}
+
+      {/* CHARTS TAB */}
+      {tab === "charts" && (
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }}>
+          <Card>
+            <div style={{ fontSize:13, fontWeight:600, color:C.text2, marginBottom:16 }}>Income vs Expenses by Month</div>
+            {chartData.length === 0
+              ? <EmptyState icon={BarChart2} title="No data" sub="Add transactions to see charts." />
+              : <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={C.border} />
+                  <XAxis dataKey="month" tick={{ fill:C.text3, fontSize:11 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fill:C.text3, fontSize:11 }} axisLine={false} tickLine={false} tickFormatter={v=>`R${(v/1000).toFixed(0)}k`} />
+                  <Tooltip formatter={v=>fmtCurr(v)} contentStyle={{ background:C.bg2, border:`1px solid ${C.border}`, borderRadius:6, fontSize:12 }} />
+                  <Bar dataKey="income" fill={C.teal} name="Income" radius={[3,3,0,0]} />
+                  <Bar dataKey="expense" fill={C.crimson} name="Expense" radius={[3,3,0,0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            }
+          </Card>
+          <Card>
+            <div style={{ fontSize:13, fontWeight:600, color:C.text2, marginBottom:16 }}>Expense Breakdown by Category</div>
+            {Object.entries(byCat).filter(([,v])=>v.expense>0).length === 0
+              ? <EmptyState icon={PieChart} title="No expense data" />
+              : <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                {Object.entries(byCat)
+                  .filter(([,v])=>v.expense>0)
+                  .sort((a,b)=>b[1].expense-a[1].expense)
+                  .map(([cat, vals]) => (
+                    <div key={cat}>
+                      <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, marginBottom:3 }}>
+                        <span style={{ color:C.text2 }}>{cat}</span>
+                        <span style={{ fontFamily:"'DM Mono',monospace", color:C.crimson }}>{fmtCurr(vals.expense)}</span>
+                      </div>
+                      <div style={{ height:4, background:C.border, borderRadius:2, overflow:"hidden" }}>
+                        <div style={{ height:"100%", borderRadius:2,
+                          width:`${totalExpense>0?(vals.expense/totalExpense)*100:0}%`,
+                          background:C.crimson }} />
+                      </div>
+                    </div>
+                  ))
+                }
+              </div>
+            }
+          </Card>
+        </div>
+      )}
+
+      {/* Add Transaction Modal */}
+      <Modal open={showAdd} onClose={() => setShowAdd(false)} title="Add Transaction" width={520}>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+          <FormRow label="Date" required>
+            <Input type="date" value={form.date} onChange={v=>setForm(f=>({...f,date:v}))} />
+          </FormRow>
+          <FormRow label="Type" required>
+            <Select value={form.type} onChange={v=>setForm(f=>({...f,type:v,
+              category:v==="Income"?FIN_INCOME_CATS[0]:FIN_EXPENSE_CATS[0]}))}
+              options={["Income","Expense"]} />
+          </FormRow>
+        </div>
+        <FormRow label="Property" required>
+          <Select value={form.propertyName} onChange={v=>setForm(f=>({...f,propertyName:v}))}
+            options={["", ...propNames]} />
+        </FormRow>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+          <FormRow label="Category" required>
+            <Select value={form.category} onChange={v=>setForm(f=>({...f,category:v}))}
+              options={form.type==="Income"?FIN_INCOME_CATS:FIN_EXPENSE_CATS} />
+          </FormRow>
+          <FormRow label="Platform / Source">
+            <Select value={form.platform} onChange={v=>setForm(f=>({...f,platform:v}))}
+              options={["","Airbnb","Booking.com","Direct","Bank","Contractor","Other"]} />
+          </FormRow>
+        </div>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+          <FormRow label="Amount (R)" required>
+            <Input type="number" value={form.amount} onChange={v=>setForm(f=>({...f,amount:v}))} placeholder="0.00" />
+          </FormRow>
+          <FormRow label="Reservation ID (optional)">
+            <Input value={form.reservationId} onChange={v=>setForm(f=>({...f,reservationId:v}))} placeholder="e.g. HMD9DDPMNY" />
+          </FormRow>
+        </div>
+        {form.amount && form.type === "Income" && (
+          <div style={{ background:C.amberBg, border:`1px solid ${C.amber}30`, borderRadius:6, padding:"10px 14px", marginBottom:12, fontSize:12 }}>
+            <div style={{ display:"flex", justifyContent:"space-between", color:C.text2 }}>
+              <span>VAT (15%)</span><span style={{ fontFamily:"'DM Mono',monospace", color:C.amber }}>{fmtCurr(Number(form.amount)*0.15)}</span>
+            </div>
+            <div style={{ display:"flex", justifyContent:"space-between", color:C.text2, marginTop:4 }}>
+              <span>Net (after VAT)</span><span style={{ fontFamily:"'DM Mono',monospace", color:C.teal }}>{fmtCurr(Number(form.amount)*0.85)}</span>
+            </div>
+          </div>
+        )}
+        <FormRow label="Notes">
+          <Input value={form.notes} onChange={v=>setForm(f=>({...f,notes:v}))} placeholder="Optional description..." />
+        </FormRow>
+        <div style={{ display:"flex", gap:8 }}>
+          <Btn variant={form.type==="Income"?"primary":"danger"} icon={Plus} onClick={handleAdd}>
+            Add {form.type}
+          </Btn>
+          <Btn variant="ghost" onClick={() => setShowAdd(false)}>Cancel</Btn>
+        </div>
+      </Modal>
     </div>
   );
 }
+
 
 // ─── ADVANCED METRICS ─────────────────────────────────────────────────────────
 function AdvancedMetrics() {
@@ -3338,10 +3622,11 @@ function SettingsModule() {
   };
 
   const clearData = () => {
-    if (window.confirm("Reset all data to initial state? This cannot be undone.")) {
-      localStorage.removeItem(LS_KEY);
-      window.location.reload();
-    }
+    if (!window.confirm("⚠️ WARNING: This will DELETE ALL data in the system.\n\nAre you absolutely sure you want to reset everything?")) return;
+    if (!window.confirm("⚠️ SECOND CONFIRMATION: All bookings, financials, incidents, reviews, housekeeping records and settings will be permanently deleted.\n\nDo you still want to continue?")) return;
+    if (!window.confirm("🔴 FINAL WARNING: This action CANNOT be undone.\n\nType OK to confirm you want to wipe all system data and start fresh.")) return;
+    localStorage.removeItem(LS_KEY);
+    window.location.reload();
   };
 
   return (
@@ -3473,8 +3758,13 @@ function SettingsModule() {
             Data is stored locally in your browser (localStorage key: <code style={{ color:C.teal }}>{LS_KEY}</code>).
             All 50 properties and {state.bookings.length} bookings are loaded.
           </div>
-          <div style={{ display:"flex", gap:8 }}>
-            <Btn variant="danger" onClick={clearData}>Reset to Defaults</Btn>
+          <div style={{ background:C.crimsonBg, border:`1px solid ${C.crimson}30`, borderRadius:8, padding:"14px 16px" }}>
+            <div style={{ fontSize:12, fontWeight:700, color:C.crimson, marginBottom:6 }}>⚠️ Danger Zone</div>
+            <div style={{ fontSize:12, color:C.text3, marginBottom:12, lineHeight:1.6 }}>
+              This will permanently delete ALL data — bookings, financials, incidents, reviews, housekeeping records, and settings.
+              You will be asked to confirm <strong style={{ color:C.crimson }}>three times</strong> before the reset happens.
+            </div>
+            <Btn variant="danger" icon={Trash2} onClick={clearData}>Reset & Clear All Data</Btn>
           </div>
         </Card>
 
@@ -4303,35 +4593,76 @@ function ManagementReport() {
         {/* Financials */}
         {sections.financials && (
           <Section id="financials" title="Financial Summary">
-            <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))", gap:10, marginBottom:14 }}>
-              {[
-                { label:"Gross Revenue", value:fmtCurr(totalRevenue), color:C.teal },
-                { label:"Bookings", value:filteredBookings.length, color:C.blue },
-                { label:"Avg per Booking", value:filteredBookings.length?fmtCurr(totalRevenue/filteredBookings.length):"—", color:C.amber },
-                { label:"Total Nights", value:filteredBookings.reduce((s,b)=>s+b.nights,0), color:C.text2 },
-              ].map(k => (
-                <div key={k.label} style={{ background:C.bg2, borderRadius:8, padding:"12px 14px", borderLeft:`3px solid ${k.color}` }}>
-                  <div style={{ fontFamily:"'DM Mono',monospace", fontSize:16, fontWeight:700, color:k.color }}>{k.value}</div>
-                  <div style={{ fontSize:10, color:C.text3, textTransform:"uppercase", letterSpacing:"0.05em", marginTop:3 }}>{k.label}</div>
-                </div>
-              ))}
-            </div>
-            {/* Platform breakdown */}
-            <div style={{ fontSize:11, color:C.text3, fontWeight:600, marginBottom:8, textTransform:"uppercase", letterSpacing:"0.06em" }}>By Platform</div>
-            <div style={{ display:"flex", gap:10, flexWrap:"wrap" }}>
-              {["Airbnb","Booking.com","Direct"].map(plat => {
-                const platBks = filteredBookings.filter(b=>b.platform===plat);
-                const platRev = platBks.reduce((s,b)=>s+b.revenue,0);
-                if (!platBks.length) return null;
-                return (
-                  <div key={plat} style={{ background:C.bg2, borderRadius:8, padding:"10px 14px", flex:1, minWidth:120 }}>
-                    <div style={{ fontSize:12, fontWeight:600, color:C.text1, marginBottom:4 }}>{plat}</div>
-                    <div style={{ fontFamily:"'DM Mono',monospace", fontSize:14, color:C.teal }}>{fmtCurr(platRev)}</div>
-                    <div style={{ fontSize:11, color:C.text3 }}>{platBks.length} booking{platBks.length!==1?"s":""}</div>
+            {(() => {
+              const ledger = Array.isArray(state.financialLedger) ? state.financialLedger : [];
+              const filteredLedger = ledger.filter(f => {
+                const matchDate = f.date >= fromDate && f.date <= toDate;
+                const matchProp = reportProp==="All" || f.propertyName===reportProp;
+                return matchDate && matchProp;
+              });
+              const ledgerIncome  = filteredLedger.filter(f=>f.type==="Income").reduce((s,f)=>s+Number(f.amount),0);
+              const ledgerExpense = filteredLedger.filter(f=>f.type==="Expense").reduce((s,f)=>s+Number(f.amount),0);
+              const ledgerNet     = ledgerIncome - ledgerExpense;
+              const ledgerVAT     = filteredLedger.filter(f=>f.type==="Income").reduce((s,f)=>s+Number(f.vat||0),0);
+              return (
+                <div>
+                  <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))", gap:10, marginBottom:16 }}>
+                    {[
+                      { label:"Booking Revenue", value:fmtCurr(totalRevenue), color:C.blue },
+                      { label:"Ledger Income", value:fmtCurr(ledgerIncome), color:C.teal },
+                      { label:"Ledger Expenses", value:fmtCurr(ledgerExpense), color:C.crimson },
+                      { label:"Net Profit", value:fmtCurr(ledgerNet), color:ledgerNet>=0?C.green:C.crimson },
+                      { label:"VAT Collected", value:fmtCurr(ledgerVAT), color:C.amber },
+                    ].map(k => (
+                      <div key={k.label} style={{ background:C.bg2, borderRadius:8, padding:"12px 14px", borderLeft:`3px solid ${k.color}` }}>
+                        <div style={{ fontFamily:"'DM Mono',monospace", fontSize:15, fontWeight:700, color:k.color }}>{k.value}</div>
+                        <div style={{ fontSize:10, color:C.text3, textTransform:"uppercase", letterSpacing:"0.05em", marginTop:3 }}>{k.label}</div>
+                      </div>
+                    ))}
                   </div>
-                );
-              })}
-            </div>
+                  {filteredLedger.length > 0 && (
+                    <div>
+                      <div style={{ fontSize:11, color:C.text3, fontWeight:600, marginBottom:8, textTransform:"uppercase", letterSpacing:"0.06em" }}>Transaction Ledger ({filteredLedger.length} entries)</div>
+                      <div style={{ overflowX:"auto" }}>
+                        <div style={{ display:"grid", gridTemplateColumns:"90px 1fr 80px 130px 90px 90px", minWidth:500,
+                          padding:"7px 12px", background:C.bg2, borderRadius:"6px 6px 0 0" }}>
+                          {["Date","Property","Type","Category","Amount","Net"].map(h=>(
+                            <div key={h} style={{ fontSize:10, color:C.text3, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.05em" }}>{h}</div>
+                          ))}
+                        </div>
+                        {filteredLedger.slice(0,30).map(f=>(
+                          <div key={f.id} style={{ display:"grid", gridTemplateColumns:"90px 1fr 80px 130px 90px 90px",
+                            minWidth:500, padding:"8px 12px", borderBottom:`1px solid ${C.border}20`, alignItems:"center",
+                            borderLeft:`3px solid ${f.type==="Income"?C.teal:C.crimson}` }}>
+                            <div style={{ fontSize:11, color:C.text2, fontFamily:"'DM Mono',monospace" }}>{fmtShort(f.date)}</div>
+                            <div style={{ fontSize:12, color:C.text1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{f.propertyName}</div>
+                            <div><span style={{ fontSize:10, padding:"2px 6px", borderRadius:3, fontWeight:600,
+                              background:f.type==="Income"?C.tealBg:C.crimsonBg,
+                              color:f.type==="Income"?C.teal:C.crimson }}>{f.type}</span></div>
+                            <div style={{ fontSize:11, color:C.text3 }}>{f.category}</div>
+                            <div style={{ fontFamily:"'DM Mono',monospace", fontSize:11,
+                              color:f.type==="Income"?C.teal:C.crimson }}>{fmtCurr(Number(f.amount))}</div>
+                            <div style={{ fontFamily:"'DM Mono',monospace", fontSize:11, color:C.text1 }}>{fmtCurr(f.net||0)}</div>
+                          </div>
+                        ))}
+                        <div style={{ display:"grid", gridTemplateColumns:"90px 1fr 80px 130px 90px 90px",
+                          minWidth:500, padding:"9px 12px", background:C.bg2, borderRadius:"0 0 6px 6px",
+                          borderTop:`2px solid ${C.border}` }}>
+                          <div style={{ fontSize:11, fontWeight:700, color:C.text1, gridColumn:"1/5" }}>TOTAL</div>
+                          <div style={{ fontFamily:"'DM Mono',monospace", fontSize:11, fontWeight:700,
+                            color:ledgerNet>=0?C.teal:C.crimson }}>{fmtCurr(ledgerNet)}</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {filteredLedger.length === 0 && (
+                    <div style={{ fontSize:12, color:C.text3, fontStyle:"italic", padding:"8px 0" }}>
+                      No financial transactions recorded for this period. Add transactions in the Financials module.
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </Section>
         )}
 
