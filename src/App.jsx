@@ -15,6 +15,14 @@ import {
 } from "recharts";
 
 // ─── FONTS ───────────────────────────────────────────────────────────────────
+// Ensure mobile viewport
+const viewportMeta = document.querySelector('meta[name="viewport"]');
+if (!viewportMeta) {
+  const m = document.createElement("meta");
+  m.name = "viewport";
+  m.content = "width=device-width, initial-scale=1, maximum-scale=1";
+  document.head.appendChild(m);
+}
 const fontLink = document.createElement("link");
 fontLink.rel = "stylesheet";
 fontLink.href = "https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap";
@@ -32,7 +40,11 @@ gStyle.textContent = `
   .syne{font-family:'Syne',sans-serif;}
   @keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
   @keyframes slideIn{from{transform:translateX(100%);}to{transform:translateX(0);}}
+  @keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
   @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+  @media(max-width:768px){
+    input,select,textarea{font-size:16px!important;}
+  }
 `;
 document.head.appendChild(gStyle);
 
@@ -438,8 +450,8 @@ function Card({ children, style: sx, onClick, hover }) {
 
 function KPICard({ label, value, sub, icon: Icon, color, trend }) {
   return (
-    <div style={{ background: C.bg1, border: `1px solid ${C.border}`, borderRadius: 10, padding: "16px 20px",
-      borderLeft: `3px solid ${color || C.teal}`, flex: 1, minWidth: 140 }}>
+    <div style={{ background: C.bg1, border: `1px solid ${C.border}`, borderRadius: 10, padding: "12px 16px",
+      borderLeft: `3px solid ${color || C.teal}`, flex: 1, minWidth: 120 }}>
       <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8 }}>
         <span style={{ fontSize:11, color: C.text2, fontWeight:600, letterSpacing:"0.08em", textTransform:"uppercase" }}>{label}</span>
         {Icon && <Icon size={16} color={color || C.teal} />}
@@ -466,11 +478,16 @@ function SectionTitle({ children, sub }) {
 
 function Modal({ open, onClose, title, children, width = 560 }) {
   if (!open) return null;
+  const isMob = typeof window !== 'undefined' && window.innerWidth < 768;
   return (
-    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.7)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.7)", zIndex:1000, display:"flex",
+      alignItems: isMob ? "flex-end" : "center", justifyContent:"center", padding: isMob ? 0 : 20 }}
       onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div style={{ background:C.bg1, border:`1px solid ${C.border}`, borderRadius:12, width:"100%", maxWidth:width,
-        maxHeight:"90vh", overflowY:"auto", animation:"fadeIn 0.2s ease" }}>
+      <div style={{ background:C.bg1, border:`1px solid ${C.border}`,
+        borderRadius: isMob ? "16px 16px 0 0" : 12,
+        width:"100%", maxWidth: isMob ? "100%" : width,
+        maxHeight: isMob ? "92vh" : "90vh",
+        overflowY:"auto", animation: isMob ? "slideUp 0.25s ease" : "fadeIn 0.2s ease" }}>
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"16px 20px", borderBottom:`1px solid ${C.border}` }}>
           <h3 style={{ fontFamily:"'Syne',sans-serif", fontSize:16, fontWeight:700, color:C.platinum }}>{title}</h3>
           <button onClick={onClose} style={{ background:"none", border:"none", cursor:"pointer", color:C.text2, padding:4 }}><X size={18}/></button>
@@ -482,11 +499,18 @@ function Modal({ open, onClose, title, children, width = 560 }) {
 }
 
 function Drawer({ open, onClose, title, children }) {
+  const isMob = typeof window !== 'undefined' && window.innerWidth < 768;
   return (
-    <div style={{ position:"fixed", inset:0, zIndex:999, display: open ? "flex" : "none", justifyContent:"flex-end" }}>
+    <div style={{ position:"fixed", inset:0, zIndex:999, display: open ? "flex" : "none",
+      justifyContent: isMob ? "flex-start" : "flex-end",
+      flexDirection: isMob ? "column" : "row", alignItems: isMob ? "flex-end" : "stretch" }}>
       <div onClick={onClose} style={{ flex:1, background:"rgba(0,0,0,0.5)" }} />
-      <div style={{ width:480, maxWidth:"90vw", background:C.bg1, borderLeft:`1px solid ${C.border}`,
-        height:"100%", overflowY:"auto", animation: open ? "slideIn 0.3s ease" : "none" }}>
+      <div style={{ width: isMob ? "100%" : 480, maxWidth: isMob ? "100%" : "90vw",
+        background:C.bg1, borderLeft: isMob ? "none" : `1px solid ${C.border}`,
+        borderTop: isMob ? `1px solid ${C.border}` : "none",
+        height: isMob ? "85vh" : "100%", overflowY:"auto",
+        borderRadius: isMob ? "16px 16px 0 0" : 0,
+        animation: open ? (isMob ? "slideUp 0.3s ease" : "slideIn 0.3s ease") : "none" }}>
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"20px 24px", borderBottom:`1px solid ${C.border}`, position:"sticky", top:0, background:C.bg1, zIndex:1 }}>
           <h3 style={{ fontFamily:"'Syne',sans-serif", fontSize:16, fontWeight:700, color:C.platinum }}>{title}</h3>
           <button onClick={onClose} style={{ background:"none", border:"none", cursor:"pointer", color:C.text2, padding:4 }}><X size={18}/></button>
@@ -689,21 +713,21 @@ function TopBar({ module }) {
     { label:"Urgent Cleans", value:urgentCleans, color: urgentCleans > 0 ? C.crimson : C.text3 },
   ];
   return (
-    <div style={{ height:56, background:C.bg1, borderBottom:`1px solid ${C.border}`, display:"flex",
-      alignItems:"center", padding:"0 24px", gap:20, flexShrink:0 }}>
-      <div style={{ fontFamily:"'Syne',sans-serif", fontSize:14, fontWeight:700, color:C.platinum, flex:"0 0 auto" }}>
+    <div style={{ height:52, background:C.bg1, borderBottom:`1px solid ${C.border}`, display:"flex",
+      alignItems:"center", padding:"0 16px", gap:12, flexShrink:0, overflowX:"auto" }}>
+      <div style={{ fontFamily:"'Syne',sans-serif", fontSize:13, fontWeight:700, color:C.platinum, flex:"0 0 auto" }}>
         {NAV.find(n => n.id === module)?.label || "Dashboard"}
       </div>
-      <div style={{ width:1, height:24, background:C.border }} />
-      <div style={{ display:"flex", gap:16, flex:1 }}>
+      <div style={{ width:1, height:20, background:C.border, flexShrink:0 }} />
+      <div style={{ display:"flex", gap:12, flex:1, overflowX:"auto" }}>
         {chips.map(chip => (
-          <div key={chip.label} style={{ display:"flex", alignItems:"center", gap:6 }}>
-            <span style={{ fontSize:11, color:C.text3 }}>{chip.label}:</span>
-            <span style={{ fontFamily:"'DM Mono',monospace", fontSize:13, fontWeight:600, color:chip.color }}>{chip.value}</span>
+          <div key={chip.label} style={{ display:"flex", alignItems:"center", gap:4, flexShrink:0 }}>
+            <span style={{ fontSize:10, color:C.text3 }}>{chip.label}:</span>
+            <span style={{ fontFamily:"'DM Mono',monospace", fontSize:12, fontWeight:600, color:chip.color }}>{chip.value}</span>
           </div>
         ))}
       </div>
-      <div style={{ fontFamily:"'DM Mono',monospace", fontSize:12, color:C.text3 }}>
+      <div style={{ fontFamily:"'DM Mono',monospace", fontSize:11, color:C.text3, flexShrink:0 }}>
         {fmtDate(TODAY)}
       </div>
     </div>
@@ -734,7 +758,7 @@ function Dashboard({ onNav }) {
       <SectionTitle>Operations Overview <span style={{ fontFamily:"'DM Mono',monospace", fontSize:14, color:C.text2, fontWeight:400 }}>— {fmtDate(TODAY)}</span></SectionTitle>
 
       {/* KPI Row */}
-      <div style={{ display:"flex", gap:12, marginBottom:24, flexWrap:"wrap" }}>
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(140px,1fr))", gap:10, marginBottom:20 }}>
         <KPICard label="In-House" value={inHouseBookings.length} icon={Building} color={C.teal} sub="properties occupied" />
         <KPICard label="Today Check-ins" value={todayIn.length} icon={ArrowUp} color={C.green} />
         <KPICard label="Today Check-outs" value={todayOut.length} icon={ArrowDown} color={C.blue} />
@@ -903,7 +927,7 @@ function CleanDetailDrawer({ booking, cleanIndex, open, onClose }) {
   return (
     <Drawer open={open} onClose={onClose} title={`Clean #${clean.cleanNumber} · ${booking.propertyName}`}>
       <div style={{ marginBottom:20, padding:"12px 16px", background:C.bg2, borderRadius:8 }}>
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))", gap:12 }}>
           <div><div style={{ fontSize:11, color:C.text3 }}>Due Date</div><div style={{ fontSize:14, color:C.text1, fontWeight:600, fontFamily:"'DM Mono',monospace" }}>{fmtDate(clean.dueDate)}</div></div>
           <div><div style={{ fontSize:11, color:C.text3 }}>Current Status</div><div style={{ marginTop:4 }}><CleanStatusBadge status={getCleanStatus(clean)} /></div></div>
           <div><div style={{ fontSize:11, color:C.text3 }}>Guest</div><div style={{ fontSize:13, color:C.text1 }}>{booking.guestName}</div></div>
@@ -2290,7 +2314,7 @@ function PropertiesModule() {
         <KPICard label="Portfolio 2" value={state.properties.filter(p=>p.portfolio===2&&p.status==="Active").length} color={C.amber} />
       </div>
 
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))", gap:12 }}>
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))", gap:12 }}>
         {filtered.map(p => {
           const propBookings = getPropBookings(p.id, p.name);
           const propRevenue = getPropRevenue(p.id, p.name);
@@ -3012,7 +3036,20 @@ async function syncFromHospitable(token, state, dispatch, toast) {
 function AppInner() {
   const [active, setActive] = useState("dashboard");
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const { state, dispatch, toast } = useApp();
+
+  useEffect(() => {
+    const check = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (mobile) setCollapsed(true);
+    };
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   // Auto-sync from Hospitable on load and every 5 minutes
   useEffect(() => {
@@ -3030,14 +3067,87 @@ function AppInner() {
     return () => clearInterval(interval);
   }, [state.settings?.hospitable?.apiUrl, state.settings?.hospitable?.enabled]);
 
+  const handleNav = (id) => {
+    setActive(id);
+    if (isMobile) setMobileNavOpen(false);
+  };
+
   return (
     <div style={{ display:"flex", height:"100vh", overflow:"hidden", background:C.bg0, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
-      <Sidebar active={active} onNav={setActive} collapsed={collapsed} onToggle={() => setCollapsed(c => !c)} />
+
+      {/* Desktop Sidebar */}
+      {!isMobile && (
+        <Sidebar active={active} onNav={handleNav} collapsed={collapsed} onToggle={() => setCollapsed(c => !c)} />
+      )}
+
+      {/* Mobile Nav Drawer */}
+      {isMobile && mobileNavOpen && (
+        <div style={{ position:"fixed", inset:0, zIndex:999, display:"flex" }}>
+          <div style={{ position:"absolute", inset:0, background:"rgba(0,0,0,0.6)" }} onClick={() => setMobileNavOpen(false)} />
+          <div style={{ position:"relative", width:280, background:C.bg1, height:"100%", overflowY:"auto",
+            borderRight:`1px solid ${C.border}`, animation:"slideIn 0.25s ease", zIndex:1 }}>
+            <Sidebar active={active} onNav={handleNav} collapsed={false} onToggle={() => setMobileNavOpen(false)} />
+          </div>
+        </div>
+      )}
+
       <div style={{ flex:1, display:"flex", flexDirection:"column", overflow:"hidden" }}>
-        <TopBar module={active} />
-        <main style={{ flex:1, overflowY:"auto", padding:24 }}>
-          <ModuleContent active={active} onNav={setActive} />
+        {/* Mobile Top Bar */}
+        {isMobile ? (
+          <div style={{ height:52, background:C.bg1, borderBottom:`1px solid ${C.border}`,
+            display:"flex", alignItems:"center", padding:"0 16px", gap:12, flexShrink:0 }}>
+            <button onClick={() => setMobileNavOpen(true)}
+              style={{ background:"none", border:`1px solid ${C.border}`, borderRadius:7,
+                padding:"6px 8px", cursor:"pointer", color:C.text1, display:"flex", alignItems:"center" }}>
+              <Menu size={18} />
+            </button>
+            <span style={{ fontFamily:"'Syne',sans-serif", fontSize:14, fontWeight:700, color:C.platinum, flex:1 }}>
+              {NAV.find(n => n.id === active)?.label || "Dashboard"}
+            </span>
+            <span style={{ fontFamily:"'DM Mono',monospace", fontSize:11, color:C.text3 }}>
+              {new Date().toLocaleDateString("en-ZA",{day:"numeric",month:"short"})}
+            </span>
+          </div>
+        ) : (
+          <TopBar module={active} />
+        )}
+
+        <main style={{ flex:1, overflowY:"auto", padding: isMobile ? "16px 14px 80px" : 24 }}>
+          <ModuleContent active={active} onNav={handleNav} />
         </main>
+
+        {/* Mobile Bottom Nav Bar */}
+        {isMobile && (
+          <div style={{ position:"fixed", bottom:0, left:0, right:0, background:C.bg1,
+            borderTop:`1px solid ${C.border}`, display:"flex", zIndex:100, height:60 }}>
+            {[
+              { id:"dashboard",    icon:Home,         label:"Home" },
+              { id:"reservations", icon:BookMarked,   label:"Reservations" },
+              { id:"cleans",       icon:Calendar,     label:"Cleans" },
+              { id:"housekeeping", icon:Users,        label:"HK" },
+              { id:"incidents",    icon:AlertTriangle,label:"Issues" },
+            ].map(({ id, icon:Icon, label }) => {
+              const isAct = active === id;
+              return (
+                <button key={id} onClick={() => handleNav(id)}
+                  style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center",
+                    justifyContent:"center", gap:3, background:"none", border:"none", cursor:"pointer",
+                    color: isAct ? C.teal : C.text3, borderTop: isAct ? `2px solid ${C.teal}` : "2px solid transparent",
+                    transition:"all 0.15s" }}>
+                  <Icon size={18} />
+                  <span style={{ fontSize:10, fontWeight: isAct ? 600 : 400 }}>{label}</span>
+                </button>
+              );
+            })}
+            <button onClick={() => setMobileNavOpen(true)}
+              style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center",
+                justifyContent:"center", gap:3, background:"none", border:"none", cursor:"pointer",
+                color:C.text3, borderTop:"2px solid transparent" }}>
+              <Menu size={18} />
+              <span style={{ fontSize:10 }}>More</span>
+            </button>
+          </div>
+        )}
       </div>
       <Toast />
     </div>
@@ -3475,9 +3585,9 @@ function Reservations() {
       </div>
 
       {/* Table */}
-      <div style={{ background:C.bg1, border:`1px solid ${C.border}`, borderRadius:10, overflow:"hidden" }}>
+      <div style={{ background:C.bg1, border:`1px solid ${C.border}`, borderRadius:10, overflowX:"auto" }}>
         {/* Header */}
-        <div style={{ display:"grid", gridTemplateColumns:"12px 1fr 140px 90px 90px 50px 90px 100px 100px 80px",
+        <div style={{ display:"grid", gridTemplateColumns:"12px 1fr 140px 90px 90px 50px 90px 100px 100px 80px", minWidth:900,
           padding:"10px 16px", borderBottom:`1px solid ${C.border}`, background:C.bg2 }}>
           {["","Property","Guest","Check-in","Check-out","Nts","Revenue","Platform","Booking Status",""].map(h => (
             <div key={h} style={{ fontSize:11, color:C.text3, fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em" }}>{h}</div>
