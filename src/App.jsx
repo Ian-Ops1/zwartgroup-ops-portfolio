@@ -7,7 +7,7 @@ import {
   Clock, RefreshCw, Phone, Mail, ExternalLink, Download, Upload, Eye,
   AlertCircle, CheckCircle, XCircle, Info, Bell, Menu, LogOut, Zap,
   ArrowUp, ArrowDown, Minus, Save, Copy, MoreVertical, Link,
-  MapPin, User, CreditCard, Hash, Percent, Activity, Layers, Target
+  MapPin, User, CreditCard, Hash, Percent, Activity, Layers, Target, PieChart
 } from "lucide-react";
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -281,273 +281,206 @@ const INITIAL_TEAM = [
 const SOPS = [
   {
     id:"SOP-001", title:"Guest Check-in", category:"Check-in",
-    content:`STEP 1.0 · 48 hrs before arrival
-Action: Send pre-arrival message
-Detail: Include unit address, parking instructions, access code, WiFi name & password, nearest emergency contacts. Use Template T-01. Confirm guest has read and acknowledged.
+    content:`1.0 — 48 hrs before: Send pre-arrival message
+Include unit address, parking instructions, access code, WiFi name & password, check-in window, WhatsApp number. Confirm guest has acknowledged.
 
-STEP 2.0 · 48 hrs before arrival
-Action: Verify guest details
-Detail: Confirm guest count vs booking. Check for special requests (late arrival, baby cot, accessibility needs). Flag any discrepancies to manager immediately.
+2.0 — 48 hrs before: Verify guest details
+Confirm guest count vs booking. Check for special requests (late arrival, baby cot, dietary). Confirm ID if required by building.
 
-STEP 3.0 · Day before arrival
-Action: Confirm unit is on cleaning schedule
-Detail: Check Housekeeping tab — unit must appear on tomorrow's schedule with a confirmed housekeeper assigned. If not, escalate immediately.
+3.0 — Day before: Confirm unit is on cleaning schedule
+Check Housekeeping tab — unit must appear on tomorrow's schedule with confirmed housekeeper. If not, escalate immediately.
 
-STEP 4.0 · Day of check-in
-Action: 15-point inspection
-Detail: Run full inspection from Housekeeping checklist. Unit must be clear by 13:00. Check: linen, towels, consumables, appliances, WiFi, AC, TV, locks, welcome pack, snacks, cleanliness.
+4.0 — Day of (by 13:00): 15-point inspection
+Run full inspection from Housekeeping checklist. Unit must be clear by 13:00. Photograph every room.
 
-STEP 5.0 · Day of, 10:00
-Action: Send check-in reminder
-Detail: Remind guest of check-in window (14:00–20:00) and access code. Use Template T-02. Confirm they have all details.
+5.0 — Day of 10:00: Send check-in reminder
+Remind guest of check-in window (14:00–20:00) and access code. Use Template T-02.
 
-STEP 6.0 · 14:00 onwards
-Action: Be available on WhatsApp
-Detail: Stay available from 14:00 until guest confirms they are inside. Reply within 15 minutes. Do not go offline until confirmed.
+6.0 — 14:00 onwards: Be available on WhatsApp
+Stay available from 14:00 until guest confirms they are inside. Reply within 15 minutes.
 
-STEP 7.0 · On any access issue
-Action: Access failure protocol
-Detail: If guest cannot get in: Call immediately. If unresolved in 10 min: go in person or send team member. Do not leave guest outside for more than 20 minutes.
+7.0 — On issue: Access failure protocol
+If guest cannot get in: Call immediately. If unresolved in 10 min: go in person or send backup. Never leave a guest outside for more than 30 min.
 
-STEP 8.0 · After check-in confirmed
-Action: Log confirmation
-Detail: Note time guest confirmed entry. Update booking status to In-House. Log any issues or notes in the Incident Register.`
+8.0 — After check-in: Log confirmation
+Note time guest confirmed entry in Reservation Tracker. Update status to Checked In.`
   },
   {
     id:"SOP-002", title:"Guest Complaint — LARA Framework", category:"Complaints",
-    content:`The LARA Framework is the standard response method for all guest complaints. Follow every step, in order, every time.
+    content:`L — LISTEN (During call)
+Let the guest finish speaking. Do not interrupt, justify, or defend. Take notes. SLA: Immediate.
 
-L · LISTEN (During the call)
-Let the guest finish speaking completely. Do not interrupt, justify, or defend. Take written notes. Give them your full attention. Silence is okay — it shows you are processing.
+A — ACKNOWLEDGE (During call)
+Use exact words: "I completely understand, and I'm sorry this has happened." Do not minimise. SLA: Immediate.
 
-A · ACKNOWLEDGE (During the call)
-Use these exact words: "I completely understand, and I'm sorry this has happened." Do not say "but". Do not explain what went wrong yet. Acknowledgement must come before explanation.
+R — RESOLVE (Within 1 hour)
+Offer a concrete fix — not "I'll look into it". Give a specific action and timeline: "I'll have a technician there by 3pm." SLA: Within 1 hour.
 
-R · RESOLVE (Within 1 hour)
-Offer a concrete fix — not "I'll look into it". Give a specific action and timeline. Example: "I'm sending someone right now and they'll be there by 3pm." Do not promise refunds or compensation without owner approval.
-
-A · ACT & DOCUMENT (Same day)
-Follow through exactly as promised. Then log the incident in the Incident Register with: date, property, guest name, complaint description, action taken, resolution time.
+A — ACT & DOCUMENT (Same day)
+Follow through exactly as promised. Then log the incident in the Incident Register — issue, action, outcome, time. SLA: Same day.
 
 ⚠ RULES — ALWAYS:
-• NEVER argue with a guest, even if they are wrong
+• NEVER argue with a guest
 • NEVER promise a refund or compensation without owner approval
-• ALWAYS follow up the same day to confirm the issue is resolved
-• ALWAYS log every complaint, even if resolved immediately
-• If a guest leaves a negative review, follow SOP-05 Review Management`
+• ALWAYS escalate complaints involving safety, health, or legal risk to manager immediately`
   },
   {
     id:"SOP-003", title:"Maintenance Escalation — Tier System", category:"Maintenance",
-    content:`TIER 1 — Guest-Impacting Issues (Respond immediately)
-Issues: No hot water, no WiFi, broken AC/heating, lock failure, pest sighting, flooding, no electricity, gas smell.
+    content:`TIER 1 — Guest-Impacting (Respond immediately)
+Issues: No hot water, no WiFi, broken AC/heating, lock failure, pest sighting, flooding, power outage.
 
-T1 · 0–15 minutes: Contact guest
-WhatsApp or call guest: "We're aware of the issue and have already called a technician. They will be there by [time]." Never leave guest without communication.
+T1 · 0–15 min: Contact guest
+WhatsApp or call guest: "We're aware of the issue and have already called a technician."
 
-T1 · 0–30 minutes: Call primary technician
-Use the Vendor Escalation Ladder in Team & Vendors. Log issue in system immediately. If primary is unavailable, move to next vendor. Do not wait longer than 30 minutes to escalate.
+T1 · 0–30 min: Call primary technician
+Use Vendor Escalation Ladder in Team & Vendors. Log issue in system immediately.
 
-T1 · Update guest every 30 minutes until resolved.
-Log all contact and resolution in the Incident Register.
-
----
-
-TIER 2 — Non-Urgent Maintenance (Respond within 48 hrs)
+TIER 2 — Non-Urgent (Within 48 hrs)
 Issues: Minor appliance issue, cosmetic damage, slow drain, non-urgent lock issue.
 
-T2 · Within 48 hours: Schedule repair
-Contact technician, schedule during next available low-occupancy window. Update the system. Notify owner if cost exceeds R500.
+T2 · Within 48 hrs: Schedule repair
+Contact technician, schedule during next available low-occupancy slot.
 
----
-
-TIER 3 — Cosmetic & Batch Work (Weekly)
-Issues: Paint touch-ups, garden maintenance, furniture scuffs, general wear and tear.
-
-T3 · Weekly: Compile and schedule
-Compile a weekly batch list. Schedule during next major gap. Send to owner for approval if total cost exceeds R2,000.`
+TIER 3 — Cosmetic & Batch (Weekly)
+Issues: Paint, garden, furniture scuffs. Compile weekly and schedule during next major gap.`
   },
   {
     id:"SOP-004", title:"Damage Claim Procedure", category:"Incidents",
-    content:`STEP 1.0 · At check-out
-Action: Check for damage
-Detail: Do a walk-through immediately after guest departure, before the housekeeper enters. Photograph the entire unit — every room, every surface. Compare to pre-arrival photos.
+    content:`1.0 — At check-out: Check for damage
+Do walk-through immediately after guest departure, before housekeeper enters. Photo everything. SLA: Within 1 hr of checkout.
 
-STEP 2.0 · If damage is found
-Action: Document comprehensively
-Detail: Photo and video evidence from multiple angles, written description, estimated replacement/repair value. Log in Incident Register immediately. Note time of discovery.
+2.0 — If damage found: Document comprehensively
+Photo, video, description, estimated value. Note in Incident Register immediately.
 
-STEP 3.0 · Within 24 hours
-Action: Notify platform
-Detail: Submit claim through Airbnb Resolution Centre or Booking.com Extranet. Include all documentation: photos, videos, written description, repair estimates. Retain copies of everything.
+3.0 — Within 24 hrs: Notify platform
+Submit claim through Airbnb Resolution Centre / Booking.com. Include all documentation. SLA: Within 24 hrs.
 
-STEP 4.0 · Ongoing
-Action: Follow up
-Detail: Track claim status every 48 hours. Escalate to platform support if not resolved within 7 days. Keep owner fully informed throughout.
+4.0 — Ongoing: Follow up
+Track claim status. Escalate if not resolved within 7 days. Keep owner informed throughout. SLA: Weekly follow-up.
 
-STEP 5.0 · All times
-Action: Maintain evidence
-Detail: Keep all photos and correspondence until the claim is fully resolved and payment received. Do not discard any evidence.
-
-STEP 6.0 · After resolution
-Action: Log and update
-Detail: Update the Incident Register with final outcome and amount received. Photograph repaired/replaced items. Review whether SOPs need updating to prevent recurrence.`
+5.0 — All times: Maintain evidence
+Keep photos and correspondence until claim is fully resolved. Store in Google Drive by unit/date.`
   },
   {
     id:"SOP-005", title:"Review Management", category:"Reviews",
-    content:`STEP 1.0 · Every morning (09:00)
-Action: Check all platforms for new reviews
-Detail: Check Airbnb, Booking.com, Google. Screenshot and save all new reviews in the Reviews module. Do not leave any review unread for more than 24 hours.
+    content:`1.0 — Every morning: Check all platforms for new reviews
+Check Airbnb, Booking.com, Google. Screenshot and save all reviews. SLA: Daily AM.
 
-STEP 2.0 · Within 24 hours of any review
-Action: Respond to all reviews
-Detail: Positive reviews: Thank warmly and personally. Mention something specific about their stay. Negative reviews: Acknowledge the concern without being defensive. Offer context professionally. Always end positively.
+2.0 — Within 24 hrs: Respond to all reviews
+Thank positive reviews warmly and personally. Acknowledge negative reviews without defensiveness. SLA: Within 24 hrs.
 
-STEP 3.0 · For any negative review (3 stars or below)
-Action: Internal review
-Detail: Log in the Incident Register. Discuss with owner within 48 hours. Identify the root cause. Determine whether an SOP needs updating to prevent recurrence.
+3.0 — For negative reviews: Internal review
+Log in Incident Register. Discuss with owner. Identify root cause. Update SOPs if needed. SLA: Within 48 hrs.
 
-STEP 4.0 · Monthly
-Action: Analyse trends
-Detail: Review all reviews from the past month. Look for repeated themes. Three or more mentions of the same issue = a systemic problem that requires an SOP update or process change.
-
-STEP 5.0 · Rating targets
-• Airbnb: Maintain 4.8+ overall rating
-• Booking.com: Maintain 8.5+ review score
-• Any property dropping below target: Escalate to manager within 24 hours`
+4.0 — Monthly: Analyse trends
+Look for repeated themes in negative reviews. 3+ mentions of same issue = systematic fix required. SLA: Monthly.`
   },
   {
     id:"SOP-006", title:"Inventory & Stock Management", category:"Operations",
-    content:`STEP 1.0 · Every Monday morning
-Action: Count all stock
-Detail: Walk all storage areas. Count every consumable item: toilet paper, shampoo, conditioner, body wash, soap, coffee pods, tea, sugar, laundry detergent, dishwasher tablets, bin bags, batteries. Update inventory records.
+    content:`1.0 — Every Monday: Count all stock
+Walk all storage areas. Count every item. Update inventory records. SLA: Every Monday AM.
 
-STEP 2.0 · When any item is at or below reorder point
-Action: Place order immediately
-Detail: Do not wait for the weekly stock count. If you notice an item is running low during any property visit, flag it and order immediately. Stock-outs during guest stays are unacceptable.
+2.0 — When below reorder point: Place order immediately
+Any item at or below reorder point = order immediately. Do not wait for weekly shop.
 
-STEP 3.0 · On delivery
-Action: Check and log delivery
-Detail: Count all items received. Check for damage. Compare against order. Update inventory records. File supplier invoice. Report any discrepancies to manager same day.
+3.0 — On delivery: Check and log
+Count all items received. Check for damage. Update inventory tab. File supplier invoice. SLA: On every delivery.
 
-STEP 4.0 · Monthly audit
-Action: Audit linen quality
-Detail: Check all linen for staining, pilling, tears, or discolouration. Remove any sub-standard items immediately. Maintain a 20% buffer stock of all linen above active usage.
-
-STEP 5.0 · Standard stock levels per unit (minimum)
-• Toilet paper: 8 rolls
-• Towels (bath): 2 per guest + 2 spare
-• Towels (hand/face): 2 per guest
-• Coffee pods: 8 minimum
-• Tea bags: 10 minimum
-• Shampoo/conditioner: 1 bottle each
-• Body wash/soap: 1 per bathroom
-• Bin bags: 6 minimum`
+4.0 — Monthly: Audit linen quality
+Check all linen for staining, pilling, tears. Remove sub-standard items from rotation. Replace. SLA: First Monday of month.`
   },
   {
     id:"SOP-007", title:"Pre-Arrival Housekeeping Checklist", category:"Housekeeping",
-    content:`Complete minimum 2 hours before check-in. Unit must pass all points before guest arrival.
+    content:`Complete minimum 2 hours before check-in.
 
 BEDROOM(S)
-□ Fresh linen on all beds — hospital corners
-□ Extra blanket folded at foot of bed
-□ Bedside tables wiped and clear
-□ Mirror cleaned, no streaks
-□ Wardrobe interior clean, hangers uniform
+• Fresh linen on all beds — hospital corners
+• Extra blanket folded at foot of bed
+• Bedside tables wiped and clear
+• Mirror cleaned, no streaks
 
 BATHROOM(S)
-□ Full clean — toilet, basin, shower/bath, tiles
-□ Fresh bath towels, hand towels, face cloths
-□ Shampoo, conditioner, body wash, soap replenished
-□ Toilet paper: minimum 4 rolls visible
-□ Bin emptied and relined
+• Full clean — toilet, basin, shower/bath, tiles
+• Fresh bath towels, hand towels, face cloths
+• Shampoo, conditioner, body wash, soap replenished
+• Toilet paper: minimum 4 rolls visible
+• Bin emptied and relined
 
 KITCHEN
-□ All surfaces wiped — counters, stovetop, inside microwave
-□ Dishwasher empty and clean
-□ Fridge wiped inside — no previous guest items
-□ Coffee machine cleaned, pods/capsules replenished
-□ Welcome pack: coffee, tea, sugar, milk portions, biscuits
+• All surfaces wiped — counters, stovetop, inside microwave
+• Dishwasher empty and clean
+• Fridge wiped inside — no previous guest items
+• Coffee machine cleaned, pods replenished
+• Welcome pack: coffee, tea, sugar, biscuits
 
 LIVING AREA
-□ All surfaces dusted and wiped
-□ Cushions plumped and arranged
-□ TV remote batteries checked
-□ All lights and switches tested
+• All surfaces dusted and wiped
+• Cushions plumped and arranged
+• TV remote batteries checked
+• All lights and switches tested
 
 TECHNICAL
-□ WiFi router on — test connection from phone
-□ AC/heating tested and set to neutral
-□ All appliances tested: TV, washing machine, dishwasher
-□ Front door access code tested from outside
+• WiFi router on — test connection from phone
+• AC/heating tested and set to neutral
+• All appliances tested: TV, washing machine, dishwasher
+• Front door access code tested from outside
 
 FINAL CHECK
-□ All windows closed and locked
-□ Photograph entire unit — submit to ops group
-□ Update housekeeping record with completion time`
+• All windows closed and locked
+• Photograph entire unit
+• Update housekeeping record with completion time`
   },
   {
     id:"SOP-008", title:"Mid-Stay Clean Protocol", category:"Housekeeping",
-    content:`Applies to all bookings of 10+ nights. Clean is scheduled every 7 days from check-in.
+    content:`Applies to all bookings of 10+ nights. Clean scheduled every 7 days from check-in.
 
 BEFORE ENTRY
-□ Knock and announce clearly: "Housekeeping" — 3 times
-□ Wait 30 seconds before entering
-□ If guest is present, confirm they are comfortable to proceed
+• Knock and announce "Housekeeping" 3 times
+• Wait 30 seconds before entering
+• If guest is present, confirm they are comfortable to proceed
 
 BEDROOM(S)
-□ Change all linen if guest requests — tidy and straighten if not
-□ Replace ALL towels regardless of guest preference
-□ Wipe bedside tables and surfaces
+• Change linen if guest requests — tidy if not
+• Replace ALL towels regardless of guest preference
+• Wipe bedside tables and surfaces
 
 BATHROOM(S)
-□ Full clean — toilet, basin, shower/bath
-□ Replace ALL towels (bath, hand, face)
-□ Restock: toilet paper (min 4 rolls), soap, shampoo, conditioner
-□ Empty bin and reline
+• Full clean — toilet, basin, shower/bath
+• Replace ALL towels
+• Restock: toilet paper, soap, shampoo, conditioner
 
 KITCHEN
-□ Wipe all surfaces
-□ Clean appliances (microwave, stovetop)
-□ Replenish: coffee pods, tea, sugar, milk portions
-
-GENERAL
-□ Vacuum/sweep all floors
-□ Empty all bins
-□ Note any damage and photograph immediately
+• Wipe all surfaces
+• Clean appliances (microwave, stovetop)
+• Replenish: coffee pods, tea, sugar
 
 AFTER CLEAN
-□ Photograph completed unit
-□ Report any damage to manager within 15 minutes
-□ Log completion in system with timestamp and housekeeper name`
+• Photograph completed unit
+• Report any damage to manager within 15 minutes
+• Log completion in system with timestamp`
   },
   {
     id:"SOP-009", title:"Checkout Inspection", category:"Inspection",
     content:`Complete within 1 hour of guest checkout.
 
 INSPECTION SEQUENCE
-□ Inspect before housekeeper enters — you need unaltered evidence
-□ Walk through every room systematically
-□ Photograph every room regardless of condition
+• Inspect before housekeeper enters
+• Walk through every room systematically
+• Photograph every room regardless of condition
 
 DAMAGE ASSESSMENT
-□ Check all furniture — sofas, beds, chairs, tables
-□ Check all appliances — test TV, AC, washing machine
-□ Check all fixtures — taps, showerhead, toilet flush, door handles
-□ Check walls, ceilings for damage or marks
-□ Check kitchen — inside fridge, microwave, stovetop
-□ Count all inventory items (towels, crockery, cutlery, remote controls)
+• Check all furniture — sofas, beds, chairs, tables
+• Check all appliances — test TV, AC, washing machine
+• Check all fixtures — taps, showerhead, toilet flush
+• Check walls and ceilings for damage
+• Check kitchen — fridge, microwave, stovetop
+• Count all inventory items
 
 REPORTING
-□ Any damage: photograph immediately, multiple angles
-□ Log in Incident Register within 15 minutes of discovery
-□ WhatsApp photo to manager group immediately
-□ Obtain repair/replacement quote within 24 hours
-
-RATINGS
-□ Rate unit condition 1–5 in the system
-□ 1–2: Escalate to manager, hold cleaning until assessment
-□ 3: Normal clean, note any minor damage
-□ 4–5: Standard clean, no issues to report`
+• Any damage: photograph immediately, multiple angles
+• Log in Incident Register within 15 minutes
+• WhatsApp photo to manager group immediately
+• Obtain repair/replacement quote within 24 hours`
   },
   {
     id:"SOP-010", title:"Emergency Contacts & Protocol", category:"Emergency",
@@ -556,14 +489,7 @@ RATINGS
 • Police: 10111
 • Ambulance: 10177
 • City of Cape Town Faults: 0860 103 089
-• Electricity faults: 0860 103 089
-• Water & sanitation: 0860 103 089
 • Poison Centre: 0861 555 777
-
-INTERNAL ESCALATION ORDER
-1. On-call Manager (see Settings > Emergency Numbers)
-2. Andy — Internet & Tech: +27 84 999 0000
-3. Cleanix — Maintenance: +27 21 555 7777
 
 WHEN TO CALL EMERGENCY SERVICES
 • Fire, smoke, or gas smell — evacuate first, call 107
@@ -576,10 +502,7 @@ AFTER ANY EMERGENCY
 2. Call manager immediately
 3. Log in Incident Register within 1 hour
 4. Take photographs of any damage
-5. Inform owner within 24 hours
-6. Complete full incident report within 48 hours
-
-NEVER: Leave a guest in an emergency situation without a manager knowing.`
+5. Inform owner within 24 hours`
   },
 ];
 
@@ -4009,24 +3932,24 @@ function TeamVendors() {
 
 // ─── SOPS ─────────────────────────────────────────────────────────────────────
 function SOPs() {
-  const { state } = useApp();
   const [selected, setSelected] = useState(null);
-  const cats = [...new Set(state.sops.map(s => s.category))];
-
+  const cats = [...new Set(SOPS.map(s => s.category))];
   return (
     <div style={{ animation:"fadeIn 0.25s ease" }}>
       <SectionTitle>Standard Operating Procedures</SectionTitle>
-      <div style={{ display:"grid", gridTemplateColumns:"280px 1fr", gap:16 }}>
+      <div style={{ display:"grid", gridTemplateColumns:"260px 1fr", gap:16 }}>
         <div>
           {cats.map(cat => (
             <div key={cat} style={{ marginBottom:16 }}>
-              <div style={{ fontSize:10, color:C.text3, fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:8 }}>{cat}</div>
-              {state.sops.filter(s => s.category === cat).map(sop => (
+              <div style={{ fontSize:10, color:C.text3, fontWeight:700, letterSpacing:"0.1em",
+                textTransform:"uppercase", marginBottom:8 }}>{cat}</div>
+              {SOPS.filter(s => s.category === cat).map(sop => (
                 <div key={sop.id} onClick={() => setSelected(sop)}
                   style={{ padding:"9px 12px", borderRadius:6, cursor:"pointer", marginBottom:4,
                     background: selected?.id === sop.id ? C.tealBg : "transparent",
                     border:`1px solid ${selected?.id === sop.id ? C.teal+"40" : "transparent"}`,
-                    color: selected?.id === sop.id ? C.teal : C.text1, fontSize:13, transition:"all 0.12s" }}>
+                    color: selected?.id === sop.id ? C.teal : C.text1,
+                    fontSize:13, transition:"all 0.12s" }}>
                   {sop.title}
                 </div>
               ))}
@@ -4036,9 +3959,13 @@ function SOPs() {
         <Card>
           {selected ? (
             <>
-              <div style={{ fontSize:11, color:C.teal, fontWeight:600, letterSpacing:"0.08em", textTransform:"uppercase", marginBottom:8 }}>{selected.category}</div>
-              <h3 style={{ fontFamily:"'Syne',sans-serif", fontSize:18, fontWeight:700, color:C.platinum, marginBottom:20 }}>{selected.title}</h3>
-              <div style={{ whiteSpace:"pre-line", fontSize:13, color:C.text1, lineHeight:1.8 }}>{selected.content}</div>
+              <div style={{ fontSize:11, color:C.teal, fontWeight:600, letterSpacing:"0.08em",
+                textTransform:"uppercase", marginBottom:8 }}>{selected.category}</div>
+              <h3 style={{ fontFamily:"'Syne',sans-serif", fontSize:18, fontWeight:700,
+                color:C.platinum, marginBottom:20 }}>{selected.title}</h3>
+              <div style={{ whiteSpace:"pre-line", fontSize:13, color:C.text1, lineHeight:1.9 }}>
+                {selected.content}
+              </div>
             </>
           ) : <EmptyState icon={BookOpen} title="Select a procedure" sub="Click any SOP from the list" />}
         </Card>
@@ -4046,7 +3973,6 @@ function SOPs() {
     </div>
   );
 }
-
 
 // ─── GUEST COMMS TEMPLATES ────────────────────────────────────────────────────
 function GuestTemplates() {
@@ -4269,13 +4195,13 @@ function PropertiesModule() {
       </div>
 
       {/* Import Result Banner */}
-      {importResult && (
+      {propImportResult && (
         <div style={{ background:C.tealBg, border:`1px solid ${C.teal}30`, borderRadius:8,
           padding:"10px 16px", marginBottom:16, display:"flex", alignItems:"center", gap:12 }}>
           <CheckCircle size={16} color={C.teal} />
           <span style={{ fontSize:13, color:C.teal }}>
-            Imported <strong>{importResult.added}</strong> properties from <strong>{importResult.file}</strong>
-            {importResult.skipped > 0 && ` · ${importResult.skipped} skipped (duplicates or empty rows)`}
+            Imported <strong>{propImportResult.added}</strong> properties from <strong>{propImportResult.file}</strong>
+            {propImportResult.skipped > 0 && ` · ${propImportResult.skipped} skipped (duplicates or empty rows)`}
           </span>
           <button onClick={() => setPropImportResult(null)}
             style={{ marginLeft:"auto", background:"none", border:"none", cursor:"pointer", color:C.text3 }}>
