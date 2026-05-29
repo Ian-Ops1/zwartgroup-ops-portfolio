@@ -7,7 +7,7 @@ import {
   Clock, RefreshCw, Phone, Mail, ExternalLink, Download, Upload, Eye,
   AlertCircle, CheckCircle, XCircle, Info, Bell, Menu, LogOut, Zap,
   ArrowUp, ArrowDown, Minus, Save, Copy, MoreVertical, Link,
-  MapPin, User, CreditCard, Hash, Percent, Activity, Layers, Target, PieChart
+  MapPin, User, CreditCard, Hash, Percent, Activity, Layers, Target
 } from "lucide-react";
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -2090,7 +2090,7 @@ function Financials() {
           <Card>
             <div style={{ fontSize:13, fontWeight:600, color:C.text2, marginBottom:16 }}>Expense Breakdown by Category</div>
             {Object.entries(byCat).filter(([,v])=>v.expense>0).length === 0
-              ? <EmptyState icon={PieChart} title="No expense data" />
+              ? <EmptyState icon={BarChart2} title="No expense data" />
               : <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
                 {Object.entries(byCat)
                   .filter(([,v])=>v.expense>0)
