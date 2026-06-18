@@ -1160,11 +1160,32 @@ function CleanDetailDrawer({ booking, cleanIndex, open, onClose }) {
   const hk = ["Rebecca","Sharon","Sandy","Betty","Netsai","Tryness","Kudzai","Merjury"];
 
   const save = () => {
-    dispatch({ type:"UPDATE_CLEAN", payload:{ bookingId:booking.id, cleanIndex, updates:{
+    const updatedForm = {
       ...form,
       completedDate: form.status === "Completed" ? (form.completedDate || TODAY) : form.completedDate,
-    }}});
-    toast("Clean record updated");
+    };
+
+    // If rescheduled with a new date, cascade all following cleans keeping 7-night gap
+    if (form.status === "Rescheduled" && form.rescheduledFrom) {
+      const newBase = form.rescheduledFrom;
+      const updatedCleans = booking.cleans.map((c, i) => {
+        if (i === cleanIndex) {
+          // This clean: update with form values, set dueDate to rescheduled date
+          return { ...c, ...updatedForm, dueDate: newBase };
+        } else if (i > cleanIndex) {
+          // All subsequent cleans: shift by 7 days from the rescheduled base
+          const offset = (i - cleanIndex) * 7;
+          const newDate = addDays(newBase, offset);
+          return { ...c, dueDate: newDate };
+        }
+        return c;
+      });
+      dispatch({ type:"UPDATE_BOOKING", payload:{ id:booking.id, cleans: updatedCleans }});
+      toast(`Clean rescheduled — ${booking.cleans.length - cleanIndex - 1} following clean${booking.cleans.length - cleanIndex - 1 !== 1 ? "s" : ""} updated`);
+    } else {
+      dispatch({ type:"UPDATE_CLEAN", payload:{ bookingId:booking.id, cleanIndex, updates: updatedForm }});
+      toast("Clean record updated");
+    }
     onClose();
   };
 
