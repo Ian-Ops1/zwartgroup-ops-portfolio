@@ -4163,6 +4163,33 @@ function PropertiesModule() {
     }
   };
 
+  const handleExportProps = async () => {
+    try {
+      const XLSX = await import("https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm");
+      const rows = [
+        ["ID","Name","Address","Area","Type","Portfolio","Status","Owner Name","Owner Email","Owner Phone","Management Fee %"],
+        ...state.properties.map(p => [
+          p.id, p.name, p.address||"", p.area||"", p.type||"",
+          p.portfolio, p.status,
+          p.ownerName||"", p.ownerEmail||"", p.ownerPhone||"",
+          p.managementFee||20,
+        ])
+      ];
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      // Set column widths
+      ws["!cols"] = [
+        {wch:10},{wch:30},{wch:40},{wch:16},{wch:12},
+        {wch:10},{wch:12},{wch:22},{wch:28},{wch:18},{wch:16}
+      ];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Properties");
+      XLSX.writeFile(wb, `ZwartGroup_Properties_${TODAY}.xlsx`);
+      toast(`${state.properties.length} properties exported`);
+    } catch(err) {
+      toast("Export failed: " + err.message, "error");
+    }
+  };
+
   const handleAdd = () => {
     if (!form.id || !form.name) return toast("Property ID and Name are required","error");
     if (state.properties.find(p => p.id === form.id.toUpperCase())) return toast("Property ID already exists","error");
@@ -4211,6 +4238,7 @@ function PropertiesModule() {
           <Btn variant="subtle" icon={Upload} onClick={() => propFileRef.current?.click()} disabled={propImporting}>
             {propImporting ? "Importing..." : "Import Excel"}
           </Btn>
+          <Btn variant="subtle" icon={Download} onClick={handleExportProps}>Export List</Btn>
           <Btn variant="primary" icon={Plus} onClick={() => setShowAdd(true)}>Add Property</Btn>
         </div>
       </div>
