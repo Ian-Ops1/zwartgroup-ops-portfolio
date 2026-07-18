@@ -1,14 +1,65 @@
 import { useState, useEffect, useReducer, createContext, useContext, useCallback, useMemo, useRef } from "react";
-import {
-  Home, Calendar, ClipboardList, DollarSign, BarChart2, TrendingUp,
-  AlertTriangle, Wrench, MessageSquare, Star, FileText, Users, BookOpen,
-  MessageCircle, Building, BookMarked, Settings, ChevronLeft, ChevronRight,
-  ChevronDown, ChevronUp, Plus, Edit, Trash2, Search, Filter, X, Check,
-  Clock, RefreshCw, Phone, Mail, ExternalLink, Download, Upload, Eye,
-  AlertCircle, CheckCircle, XCircle, Info, Bell, Menu, LogOut, Zap,
-  ArrowUp, ArrowDown, Minus, Save, Copy, MoreVertical, Link,
-  MapPin, User, CreditCard, Hash, Percent, Activity, Layers, Target
-} from "lucide-react";
+// Icon components — inline SVG replacements for lucide-react
+const iconProps = (p) => ({ width:p.size||16, height:p.size||16, viewBox:"0 0 24 24", fill:"none", stroke:p.color||"currentColor", strokeWidth:2, strokeLinecap:"round", strokeLinejoin:"round", style:p.style||{}, className:p.className||"" });
+const Home = (p) => <svg {...iconProps(p)}><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>;
+const Calendar = (p) => <svg {...iconProps(p)}><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>;
+const ClipboardList = (p) => <svg {...iconProps(p)}><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><line x1="12" y1="11" x2="16" y2="11"/><line x1="12" y1="16" x2="16" y2="16"/><line x1="8" y1="11" x2="8.01" y2="11"/><line x1="8" y1="16" x2="8.01" y2="16"/></svg>;
+const DollarSign = (p) => <svg {...iconProps(p)}><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>;
+const BarChart2 = (p) => <svg {...iconProps(p)}><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>;
+const TrendingUp = (p) => <svg {...iconProps(p)}><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>;
+const AlertTriangle = (p) => <svg {...iconProps(p)}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>;
+const Wrench = (p) => <svg {...iconProps(p)}><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>;
+const MessageSquare = (p) => <svg {...iconProps(p)}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>;
+const Star = (p) => <svg {...iconProps(p)}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>;
+const FileText = (p) => <svg {...iconProps(p)}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>;
+const Users = (p) => <svg {...iconProps(p)}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
+const BookOpen = (p) => <svg {...iconProps(p)}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>;
+const MessageCircle = (p) => <svg {...iconProps(p)}><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/></svg>;
+const Building = (p) => <svg {...iconProps(p)}><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg>;
+const BookMarked = (p) => <svg {...iconProps(p)}><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><polyline points="10 2 10 9 13 6 16 9 16 2"/></svg>;
+const Settings = (p) => <svg {...iconProps(p)}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>;
+const ChevronLeft = (p) => <svg {...iconProps(p)}><polyline points="15 18 9 12 15 6"/></svg>;
+const ChevronRight = (p) => <svg {...iconProps(p)}><polyline points="9 18 15 12 9 6"/></svg>;
+const ChevronDown = (p) => <svg {...iconProps(p)}><polyline points="6 9 12 15 18 9"/></svg>;
+const ChevronUp = (p) => <svg {...iconProps(p)}><polyline points="18 15 12 9 6 15"/></svg>;
+const Plus = (p) => <svg {...iconProps(p)}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>;
+const Edit = (p) => <svg {...iconProps(p)}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>;
+const Trash2 = (p) => <svg {...iconProps(p)}><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>;
+const Search = (p) => <svg {...iconProps(p)}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>;
+const Filter = (p) => <svg {...iconProps(p)}><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>;
+const X = (p) => <svg {...iconProps(p)}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>;
+const Check = (p) => <svg {...iconProps(p)}><polyline points="20 6 9 17 4 12"/></svg>;
+const Clock = (p) => <svg {...iconProps(p)}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>;
+const RefreshCw = (p) => <svg {...iconProps(p)}><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>;
+const Phone = (p) => <svg {...iconProps(p)}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.3 2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 6.29 6.29l.96-.96a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>;
+const Mail = (p) => <svg {...iconProps(p)}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>;
+const ExternalLink = (p) => <svg {...iconProps(p)}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>;
+const Download = (p) => <svg {...iconProps(p)}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>;
+const Upload = (p) => <svg {...iconProps(p)}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>;
+const Eye = (p) => <svg {...iconProps(p)}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>;
+const AlertCircle = (p) => <svg {...iconProps(p)}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>;
+const CheckCircle = (p) => <svg {...iconProps(p)}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>;
+const XCircle = (p) => <svg {...iconProps(p)}><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>;
+const Info = (p) => <svg {...iconProps(p)}><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>;
+const Bell = (p) => <svg {...iconProps(p)}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>;
+const Menu = (p) => <svg {...iconProps(p)}><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>;
+const LogOut = (p) => <svg {...iconProps(p)}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>;
+const Zap = (p) => <svg {...iconProps(p)}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>;
+const ArrowUp = (p) => <svg {...iconProps(p)}><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>;
+const ArrowDown = (p) => <svg {...iconProps(p)}><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>;
+const Minus = (p) => <svg {...iconProps(p)}><line x1="5" y1="12" x2="19" y2="12"/></svg>;
+const Save = (p) => <svg {...iconProps(p)}><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>;
+const Copy = (p) => <svg {...iconProps(p)}><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>;
+const MoreVertical = (p) => <svg {...iconProps(p)}><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>;
+const Link = (p) => <svg {...iconProps(p)}><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>;
+const MapPin = (p) => <svg {...iconProps(p)}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>;
+const User = (p) => <svg {...iconProps(p)}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
+const CreditCard = (p) => <svg {...iconProps(p)}><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>;
+const Hash = (p) => <svg {...iconProps(p)}><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>;
+const Percent = (p) => <svg {...iconProps(p)}><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>;
+const Activity = (p) => <svg {...iconProps(p)}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>;
+const Layers = (p) => <svg {...iconProps(p)}><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>;
+const Target = (p) => <svg {...iconProps(p)}><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>;
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Area, AreaChart
@@ -3358,13 +3409,13 @@ function OwnerStatements() {
           <div class="section-title">Property</div>
           <div class="info-val">${prop?.name}</div>
           <div style="color:#666;font-size:12px;margin-top:3px">${prop?.area || ""} · ${prop?.type || ""}</div>
-          ${prop?.address ? `<div style="color:#888;font-size:11px;margin-top:2px">${prop.address}</div>`:""}
+          ${prop?.address ? ("<div style=\"color:#888;font-size:11px;margin-top:2px\">"+prop.address+"</div>") : ""}
         </div>
         <div>
           <div class="section-title">Owner</div>
           <div class="info-val">${prop?.ownerName || "Not specified"}</div>
-          ${prop?.ownerEmail ? `<div style="color:#666;font-size:12px;margin-top:2px">${prop.ownerEmail}</div>`:""}
-          ${prop?.ownerPhone ? `<div style="color:#666;font-size:12px;margin-top:2px">${prop.ownerPhone}</div>`:""}
+          ${prop?.ownerEmail ? ("<div style=\"color:#666;font-size:12px;margin-top:2px\">"+prop.ownerEmail+"</div>") : ""}
+          ${prop?.ownerPhone ? ("<div style=\"color:#666;font-size:12px;margin-top:2px\">"+prop.ownerPhone+"</div>") : ""}
         </div>
       </div>
       <div class="section">
@@ -3377,27 +3428,17 @@ function OwnerStatements() {
       <div class="section">
         <div class="section-title">Deductions</div>
         <div class="row dimmed"><span>Management Fee (${prop?.managementFee||20}%)</span><span>- ${fmtCurr(managementFee)}</span></div>
-        ${cleaningCosts>0?`<div class="row dimmed"><span>Cleaning Costs</span><span>- ${fmtCurr(cleaningCosts)}</span></div>`:""}
-        ${maintenanceCosts>0?`<div class="row dimmed"><span>Maintenance</span><span>- ${fmtCurr(maintenanceCosts)}</span></div>`:""}
-        ${linenCosts>0?`<div class="row dimmed"><span>Linen Costs</span><span>- ${fmtCurr(linenCosts)}</span></div>`:""}
-        ${(expenses.extras||[]).filter(x=>x.label&&Number(x.amount)>0).map(x=>`<div class="row dimmed"><span>${x.label}</span><span>- ${fmtCurr(Number(x.amount))}</span></div>`).join("")}
+        ${cleaningCosts>0?("<div class=\"row dimmed\"><span>Cleaning Costs</span><span>- "+fmtCurr(cleaningCosts)+"</span></div>"):""}
+        ${maintenanceCosts>0?("<div class=\"row dimmed\"><span>Maintenance</span><span>- "+fmtCurr(maintenanceCosts)+"</span></div>"):""}
+        ${linenCosts>0?("<div class=\"row dimmed\"><span>Linen Costs</span><span>- "+fmtCurr(linenCosts)+"</span></div>"):""}
+        ${(expenses.extras||[]).filter(x=>x.label&&Number(x.amount)>0).map(x=>("<div class=\"row dimmed\"><span>"+x.label+"</span><span>- "+fmtCurr(Number(x.amount))+"</span></div>")).join("")}
         <div class="row bold"><span>Total Deductions</span><span>- ${fmtCurr(managementFee+totalExpenses)}</span></div>
       </div>
       <div class="payout">
         <div><div class="payout-label">Net Owner Payout</div><div style="font-size:12px;color:#555;margin-top:3px">${statementMonth}</div></div>
         <div class="payout-val">${fmtCurr(netOwnerPayout)}</div>
       </div>
-      ${bookings.length>0?`
-      <div class="section">
-        <div class="section-title">Booking Breakdown</div>
-        <table>
-          <thead><tr><th>Guest</th><th>Platform</th><th>Check-in</th><th>Check-out</th><th>Nights</th><th>Revenue</th></tr></thead>
-          <tbody>
-            ${bookings.map(b=>`<tr><td>${b.guestName}</td><td>${b.platform}</td><td>${fmtShort(b.checkIn)}</td><td>${fmtShort(b.checkOut)}</td><td>${b.nights}</td><td>${b.revenue>0?fmtCurr(b.revenue):"—"}</td></tr>`).join("")}
-          </tbody>
-          <tfoot><tr><td colspan="4"><strong>TOTAL</strong></td><td><strong>${bookings.reduce((s,b)=>s+b.nights,0)}n</strong></td><td><strong>${fmtCurr(grossRevenue)}</strong></td></tr></tfoot>
-        </table>
-      </div>`:""}
+      ${bookings.length>0?("<div class=\"section\"><div class=\"section-title\">Booking Breakdown</div><table><thead><tr><th>Guest</th><th>Platform</th><th>Check-in</th><th>Check-out</th><th>Nights</th><th>Revenue</th></tr></thead><tbody>"+bookings.map(b=>"<tr><td>"+b.guestName+"</td><td>"+b.platform+"</td><td>"+fmtShort(b.checkIn)+"</td><td>"+fmtShort(b.checkOut)+"</td><td>"+b.nights+"</td><td>"+(b.revenue>0?fmtCurr(b.revenue):"—")+"</td></tr>").join("")+"</tbody><tfoot><tr><td colspan=\"4\"><strong>TOTAL</strong></td><td><strong>"+bookings.reduce((s,b)=>s+b.nights,0)+"n</strong></td><td><strong>"+fmtCurr(grossRevenue)+"</strong></td></tr></tfoot></table></div>"):""}
       <div class="footer">Zwart Group · Ops &amp; Portfolio Command · Confidential Owner Statement</div>
     </body></html>`);
     w.document.close();
@@ -5604,25 +5645,24 @@ async function syncFromHospitable(token, state, dispatch, toast) {
     "Accept": "application/json",
   };
 
-  // Fetch reservations from Hospitable REST API
-  // Hospitable API: GET /v1/reservations
   let allReservations = [];
   let page = 1;
   let hasMore = true;
 
+  // Use the correct Hospitable v2 API endpoint
   while (hasMore) {
-    const res = await fetch(`https://api.hospitable.com/v1/reservations?per_page=100&page=${page}&status=accepted`, { headers });
+    const res = await fetch(
+      `https://public.api.hospitable.com/v2/reservations?page=${page}&per_page=100&include=properties`,
+      { headers }
+    );
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.message || `API error ${res.status}`);
     }
     const data = await res.json();
-
-    // Hospitable returns { data: [...], meta: { current_page, last_page } }
-    const items = data.data || data.reservations || data || [];
+    const items = data.data || [];
     if (!Array.isArray(items) || items.length === 0) { hasMore = false; break; }
     allReservations = allReservations.concat(items);
-
     const meta = data.meta || {};
     if (meta.current_page && meta.last_page && meta.current_page < meta.last_page) {
       page++;
@@ -5631,74 +5671,58 @@ async function syncFromHospitable(token, state, dispatch, toast) {
     }
   }
 
-  // Also fetch cancelled reservations
-  try {
-    const cancelRes = await fetch(`https://api.hospitable.com/v1/reservations?per_page=100&status=cancelled`, { headers });
-    if (cancelRes.ok) {
-      const cancelData = await cancelRes.json();
-      const cancelled = cancelData.data || cancelData.reservations || [];
-      allReservations = allReservations.concat(cancelled.map(r => ({ ...r, _isCancelled: true })));
-    }
-  } catch {}
-
   if (allReservations.length === 0) {
-    toast("Hospitable connected — no reservations found", "info");
+    toast("Hospitable connected — no reservations found");
     return 0;
   }
 
-  // Get existing booking IDs to avoid duplicates
   const existingIds = new Set(state.bookings.map(b => b.id));
   let addedCount = 0;
 
   allReservations.forEach(r => {
-    // Hospitable reservation fields
-    const id = String(
-      r.code || r.id || r.reservation_code || r.confirmation_code || ""
-    ).trim();
+    const id = String(r.id || r.uuid || "").trim();
     if (!id || existingIds.has(id)) return;
 
+    // Extract property name from included properties array
+    const property = Array.isArray(r.properties) ? r.properties[0] : null;
+    const propName = property?.name || property?.public_name ||
+      r.property?.name || r.listing?.name || r.property_name || "Unknown Property";
+
     // Dates
-    const checkIn  = (r.check_in  || r.checkin  || r.arrival   || r.start_date || "").slice(0,10);
-    const checkOut = (r.check_out || r.checkout || r.departure || r.end_date   || "").slice(0,10);
+    const checkIn  = (r.arrival_date  || r.check_in  || "").slice(0, 10);
+    const checkOut = (r.departure_date || r.check_out || "").slice(0, 10);
     if (!checkIn || !checkOut || checkIn >= checkOut) return;
 
-    // Guest name
-    const guest = r.guest?.full_name || r.guest?.name || r.guest_name ||
-      [r.guest?.first_name, r.guest?.last_name].filter(Boolean).join(" ") || "Guest";
+    // Guest
+    const guests = r.guests?.total || r.guests_count || 1;
+    const guestName = guests > 1 ? `${guests} guests` : "Guest";
 
-    // Property name
-    const propName = r.property?.name || r.listing?.name || r.property_name ||
-      r.listing_name || r.unit_name || "Unknown Property";
-
-    // Platform / channel
-    const platform = r.platform || r.channel?.name || r.source ||
-      r.booking_channel || "Airbnb";
+    // Platform
+    const platform = r.platform || r.channel?.name || "Airbnb";
 
     // Revenue
     const revenue = Number(
-      r.revenue?.total || r.total_price || r.amount ||
-      r.payout?.amount || r.host_payout || 0
+      r.revenue?.total || r.total_price || r.payout?.amount || r.host_payout || 0
     );
 
-    const booking = mkBookingDirect(id, guest, propName, checkIn, checkOut, platform, revenue, []);
-    if (r._isCancelled) booking.bookingStatus = "Cancelled";
+    const booking = mkBookingDirect(id, guestName, propName, checkIn, checkOut, platform, revenue, []);
+    booking.code = r.code || id;
+    if (r.status === "cancelled") booking.bookingStatus = "Cancelled";
 
     dispatch({ type:"ADD_BOOKING", payload:booking });
-    existingIds.add(id); // prevent adding same booking twice if it appears in multiple pages
+    existingIds.add(id);
     addedCount++;
   });
 
-  // Update last sync timestamp
   dispatch({ type:"UPDATE_SETTINGS", payload:{
     hospitable: { ...state.settings.hospitable, lastSync: new Date().toISOString() }
   }});
 
   if (addedCount > 0) {
-    toast(`✓ Hospitable sync — ${addedCount} new booking${addedCount!==1?"s":""} added`);
+    toast(`✓ Hospitable sync — ${addedCount} new booking${addedCount !== 1 ? "s" : ""} added`);
   } else {
-    toast("✓ Hospitable sync — up to date, no new bookings");
+    toast("✓ Hospitable sync — already up to date");
   }
-
   return addedCount;
 }
 
@@ -5736,6 +5760,53 @@ function AppInner() {
     const interval = setInterval(doSync, 5 * 60 * 1000); // every 5 minutes
     return () => clearInterval(interval);
   }, [state.settings?.hospitable?.apiUrl, state.settings?.hospitable?.enabled]);
+
+  // Supabase sync — pull bookings from hospitable_bookings table on load and every 2 min
+  useEffect(() => {
+    const supabaseUrl = import.meta.env?.VITE_SUPABASE_URL;
+    const supabaseKey = import.meta.env?.VITE_SUPABASE_KEY;
+    if (!supabaseUrl || !supabaseKey) return;
+
+    const fetchFromSupabase = async () => {
+      try {
+        const res = await fetch(
+          `${supabaseUrl}/rest/v1/hospitable_bookings?select=*&order=check_in.asc`,
+          { headers: { "apikey": supabaseKey, "Authorization": `Bearer ${supabaseKey}` } }
+        );
+        if (!res.ok) return;
+        const rows = await res.json();
+        if (!Array.isArray(rows) || rows.length === 0) return;
+
+        const existingIds = new Set(state.bookings.map(b => b.id));
+        let added = 0;
+
+        rows.forEach(row => {
+          if (!row.id || existingIds.has(row.id)) return;
+          if (!row.check_in || !row.check_out) return;
+          const booking = mkBookingDirect(
+            row.id,
+            row.guests ? `${row.guests} guest${row.guests !== 1 ? "s" : ""}` : "Guest",
+            row.property_name || "Unknown Property",
+            row.check_in, row.check_out,
+            row.platform || "Airbnb", 0, []
+          );
+          booking.code = row.code || row.id;
+          if (row.status === "cancelled") booking.bookingStatus = "Cancelled";
+          dispatch({ type:"ADD_BOOKING", payload:booking });
+          existingIds.add(row.id);
+          added++;
+        });
+
+        if (added > 0) toast(`✓ ${added} new booking${added !== 1 ? "s" : ""} synced from Hospitable`);
+      } catch(e) {
+        console.warn("Supabase sync error:", e.message);
+      }
+    };
+
+    fetchFromSupabase();
+    const interval = setInterval(fetchFromSupabase, 2 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleNav = (id) => {
     setActive(id);
@@ -6008,6 +6079,8 @@ function Reservations() {
   const [selected, setSelected] = useState(null);
   const [nbForm, setNbForm] = useState({ id:"", guestName:"", propId:"", checkIn:"", checkOut:"", platform:"Airbnb", revenue:"", notes:"" });
   const [bookingStatusFilter, setBookingStatusFilter] = useState("Accepted");
+  const [syncing, setSyncing] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState(null);
   const fileRef = useRef(null);
@@ -6260,26 +6333,29 @@ function Reservations() {
       <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:20 }}>
         <div>
           <SectionTitle>Reservations</SectionTitle>
-          {state.settings?.hospitable?.enabled && state.settings?.hospitable?.apiUrl && (
+          {state.settings?.hospitable?.lastSync && (
             <div style={{ fontSize:11, color:C.teal, marginTop:-8 }}>
-              ● Hospitable auto-sync active · Last sync: {state.settings.hospitable.lastSync
-                ? new Date(state.settings.hospitable.lastSync).toLocaleTimeString()
-                : "not yet synced"}
+              ● Last Hospitable sync: {new Date(state.settings.hospitable.lastSync).toLocaleString()}
             </div>
           )}
         </div>
-        <div style={{ display:"flex", gap:8 }}>
+        <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
           <input ref={fileRef} type="file" accept=".csv,.xlsx,.xls" onChange={handleImport} style={{ display:"none" }} />
           <Btn variant="subtle" icon={Upload} onClick={() => fileRef.current?.click()} disabled={importing}>
             {importing ? "Importing..." : "Import CSV / Excel"}
           </Btn>
-          {state.settings?.hospitable?.enabled && state.settings?.hospitable?.apiUrl && (
-            <Btn variant="subtle" icon={RefreshCw} onClick={async () => {
-              try {
-                await syncFromHospitable(state.settings.hospitable.apiUrl, state, dispatch, toast);
-              } catch(e) { toast("Sync failed: " + e.message, "error"); }
-            }}>Sync Now</Btn>
-          )}
+          <Btn variant="subtle" icon={RefreshCw} disabled={syncing} onClick={async () => {
+            const token = state.settings?.hospitable?.apiUrl;
+            if (!token) return toast("Add your Hospitable token in Settings first", "error");
+            setSyncing(true);
+            try {
+              await syncFromHospitable(token, state, dispatch, toast);
+            } catch(e) {
+              toast("Sync failed: " + e.message, "error");
+            } finally { setSyncing(false); }
+          }}>
+            {syncing ? "Syncing..." : "↻ Sync Hospitable"}
+          </Btn>
           <Btn variant="primary" icon={Plus} onClick={() => setShowAdd(true)}>Add Booking</Btn>
         </div>
       </div>
