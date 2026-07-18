@@ -6080,7 +6080,6 @@ function Reservations() {
   const [nbForm, setNbForm] = useState({ id:"", guestName:"", propId:"", checkIn:"", checkOut:"", platform:"Airbnb", revenue:"", notes:"" });
   const [bookingStatusFilter, setBookingStatusFilter] = useState("Accepted");
   const [syncing, setSyncing] = useState(false);
-  const [syncing, setSyncing] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState(null);
   const fileRef = useRef(null);
