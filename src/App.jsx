@@ -623,9 +623,11 @@ function reducer(state, action) {
       )};
     }
     case "DELETE_BOOKING": return { ...state, bookings: state.bookings.filter(b => b.id !== action.payload) };
+    case "CLEAR_ALL_BOOKINGS": return { ...state, bookings: [] };
     case "ADD_BOOKING": return { ...state, bookings: [...state.bookings, action.payload] };
     case "UPDATE_BOOKING": return { ...state, bookings: state.bookings.map(b => b.id === action.payload.id ? { ...b, ...action.payload } : b) };
     case "DELETE_BOOKING": return { ...state, bookings: state.bookings.filter(b => b.id !== action.payload) };
+    case "CLEAR_ALL_BOOKINGS": return { ...state, bookings: [] };
     case "ADD_INCIDENT": return { ...state, incidents: [...state.incidents, action.payload] };
     case "UPDATE_INCIDENT": return { ...state, incidents: state.incidents.map(i => i.id === action.payload.id ? { ...i, ...action.payload } : i) };
     case "ADD_MAINTENANCE": return { ...state, maintenance: [...state.maintenance, action.payload] };
@@ -6566,8 +6568,15 @@ function Reservations() {
                     oldBookings.forEach(b => dispatch({ type:"DELETE_BOOKING", payload:b.id }));
                     toast(`${oldBookings.length} old booking${oldBookings.length!==1?"s":""} deleted`);
                     setShowCleanup(false);
-                  }}>Delete {oldBookings.length} Old Booking{oldBookings.length!==1?"s":""}</Btn>
+                  }}>Delete {oldBookings.length} Old</Btn>
                 )}
+                <Btn variant="danger" icon={Trash2} onClick={() => {
+                  if (!window.confirm(`Delete ALL ${state.bookings.length} bookings? This cannot be undone.`)) return;
+                  if (!window.confirm("Are you absolutely sure? This will remove every single booking.")) return;
+                  dispatch({ type:"CLEAR_ALL_BOOKINGS" });
+                  toast(`All bookings cleared`);
+                  setShowCleanup(false);
+                }}>Clear ALL Bookings</Btn>
                 <Btn variant="ghost" onClick={() => setShowCleanup(false)}>Close</Btn>
               </div>
             </div>
