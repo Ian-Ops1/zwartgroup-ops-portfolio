@@ -16,21 +16,18 @@
     <!-- Icons -->
     <link rel="apple-touch-icon" href="/icon-192.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
-    <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
 
-    <!-- Description -->
-    <meta name="description" content="Zwart Group STR Operations & Portfolio Management" />
+    <!-- Recharts via CDN (avoids CommonJS bundling error) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.12.7/Recharts.min.js"></script>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
-
-    <!-- Register Service Worker -->
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js')
-            .then(reg => console.log('SW registered'))
+            .then(() => console.log('SW registered'))
             .catch(err => console.warn('SW failed:', err));
         });
       }
