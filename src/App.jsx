@@ -6411,19 +6411,17 @@ function Reservations() {
     if (platformFilter !== "All") r = r.filter(b => b.platform === platformFilter);
     if (bookingStatusFilter === "Cancelled") r = r.filter(b => b.bookingStatus === "Cancelled");
     if (bookingStatusFilter === "Accepted") r = r.filter(b => b.bookingStatus !== "Cancelled");
+    // Sort: In-House first → Upcoming soonest → Checked Out most recent last
     const statusOrder = { "In-House": 0, "Upcoming": 1, "Checked Out": 2 };
-    return [...r].sort((a,b) => {
-      if (sortBy === "checkIn") {
-        // Default: In-House first, then Upcoming (soonest first), then Checked Out (most recent first)
-        const so = (statusOrder[a.status] ?? 1) - (statusOrder[b.status] ?? 1);
-        if (so !== 0) return so;
-        if (a.status === "Checked Out") return b.checkOut.localeCompare(a.checkOut); // most recent first
-        return a.checkIn.localeCompare(b.checkIn); // soonest check-in first
-      }
-      if (sortBy === "checkOut") return b.checkOut.localeCompare(a.checkOut);
+    return [...r].sort((a, b) => {
       if (sortBy === "revenue") return b.revenue - a.revenue;
       if (sortBy === "nights") return b.nights - a.nights;
-      return 0;
+      if (sortBy === "checkOut") return b.checkOut.localeCompare(a.checkOut);
+      // Default checkIn sort — status-aware
+      const so = (statusOrder[a.status] ?? 1) - (statusOrder[b.status] ?? 1);
+      if (so !== 0) return so;
+      if (a.status === "Checked Out") return b.checkOut.localeCompare(a.checkOut);
+      return a.checkIn.localeCompare(b.checkIn);
     });
   }, [bookings, search, statusFilter, platformFilter, sortBy, bookingStatusFilter]);
 
