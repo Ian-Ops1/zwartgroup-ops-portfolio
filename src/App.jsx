@@ -60,10 +60,11 @@ const Percent = (p) => <svg {...iconProps(p)}><line x1="19" y1="5" x2="5" y2="19
 const Activity = (p) => <svg {...iconProps(p)}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>;
 const Layers = (p) => <svg {...iconProps(p)}><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>;
 const Target = (p) => <svg {...iconProps(p)}><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>;
-import {
+// Recharts loaded from CDN to avoid CommonJS bundling issues
+const {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Area, AreaChart
-} from "recharts";
+} = window.Recharts || {};
 
 // ─── FONTS ───────────────────────────────────────────────────────────────────
 // Ensure mobile viewport
