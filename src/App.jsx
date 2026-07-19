@@ -1384,7 +1384,14 @@ function ResCleans() {
           </span>
           <div style={{ marginLeft:"auto", display:"flex", gap:8 }}>
             <Btn size="sm" variant="danger" onClick={() => setCleanFilter("Has Urgent")}>Show Urgent Only</Btn>
-            <Btn size="sm" variant="ghost" onClick={() => setCleanFilter("All")}>Clear</Btn>
+            <Btn size="sm" variant="ghost" onClick={() => setCleanFilter("All")}>Clear Filter</Btn>
+            <Btn size="sm" variant="danger" icon={Trash2} onClick={() => {
+              const oldBookings = state.bookings.filter(b => b.checkOut < TODAY && b.cleans && b.cleans.length > 0);
+              if (oldBookings.length === 0) return toast("No old cleans to clear");
+              if (!window.confirm(`Clear all cleans from ${oldBookings.length} checked-out bookings? This cannot be undone.`)) return;
+              oldBookings.forEach(b => dispatch({ type:"UPDATE_BOOKING", payload:{ id:b.id, cleans:[] }}));
+              toast(`✓ Cleared cleans from ${oldBookings.length} checked-out bookings`);
+            }}>Clear Old Cleans</Btn>
           </div>
         </div>
       )}
