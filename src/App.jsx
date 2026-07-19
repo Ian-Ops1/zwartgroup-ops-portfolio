@@ -5258,7 +5258,7 @@ function ManagementReport() {
             {filteredBookings.length === 0
               ? <div style={{ fontSize:12, color:C.text3, fontStyle:"italic" }}>No check-ins in this period.</div>
               : <div style={{ overflowX:"auto" }}>
-                <div style={{ display:"grid", gridTemplateColumns:"1fr 100px 100px 50px 90px 100px", gap:0, minWidth:520,
+                <div className="table-wrap"><div style={{ display:"grid", gridTemplateColumns:"1fr 100px 100px 50px 90px 100px", gap:0, minWidth:520,
                   padding:"7px 12px", background:C.bg2, borderRadius:"6px 6px 0 0" }}>
                   {["Property","Check-in","Check-out","Nts","Revenue","Status"].map(h => (
                     <div key={h} style={{ fontSize:10, color:C.text3, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.05em" }}>{h}</div>
@@ -5800,19 +5800,24 @@ function AppInner() {
       <div style={{ flex:1, display:"flex", flexDirection:"column", overflow:"hidden" }}>
         {/* Mobile Top Bar */}
         {isMobile ? (
-          <div style={{ height:52, background:C.bg1, borderBottom:`1px solid ${C.border}`,
-            display:"flex", alignItems:"center", padding:"0 16px", gap:12, flexShrink:0 }}>
+          <div style={{ height:56, background:C.bg1, borderBottom:`1px solid ${C.border}`,
+            display:"flex", alignItems:"center", padding:"0 16px", gap:12, flexShrink:0,
+            position:"sticky", top:0, zIndex:100 }}>
             <button onClick={() => setMobileNavOpen(true)}
-              style={{ background:"none", border:`1px solid ${C.border}`, borderRadius:7,
-                padding:"6px 8px", cursor:"pointer", color:C.text1, display:"flex", alignItems:"center" }}>
-              <Menu size={18} />
+              style={{ background:"none", border:`1px solid ${C.border}`, borderRadius:8,
+                padding:"8px 10px", cursor:"pointer", color:C.text1, display:"flex", alignItems:"center" }}>
+              <Menu size={20} />
             </button>
-            <span style={{ fontFamily:"'Syne',sans-serif", fontSize:13, fontWeight:700, color:C.platinum, flex:1 }}>
-              {NAV.find(n => n.id === active)?.label || "Dashboard"}
-            </span>
-            <span style={{ fontFamily:"'DM Mono',monospace", fontSize:11, color:C.text3 }}>
-              {new Date().toLocaleDateString("en-ZA",{day:"numeric",month:"short"})}
-            </span>
+            <div style={{ flex:1 }}>
+              <div style={{ fontFamily:"'Syne',sans-serif", fontSize:14, fontWeight:700, color:C.platinum }}>
+                {NAV.find(n => n.id === active)?.label || "Dashboard"}
+              </div>
+            </div>
+            <div style={{ textAlign:"right" }}>
+              <div style={{ fontFamily:"'DM Mono',monospace", fontSize:11, color:C.teal }}>
+                {new Date().toLocaleDateString("en-ZA",{day:"numeric",month:"short",year:"2-digit"})}
+              </div>
+            </div>
           </div>
         ) : (
           <TopBar module={active} />
@@ -5855,6 +5860,32 @@ function AppInner() {
           </div>
         )}
       </div>
+
+      {/* Mobile Bottom Tab Bar */}
+      {isMobile && (
+        <div style={{ position:"fixed", bottom:0, left:0, right:0, zIndex:200,
+          background:C.bg1, borderTop:`1px solid ${C.border}`,
+          display:"flex", alignItems:"stretch", height:58,
+          paddingBottom:"env(safe-area-inset-bottom,0px)" }}>
+          {[
+            { id:"dashboard",    icon:Home,          label:"Home" },
+            { id:"reservations", icon:Calendar,       label:"Reservations" },
+            { id:"cleans",       icon:ClipboardList,  label:"Cleans" },
+            { id:"financials",   icon:DollarSign,     label:"Financials" },
+            { id:"incidents",    icon:AlertTriangle,  label:"Issues" },
+          ].map(({ id, icon:Icon, label }) => (
+            <button key={id} onClick={() => handleNav(id)}
+              style={{ flex:1, background:"none", border:"none", cursor:"pointer",
+                display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
+                gap:2, color:active===id?C.teal:C.text3, transition:"color 0.15s",
+                borderTop: active===id?`2px solid ${C.teal}`:"2px solid transparent" }}>
+              <Icon size={19} />
+              <span style={{ fontSize:9, fontWeight:active===id?700:400 }}>{label}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
       <Toast />
     </div>
   );
@@ -6583,7 +6614,7 @@ function Reservations() {
       )}
 
       {/* KPIs */}
-      <div style={{ display:"flex", gap:12, marginBottom:20, flexWrap:"wrap" }}>
+      <div className="kpi-grid" style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(130px,1fr))", gap:12, marginBottom:20 }}>
         <KPICard label="Total Bookings" value={bookings.length} color={C.teal} icon={Hash} />
         <KPICard label="In-House" value={inHouse} color={C.teal} icon={Building} />
         <KPICard label="Upcoming" value={upcoming} color={C.blue} icon={ArrowUp} />
