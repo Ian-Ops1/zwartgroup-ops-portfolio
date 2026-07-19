@@ -4537,6 +4537,7 @@ function SettingsModule() {
   const [hospForm, setHospForm] = useState({ ...state.settings.hospitable });
   const [syncing, setSyncing] = useState(false);
   const [showCleanup, setShowCleanup] = useState(false);
+  const [resTab, setResTab] = useState("bookings");
   const [syncResult, setSyncResult] = useState(null);
 
   const save = () => {
@@ -5883,6 +5884,237 @@ export default function App() {
     </AppProvider>
   );
 }
+// ─── CHECKOUTS & REVIEWS ─────────────────────────────────────────────────────
+function CheckoutsReviews() {
+  const { state, dispatch, toast } = useApp();
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("All"); // All | Reviewed | Pending
+  const [showAddReview, setShowAddReview] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [reviewForm, setReviewForm] = useState({ rating:5, comment:"", platform:"Airbnb", date:TODAY });
+
+  // All checked-out bookings (not cancelled)
+  const checkouts = state.bookings
+    .filter(b => b.status === "Checked Out" && b.bookingStatus !== "Cancelled")
+    .sort((a,b) => b.checkOut.localeCompare(a.checkOut)); // most recent first
+
+  // Which bookings already have a review
+  const reviewedIds = new Set(state.reviews.map(r => r.bookingId).filter(Boolean));
+
+  const filtered = checkouts.filter(b => {
+    const matchSearch = !search ||
+      b.propertyName.toLowerCase().includes(search.toLowerCase()) ||
+      b.guestName.toLowerCase().includes(search.toLowerCase());
+    const matchFilter = filter === "All" ||
+      (filter === "Reviewed" && reviewedIds.has(b.id)) ||
+      (filter === "Pending" && !reviewedIds.has(b.id));
+    return matchSearch && matchFilter;
+  });
+
+  const pendingCount = checkouts.filter(b => !reviewedIds.has(b.id)).length;
+  const reviewedCount = checkouts.filter(b => reviewedIds.has(b.id)).length;
+
+  const openReview = (booking) => {
+    setSelectedBooking(booking);
+    setReviewForm({ rating:5, comment:"", platform:booking.platform||"Airbnb", date:TODAY });
+    setShowAddReview(true);
+  };
+
+  const getReview = (bookingId) => state.reviews.find(r => r.bookingId === bookingId);
+
+  const handleAddReview = () => {
+    if (!selectedBooking) return;
+    const id = "REV-" + String(state.reviews.length + 1).padStart(3,"0");
+    dispatch({ type:"ADD_REVIEW", payload:{
+      id, bookingId: selectedBooking.id,
+      propertyId: selectedBooking.propId,
+      propertyName: selectedBooking.propertyName,
+      guestName: selectedBooking.guestName,
+      date: reviewForm.date,
+      rating: Number(reviewForm.rating),
+      platform: reviewForm.platform,
+      comment: reviewForm.comment,
+      responded: false,
+    }});
+    toast("Review saved");
+    setShowAddReview(false);
+    setSelectedBooking(null);
+  };
+
+  return (
+    <div>
+      {/* Stats */}
+      <div style={{ display:"flex", gap:12, marginBottom:20, flexWrap:"wrap" }}>
+        <KPICard label="Total Check-outs" value={checkouts.length} color={C.teal} />
+        <KPICard label="Reviews Pending" value={pendingCount} color={pendingCount>0?C.amber:C.green} />
+        <KPICard label="Reviews Done" value={reviewedCount} color={C.green} />
+        <KPICard label="Review Rate" value={checkouts.length?Math.round(reviewedCount/checkouts.length*100)+"%":"—"} color={C.blue} />
+      </div>
+
+      {/* Info banner */}
+      {pendingCount > 0 && (
+        <div style={{ background:C.amberBg, border:`1px solid ${C.amber}30`, borderRadius:8,
+          padding:"10px 16px", marginBottom:16, fontSize:12, color:C.amber,
+          display:"flex", alignItems:"center", gap:8 }}>
+          ⭐ <strong>{pendingCount} checkout{pendingCount!==1?"s":""}</strong> still waiting for a guest review
+        </div>
+      )}
+
+      {/* Filters */}
+      <div style={{ display:"flex", gap:10, marginBottom:16, flexWrap:"wrap" }}>
+        <SearchBar value={search} onChange={setSearch} placeholder="Search property or guest..." />
+        <div style={{ display:"flex", background:C.bg2, borderRadius:7, padding:3, border:`1px solid ${C.border}` }}>
+          {[["All","All"],["Pending","⏳ Pending"],["Reviewed","✓ Reviewed"]].map(([id,label]) => (
+            <button key={id} onClick={() => setFilter(id)}
+              style={{ padding:"5px 14px", borderRadius:5, border:"none", cursor:"pointer",
+                fontSize:12, fontWeight:500, transition:"all 0.15s",
+                background: filter===id ? C.teal : "transparent",
+                color: filter===id ? "#000" : C.text2 }}>
+              {label}
+            </button>
+          ))}
+        </div>
+        <span style={{ fontSize:12, color:C.text3, alignSelf:"center" }}>
+          Showing {filtered.length} of {checkouts.length}
+        </span>
+      </div>
+
+      {/* Checkout list */}
+      <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+        {filtered.length === 0 && <EmptyState icon={CheckCircle} title="No check-outs found" sub="Adjust your filters." />}
+        {filtered.map(b => {
+          const review = getReview(b.id);
+          const hasReview = !!review;
+          return (
+            <div key={b.id} style={{ background:C.bg1, border:`1px solid ${hasReview?C.green+"40":C.border}`,
+              borderRadius:10, padding:"14px 18px",
+              borderLeft:`4px solid ${hasReview?C.green:C.amber}` }}>
+              <div style={{ display:"flex", gap:16, alignItems:"flex-start" }}>
+                <div style={{ flex:1, minWidth:0 }}>
+                  {/* Property & guest */}
+                  <div style={{ fontSize:14, fontWeight:700, color:C.text1, marginBottom:3,
+                    overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                    {b.propertyName}
+                  </div>
+                  <div style={{ display:"flex", gap:10, alignItems:"center", marginBottom:8, flexWrap:"wrap" }}>
+                    <span style={{ fontSize:12, color:b.guestName==="Guest"?C.amber:C.text2 }}>{b.guestName}</span>
+                    <Badge label={b.platform} size="xs" />
+                    <span style={{ fontFamily:"'DM Mono',monospace", fontSize:11, color:C.text3 }}>
+                      {fmtShort(b.checkIn)} → {fmtShort(b.checkOut)}
+                    </span>
+                    <span style={{ fontSize:11, color:C.text3 }}>{b.nights} nights</span>
+                  </div>
+
+                  {/* Review if exists */}
+                  {hasReview && (
+                    <div style={{ background:C.bg2, borderRadius:8, padding:"10px 14px",
+                      border:`1px solid ${C.green}20` }}>
+                      <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:6 }}>
+                        <div style={{ display:"flex", gap:2 }}>
+                          {[1,2,3,4,5].map(n => (
+                            <span key={n} style={{ fontSize:16, color:n<=review.rating?C.amber:C.border }}>★</span>
+                          ))}
+                        </div>
+                        <span style={{ fontFamily:"'DM Mono',monospace", fontSize:12, color:C.amber, fontWeight:700 }}>
+                          {review.rating}/5
+                        </span>
+                        <span style={{ fontSize:11, color:C.text3 }}>{fmtDate(review.date)}</span>
+                        {review.responded
+                          ? <span style={{ fontSize:11, color:C.green, fontWeight:600 }}>✓ Responded</span>
+                          : <span style={{ fontSize:11, color:C.amber }}>Awaiting response</span>
+                        }
+                      </div>
+                      {review.comment && (
+                        <div style={{ fontSize:12, color:C.text2, fontStyle:"italic" }}>
+                          "{review.comment}"
+                        </div>
+                      )}
+                      <div style={{ display:"flex", gap:8, marginTop:8 }}>
+                        {!review.responded && (
+                          <Btn size="sm" variant="subtle" onClick={() => {
+                            dispatch({ type:"UPDATE_REVIEW", payload:{ id:review.id, responded:true }});
+                            toast("Marked as responded");
+                          }}>Mark Responded</Btn>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* No review yet */}
+                  {!hasReview && (
+                    <div style={{ fontSize:12, color:C.amber, display:"flex", alignItems:"center", gap:6 }}>
+                      <span>⭐ No review yet</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Actions */}
+                <div style={{ flexShrink:0 }}>
+                  {!hasReview ? (
+                    <Btn variant="primary" size="sm" icon={Star} onClick={() => openReview(b)}>
+                      Add Review
+                    </Btn>
+                  ) : (
+                    <div style={{ display:"flex", alignItems:"center", gap:4 }}>
+                      <CheckCircle size={14} color={C.green} />
+                      <span style={{ fontSize:11, color:C.green, fontWeight:600 }}>Reviewed</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Add Review Modal */}
+      <Modal open={showAddReview} onClose={() => { setShowAddReview(false); setSelectedBooking(null); }}
+        title="Add Guest Review" width={500}>
+        {selectedBooking && (
+          <div style={{ background:C.bg2, borderRadius:8, padding:"12px 16px", marginBottom:20 }}>
+            <div style={{ fontSize:14, fontWeight:700, color:C.text1 }}>{selectedBooking.propertyName}</div>
+            <div style={{ fontSize:12, color:C.text3, marginTop:2 }}>
+              {selectedBooking.guestName} · Checked out {fmtDate(selectedBooking.checkOut)}
+            </div>
+          </div>
+        )}
+        <FormRow label="Guest Star Rating" required>
+          <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:4 }}>
+            {[1,2,3,4,5].map(n => (
+              <span key={n} onClick={() => setReviewForm(f => ({...f, rating:n}))}
+                style={{ fontSize:36, cursor:"pointer", transition:"transform 0.1s",
+                  color: n <= reviewForm.rating ? C.amber : C.border,
+                  transform: n <= reviewForm.rating ? "scale(1.1)" : "scale(1)" }}>★</span>
+            ))}
+            <span style={{ fontSize:16, color:C.text2, marginLeft:8, fontFamily:"'DM Mono',monospace", fontWeight:600 }}>
+              {reviewForm.rating} / 5
+            </span>
+          </div>
+        </FormRow>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+          <FormRow label="Platform">
+            <Select value={reviewForm.platform} onChange={v => setReviewForm(f => ({...f,platform:v}))}
+              options={["Airbnb","Booking.com","Direct","Google"]} />
+          </FormRow>
+          <FormRow label="Review Date">
+            <Input type="date" value={reviewForm.date} onChange={v => setReviewForm(f => ({...f,date:v}))} />
+          </FormRow>
+        </div>
+        <FormRow label="Guest Comment (optional)">
+          <textarea value={reviewForm.comment}
+            onChange={e => setReviewForm(f => ({...f,comment:e.target.value}))}
+            placeholder="Paste the guest's review comment here..."
+            rows={4} style={{ ...inputStyle, resize:"vertical" }} />
+        </FormRow>
+        <div style={{ display:"flex", gap:8 }}>
+          <Btn variant="primary" icon={Star} onClick={handleAddReview}>Save Review</Btn>
+          <Btn variant="ghost" onClick={() => { setShowAddReview(false); setSelectedBooking(null); }}>Cancel</Btn>
+        </div>
+      </Modal>
+    </div>
+  );
+}
+
 // ─── BOOKING DETAIL MODAL ────────────────────────────────────────────────────
 function BookingDetailModal({ booking, properties, onClose, onSave }) {
   const [editingProp, setEditingProp] = useState(false);
@@ -6062,6 +6294,7 @@ function Reservations() {
   const [bookingStatusFilter, setBookingStatusFilter] = useState("Accepted");
   const [syncing, setSyncing] = useState(false);
   const [showCleanup, setShowCleanup] = useState(false);
+  const [resTab, setResTab] = useState("bookings");
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState(null);
   const fileRef = useRef(null);
@@ -6451,6 +6684,26 @@ function Reservations() {
         <KPICard label="Total Revenue" value={"R "+(totalRevenue/1000).toFixed(0)+"k"} color={C.amber} icon={DollarSign} />
       </div>
 
+      {/* Tabs */}
+      <div style={{ display:"flex", borderBottom:`1px solid ${C.border}`, marginBottom:20 }}>
+        {[["bookings","All Bookings"],["checkouts","Check-outs & Reviews"]].map(([id,label]) => (
+          <button key={id} onClick={() => setResTab(id)}
+            style={{ padding:"8px 24px", background:"none", border:"none", fontSize:13,
+              borderBottom:`2px solid ${resTab===id?C.teal:"transparent"}`,
+              color:resTab===id?C.teal:C.text2, cursor:"pointer", fontWeight:resTab===id?600:400 }}>
+            {label}
+            {id==="checkouts" && (
+              <span style={{ marginLeft:6, fontFamily:"'DM Mono',monospace", fontSize:11,
+                color:C.amber }}>
+                ({state.bookings.filter(b=>b.status==="Checked Out"&&b.bookingStatus!=="Cancelled").length})
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {resTab === "checkouts" ? <CheckoutsReviews /> : <>
+
       {/* Info strip */}
       <div style={{ background:C.tealBg, border:`1px solid ${C.teal}30`, borderRadius:8, padding:"10px 16px",
         marginBottom:16, fontSize:12, color:C.teal, display:"flex", alignItems:"center", gap:8 }}>
@@ -6570,6 +6823,8 @@ function Reservations() {
           setSelected(null);
         }}
       />}
+
+      </> }
 
       {/* Add Booking Modal */}
       <Modal open={showAdd} onClose={() => setShowAdd(false)} title="Add New Booking" width={520}>
