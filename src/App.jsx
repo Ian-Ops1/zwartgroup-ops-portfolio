@@ -5258,8 +5258,7 @@ function ManagementReport() {
             {filteredBookings.length === 0
               ? <div style={{ fontSize:12, color:C.text3, fontStyle:"italic" }}>No check-ins in this period.</div>
               : <div style={{ overflowX:"auto" }}>
-                <div className="table-wrap"><div style={{ display:"grid", gridTemplateColumns:"1fr 100px 100px 50px 90px 100px", gap:0, minWidth:520,
-                  padding:"7px 12px", background:C.bg2, borderRadius:"6px 6px 0 0" }}>
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 100px 100px 50px 90px 100px", gap:0, minWidth:520, padding:"7px 12px", background:C.bg2, borderRadius:"6px 6px 0 0" }}>
                   {["Property","Check-in","Check-out","Nts","Revenue","Status"].map(h => (
                     <div key={h} style={{ fontSize:10, color:C.text3, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.05em" }}>{h}</div>
                   ))}
