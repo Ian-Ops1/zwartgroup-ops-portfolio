@@ -622,6 +622,7 @@ function reducer(state, action) {
         b.id === bookingId ? { ...b, cleans: b.cleans.map((c,i) => i === cleanIndex ? { ...c, ...updates } : c) } : b
       )};
     }
+    case "DELETE_BOOKING": return { ...state, bookings: state.bookings.filter(b => b.id !== action.payload) };
     case "ADD_BOOKING": return { ...state, bookings: [...state.bookings, action.payload] };
     case "UPDATE_BOOKING": return { ...state, bookings: state.bookings.map(b => b.id === action.payload.id ? { ...b, ...action.payload } : b) };
     case "DELETE_BOOKING": return { ...state, bookings: state.bookings.filter(b => b.id !== action.payload) };
@@ -4535,6 +4536,7 @@ function SettingsModule() {
   const [form, setForm] = useState({ ...state.settings });
   const [hospForm, setHospForm] = useState({ ...state.settings.hospitable });
   const [syncing, setSyncing] = useState(false);
+  const [showCleanup, setShowCleanup] = useState(false);
   const [syncResult, setSyncResult] = useState(null);
 
   const save = () => {
@@ -6059,6 +6061,7 @@ function Reservations() {
   const [nbForm, setNbForm] = useState({ id:"", guestName:"", propId:"", checkIn:"", checkOut:"", platform:"Airbnb", revenue:"", notes:"" });
   const [bookingStatusFilter, setBookingStatusFilter] = useState("Accepted");
   const [syncing, setSyncing] = useState(false);
+  const [showCleanup, setShowCleanup] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState(null);
   const fileRef = useRef(null);
@@ -6175,14 +6178,21 @@ function Reservations() {
     if (platformFilter !== "All") r = r.filter(b => b.platform === platformFilter);
     if (bookingStatusFilter === "Cancelled") r = r.filter(b => b.bookingStatus === "Cancelled");
     if (bookingStatusFilter === "Accepted") r = r.filter(b => b.bookingStatus !== "Cancelled");
+    const statusOrder = { "In-House": 0, "Upcoming": 1, "Checked Out": 2 };
     return [...r].sort((a,b) => {
-      if (sortBy === "checkIn") return a.checkIn.localeCompare(b.checkIn);
-      if (sortBy === "checkOut") return a.checkOut.localeCompare(b.checkOut);
+      if (sortBy === "checkIn") {
+        // Default: In-House first, then Upcoming (soonest first), then Checked Out (most recent first)
+        const so = (statusOrder[a.status] ?? 1) - (statusOrder[b.status] ?? 1);
+        if (so !== 0) return so;
+        if (a.status === "Checked Out") return b.checkOut.localeCompare(a.checkOut); // most recent first
+        return a.checkIn.localeCompare(b.checkIn); // soonest check-in first
+      }
+      if (sortBy === "checkOut") return b.checkOut.localeCompare(a.checkOut);
       if (sortBy === "revenue") return b.revenue - a.revenue;
       if (sortBy === "nights") return b.nights - a.nights;
       return 0;
     });
-  }, [bookings, search, statusFilter, platformFilter, sortBy]);
+  }, [bookings, search, statusFilter, platformFilter, sortBy, bookingStatusFilter]);
 
   const totalRevenue = bookings.reduce((s,b) => s+b.revenue, 0);
   const inHouse = bookings.filter(b => b.status==="In-House").length;
@@ -6363,8 +6373,55 @@ function Reservations() {
             {syncing ? "Syncing..." : "↻ Sync Hospitable"}
           </Btn>
           <Btn variant="primary" icon={Plus} onClick={() => setShowAdd(true)}>Add Booking</Btn>
+          <Btn variant="ghost" icon={Trash2} onClick={() => setShowCleanup(true)}>Clean Up</Btn>
         </div>
       </div>
+
+      {/* Cleanup Old Bookings Modal */}
+      <Modal open={showCleanup} onClose={() => setShowCleanup(false)} title="Delete Old Bookings" width={460}>
+        {(() => {
+          const twoMonthsAgo = new Date();
+          twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+          const cutoff = twoMonthsAgo.toISOString().slice(0,10);
+          const oldBookings = state.bookings.filter(b => b.checkOut < cutoff);
+          return (
+            <div>
+              <div style={{ background:C.amberBg, border:`1px solid ${C.amber}30`, borderRadius:8,
+                padding:"12px 16px", marginBottom:16, fontSize:13, color:C.amber }}>
+                ⚠️ This will permanently delete <strong>{oldBookings.length} booking{oldBookings.length!==1?"s":""}</strong> that
+                checked out before <strong>{fmtDate(cutoff)}</strong> (more than 2 months ago).
+              </div>
+              {oldBookings.length === 0 ? (
+                <div style={{ fontSize:13, color:C.green, marginBottom:16 }}>✓ No bookings older than 2 months to delete.</div>
+              ) : (
+                <div style={{ maxHeight:200, overflowY:"auto", marginBottom:16 }}>
+                  {oldBookings.slice(0,10).map(b => (
+                    <div key={b.id} style={{ display:"flex", justifyContent:"space-between", fontSize:12,
+                      padding:"5px 0", borderBottom:`1px solid ${C.border}20`, color:C.text3 }}>
+                      <span>{b.propertyName}</span>
+                      <span style={{ fontFamily:"'DM Mono',monospace" }}>Checked out {fmtShort(b.checkOut)}</span>
+                    </div>
+                  ))}
+                  {oldBookings.length > 10 && (
+                    <div style={{ fontSize:12, color:C.text3, padding:"5px 0" }}>...and {oldBookings.length-10} more</div>
+                  )}
+                </div>
+              )}
+              <div style={{ display:"flex", gap:8 }}>
+                {oldBookings.length > 0 && (
+                  <Btn variant="danger" icon={Trash2} onClick={() => {
+                    if (!window.confirm(`Delete ${oldBookings.length} old bookings? This cannot be undone.`)) return;
+                    oldBookings.forEach(b => dispatch({ type:"DELETE_BOOKING", payload:b.id }));
+                    toast(`${oldBookings.length} old booking${oldBookings.length!==1?"s":""} deleted`);
+                    setShowCleanup(false);
+                  }}>Delete {oldBookings.length} Old Booking{oldBookings.length!==1?"s":""}</Btn>
+                )}
+                <Btn variant="ghost" onClick={() => setShowCleanup(false)}>Close</Btn>
+              </div>
+            </div>
+          );
+        })()}
+      </Modal>
 
       {/* Import Result Banner */}
       {importResult && (
