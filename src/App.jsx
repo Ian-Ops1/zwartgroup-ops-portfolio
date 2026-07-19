@@ -4654,32 +4654,11 @@ function SettingsModule() {
           )}
 
           <div style={{ display:"flex", gap:8 }}>
-            <Btn variant="primary" icon={Save} onClick={async () => {
+            <Btn variant="primary" icon={Save} onClick={() => {
               dispatch({ type:"UPDATE_SETTINGS", payload:{ hospitable: hospForm }});
-              toast("Settings saved");
-              if (hospForm.enabled && hospForm.apiUrl) {
-                setSyncing(true); setSyncResult(null);
-                try {
-                  const count = await syncFromHospitable(hospForm.apiUrl, state, dispatch, toast);
-                  setSyncResult({ message: count + " new booking" + (count!==1?"s":"") + " added from Hospitable" });
-                } catch(e) {
-                  setSyncResult({ error:true, message: e.message });
-                } finally { setSyncing(false); }
-              }
-            }} disabled={syncing}>
-              {syncing ? "Syncing..." : "Save & Sync Now"}
-            </Btn>
-            <Btn variant="subtle" icon={RefreshCw} onClick={async () => {
-              if (!hospForm.apiUrl) return toast("Enter your MCP URL first","error");
-              setSyncing(true); setSyncResult(null);
-              try {
-                const count = await syncFromHospitable(hospForm.apiUrl, state, dispatch, toast);
-                setSyncResult({ message: count + " new booking" + (count!==1?"s":"") + " added" });
-              } catch(e) {
-                setSyncResult({ error:true, message: e.message });
-              } finally { setSyncing(false); }
-            }} disabled={syncing}>
-              {syncing ? "Syncing..." : "Sync Now"}
+              toast("API token saved — bookings sync via webhook automatically");
+            }}>
+              Save Token
             </Btn>
           </div>
 
@@ -6344,11 +6323,39 @@ function Reservations() {
             {importing ? "Importing..." : "Import CSV / Excel"}
           </Btn>
           <Btn variant="subtle" icon={RefreshCw} disabled={syncing} onClick={async () => {
-            const token = state.settings?.hospitable?.apiUrl;
-            if (!token) return toast("Add your Hospitable token in Settings first", "error");
+            const supabaseUrl = import.meta.env?.VITE_SUPABASE_URL;
+            const supabaseKey = import.meta.env?.VITE_SUPABASE_KEY;
+            if (!supabaseUrl || !supabaseKey) {
+              toast("Supabase not configured — add VITE_SUPABASE_URL and VITE_SUPABASE_KEY in Vercel", "error");
+              return;
+            }
             setSyncing(true);
             try {
-              await syncFromHospitable(token, state, dispatch, toast);
+              const res = await fetch(
+                `${supabaseUrl}/rest/v1/hospitable_bookings?select=*&order=check_in.asc`,
+                { headers: { "apikey": supabaseKey, "Authorization": `Bearer ${supabaseKey}` } }
+              );
+              if (!res.ok) throw new Error("Supabase error " + res.status);
+              const rows = await res.json();
+              const existingIds = new Set(state.bookings.map(b => b.id));
+              let added = 0;
+              (rows || []).forEach(row => {
+                if (!row.id || existingIds.has(row.id) || !row.check_in || !row.check_out) return;
+                const booking = mkBookingDirect(
+                  row.id,
+                  row.guests ? `${row.guests} guest${row.guests !== 1 ? "s" : ""}` : "Guest",
+                  row.property_name || "Unknown Property",
+                  row.check_in, row.check_out,
+                  row.platform || "Airbnb", 0, []
+                );
+                booking.code = row.code || row.id;
+                if (row.status === "cancelled") booking.bookingStatus = "Cancelled";
+                dispatch({ type:"ADD_BOOKING", payload:booking });
+                existingIds.add(row.id);
+                added++;
+              });
+              dispatch({ type:"UPDATE_SETTINGS", payload:{ hospitable:{ ...state.settings.hospitable, lastSync: new Date().toISOString() }}});
+              toast(added > 0 ? `✓ ${added} new booking${added !== 1 ? "s" : ""} pulled from Hospitable` : "✓ Already up to date");
             } catch(e) {
               toast("Sync failed: " + e.message, "error");
             } finally { setSyncing(false); }
