@@ -600,9 +600,7 @@ function reducer(state, action) {
     case "CLEAR_ALL_BOOKINGS": return { ...state, bookings: [] };
     case "ADD_BOOKING": return { ...state, bookings: [...state.bookings, action.payload] };
     case "UPDATE_BOOKING": return { ...state, bookings: state.bookings.map(b => b.id === action.payload.id ? { ...b, ...action.payload } : b) };
-    case "DELETE_BOOKING": return { ...state, bookings: state.bookings.filter(b => b.id !== action.payload) };
-    case "CLEAR_ALL_BOOKINGS": return { ...state, bookings: [] };
-    case "ADD_INCIDENT": return { ...state, incidents: [...state.incidents, action.payload] };
+            case "ADD_INCIDENT": return { ...state, incidents: [...state.incidents, action.payload] };
     case "UPDATE_INCIDENT": return { ...state, incidents: state.incidents.map(i => i.id === action.payload.id ? { ...i, ...action.payload } : i) };
     case "ADD_MAINTENANCE": return { ...state, maintenance: [...state.maintenance, action.payload] };
     case "UPDATE_MAINTENANCE": return { ...state, maintenance: state.maintenance.map(m => m.id === action.payload.id ? { ...m, ...action.payload } : m) };
