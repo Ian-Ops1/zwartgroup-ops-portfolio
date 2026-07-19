@@ -186,8 +186,8 @@ const fmtDate = (iso) => {
 };
 const fmtShort = (iso) => {
   if (!iso) return "—";
-  const [, m, d] = iso.split("-");
-  return `${d} ${["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][+m]}`;
+  const [y, m, d] = iso.split("-");
+  return `${d} ${["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][+m]} ${y}`;
 };
 const fmtCurr = (n) => `R ${Number(n || 0).toLocaleString("en-ZA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const excelToISO = (serial) => {
