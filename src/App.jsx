@@ -577,6 +577,7 @@ const initialState = {
   dailyOps: {},
   housekeeping: [],
   financialLedger: [],
+  propertyMap: {}, // maps Hospitable listing name → app property name
   settings: {
     companyName: "Zwart Group",
     managerName: "Operations Manager",
@@ -615,6 +616,7 @@ function reducer(state, action) {
     case 'ADD_HK_SCHEDULE': return { ...state, housekeeping: [...(state.housekeeping||[]), action.payload] };
     case 'UPDATE_HK_SCHEDULE': return { ...state, housekeeping: (state.housekeeping||[]).map(h => h.id===action.payload.id?{...h,...action.payload}:h) };
     case 'DELETE_HK_SCHEDULE': return { ...state, housekeeping: (state.housekeeping||[]).filter(h => h.id!==action.payload) };
+    case "SET_PROPERTY_MAP": return { ...state, propertyMap: { ...state.propertyMap, ...action.payload } };
     case "ADD_FINANCIAL": return { ...state, financialLedger: [...(state.financialLedger||[]), action.payload] };
     case "DELETE_FINANCIAL": return { ...state, financialLedger: (state.financialLedger||[]).filter(f => f.id !== action.payload) };
     case "UPDATE_FINANCIAL": return { ...state, financialLedger: (state.financialLedger||[]).map(f => f.id===action.payload.id?{...f,...action.payload}:f) };
@@ -5586,6 +5588,7 @@ function ModuleContent({ active, onNav }) {
     properties:  <PropertiesModule />,
     mgmtreport:  <ManagementReport />,
     history:     <DailyHistory />,
+    propmap:     <PropertyMapper />,
     settings:    <SettingsModule />,
   };
   return map[active] || <EmptyState icon={Layers} title="Module not found" />;
@@ -5739,14 +5742,18 @@ function AppInner() {
         rows.forEach(row => {
           if (!row.id || existingIds.has(row.id)) return;
           if (!row.check_in || !row.check_out) return;
+          // Apply property name mapping
+          const rawName = row.property_name || "Unknown Property";
+          const mappedName = state.propertyMap?.[rawName] || rawName;
           const booking = mkBookingDirect(
             row.id,
             row.guests ? `${row.guests} guest${row.guests !== 1 ? "s" : ""}` : "Guest",
-            row.property_name || "Unknown Property",
+            mappedName,
             row.check_in, row.check_out,
             row.platform || "Airbnb", 0, []
           );
           booking.code = row.code || row.id;
+          booking.hospListingName = rawName; // keep original for reference
           if (row.status === "cancelled") booking.bookingStatus = "Cancelled";
           dispatch({ type:"ADD_BOOKING", payload:booking });
           existingIds.add(row.id);
@@ -6763,6 +6770,170 @@ function Reservations() {
           <Btn variant="ghost" onClick={() => setShowAdd(false)}>Cancel</Btn>
         </div>
       </Modal>
+    </div>
+  );
+}
+
+// ─── PROPERTY MAPPER ─────────────────────────────────────────────────────────
+function PropertyMapper() {
+  const { state, dispatch, toast } = useApp();
+  const [supabaseListings, setSupabaseListings] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [mappings, setMappings] = useState({});
+  const [search, setSearch] = useState("");
+
+  // Load unique listing names from Supabase
+  const loadListings = async () => {
+    const supabaseUrl = import.meta.env?.VITE_SUPABASE_URL;
+    const supabaseKey = import.meta.env?.VITE_SUPABASE_KEY;
+    if (!supabaseUrl || !supabaseKey) return toast("Supabase not configured", "error");
+    setLoading(true);
+    try {
+      const res = await fetch(
+        `${supabaseUrl}/rest/v1/hospitable_bookings?select=property_name&order=property_name.asc`,
+        { headers: { "apikey": supabaseKey, "Authorization": `Bearer ${supabaseKey}` } }
+      );
+      const rows = await res.json();
+      const unique = [...new Set(rows.map(r => r.property_name).filter(Boolean))].sort();
+      setSupabaseListings(unique);
+      // Pre-fill with existing mappings
+      setMappings({ ...state.propertyMap });
+    } catch(e) {
+      toast("Failed to load listings: " + e.message, "error");
+    } finally { setLoading(false); }
+  };
+
+  useEffect(() => { loadListings(); }, []);
+
+  const propNames = state.properties
+    .filter(p => p.status === "Active")
+    .map(p => p.name)
+    .sort();
+
+  const handleSave = () => {
+    dispatch({ type:"SET_PROPERTY_MAP", payload:mappings });
+    toast("Property mappings saved — re-sync to apply");
+  };
+
+  const filtered = supabaseListings.filter(name =>
+    !search || name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const unmappedCount = supabaseListings.filter(name =>
+    !mappings[name] && (name === "Unknown Property" || !state.properties.find(p => p.name === name))
+  ).length;
+
+  return (
+    <div style={{ animation:"fadeIn 0.25s ease" }}>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:20 }}>
+        <div>
+          <SectionTitle>Property Name Mapping</SectionTitle>
+          <div style={{ fontSize:12, color:C.text3, marginTop:-8 }}>
+            Map Hospitable listing names to your app property names
+          </div>
+        </div>
+        <div style={{ display:"flex", gap:8 }}>
+          <Btn variant="subtle" icon={RefreshCw} onClick={loadListings} disabled={loading}>
+            {loading ? "Loading..." : "Refresh"}
+          </Btn>
+          <Btn variant="primary" icon={Save} onClick={handleSave}>Save Mappings</Btn>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div style={{ display:"flex", gap:12, marginBottom:20, flexWrap:"wrap" }}>
+        <KPICard label="Hospitable Listings" value={supabaseListings.length} color={C.teal} />
+        <KPICard label="Unmapped" value={unmappedCount} color={unmappedCount>0?C.amber:C.green} />
+        <KPICard label="Mapped" value={Object.keys(mappings).filter(k=>mappings[k]).length} color={C.green} />
+      </div>
+
+      {unmappedCount > 0 && (
+        <div style={{ background:C.amberBg, border:`1px solid ${C.amber}30`, borderRadius:8,
+          padding:"10px 16px", marginBottom:16, fontSize:12, color:C.amber }}>
+          ⚠️ {unmappedCount} listing{unmappedCount!==1?"s":""} not mapped — bookings will show the Hospitable listing name.
+          Map them below then click Save, then re-sync on the Reservations page.
+        </div>
+      )}
+
+      {/* Search */}
+      <SearchBar value={search} onChange={setSearch} placeholder="Search listing name..." style={{ marginBottom:16 }} />
+
+      {/* Mapping table */}
+      <div style={{ background:C.bg1, border:`1px solid ${C.border}`, borderRadius:10, overflow:"hidden" }}>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 40px 1fr", padding:"10px 16px",
+          background:C.bg2, borderBottom:`1px solid ${C.border}` }}>
+          <div style={{ fontSize:11, color:C.text3, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em" }}>
+            Hospitable Listing Name
+          </div>
+          <div />
+          <div style={{ fontSize:11, color:C.text3, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em" }}>
+            App Property Name
+          </div>
+        </div>
+
+        {filtered.length === 0 && !loading && (
+          <div style={{ padding:"24px 16px", textAlign:"center", fontSize:13, color:C.text3 }}>
+            {supabaseListings.length === 0 ? "No listings found — make sure Supabase is connected and has data" : "No results"}
+          </div>
+        )}
+
+        {filtered.map(listingName => {
+          const isMapped = !!mappings[listingName];
+          const matchesApp = state.properties.find(p => p.name === listingName);
+          const isUnknown = listingName === "Unknown Property";
+
+          return (
+            <div key={listingName} style={{ display:"grid", gridTemplateColumns:"1fr 40px 1fr",
+              padding:"12px 16px", borderTop:`1px solid ${C.border}20`, alignItems:"center",
+              background: isUnknown ? C.crimsonBg : isMapped ? C.greenBg+"30" : matchesApp ? C.tealBg+"20" : "transparent" }}>
+              {/* Hospitable name */}
+              <div>
+                <div style={{ fontSize:13, color: isUnknown ? C.crimson : C.text1, fontWeight:500 }}>
+                  {listingName}
+                </div>
+                {isUnknown && (
+                  <div style={{ fontSize:11, color:C.crimson, marginTop:2 }}>
+                    Property ID not found — needs mapping
+                  </div>
+                )}
+                {matchesApp && !isUnknown && (
+                  <div style={{ fontSize:11, color:C.teal, marginTop:2 }}>✓ Matches app property</div>
+                )}
+              </div>
+
+              {/* Arrow */}
+              <div style={{ textAlign:"center", color:C.text3, fontSize:16 }}>→</div>
+
+              {/* App property selector */}
+              <div>
+                <select
+                  value={mappings[listingName] || ""}
+                  onChange={e => setMappings(m => ({...m, [listingName]: e.target.value || ""}))}
+                  style={{ width:"100%", padding:"7px 10px", background:C.bg2,
+                    border:`1px solid ${isMapped ? C.green : C.border}`,
+                    borderRadius:6, color: isMapped ? C.text1 : C.text3,
+                    fontSize:12, cursor:"pointer" }}>
+                  <option value="">-- select property --</option>
+                  {matchesApp && <option value={listingName}>Keep as "{listingName}"</option>}
+                  {propNames.map(name => (
+                    <option key={name} value={name}>{name}</option>
+                  ))}
+                  <option value="__skip__">Skip / Ignore</option>
+                </select>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {filtered.length > 0 && (
+        <div style={{ marginTop:16, display:"flex", gap:8 }}>
+          <Btn variant="primary" icon={Save} onClick={handleSave}>Save All Mappings</Btn>
+          <div style={{ fontSize:12, color:C.text3, alignSelf:"center" }}>
+            After saving, go to Reservations → ↻ Sync Hospitable to apply mappings
+          </div>
+        </div>
+      )}
     </div>
   );
 }
