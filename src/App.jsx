@@ -72,9 +72,13 @@ const SimpleBar = ({data=[],dataKey,color='#00D4B8',nameKey='name'}) => {
     </div>)}
   </div>;
 };
-const BarChart = ({children,data,height}) => <div style={{width:'100%',height:height||200,position:'relative'}}>{
-  React.Children.map(children,c=>c?.type?.displayName==='Bar'?<SimpleBar data={data} dataKey={c.props.dataKey} color={c.props.fill}/>:null)
-}</div>;
+const BarChart = ({children,data,height}) => {
+  const arr = Array.isArray(children)?children:[children];
+  const bars = arr.filter(c=>c&&c.props&&c.props.dataKey);
+  return <div style={{width:'100%',height:height||200,position:'relative'}}>
+    {bars.map((c,i)=><SimpleBar key={i} data={data} dataKey={c.props.dataKey} color={c.props.fill||'#00D4B8'}/>)}
+  </div>;
+};
 const LineChart = ({children,data}) => <BarChart children={children} data={data}/>;
 const AreaChart = ({children,data}) => <BarChart children={children} data={data}/>;
 const Bar = (p) => { Bar.displayName='Bar'; return null; };
