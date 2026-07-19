@@ -1337,7 +1337,12 @@ function ResCleans() {
   }, [bookings]);
 
   const filtered = useMemo(() => {
-    let r = bookings;
+    // Only show 10+ night bookings that are current or future (not old checked-out ones)
+    let r = bookings.filter(b =>
+      b.nights >= 10 &&
+      b.cleans && b.cleans.length > 0 &&
+      b.checkOut >= addDays(TODAY, -14) // exclude bookings checked out more than 14 days ago
+    );
     if (search) r = r.filter(b => b.guestName.toLowerCase().includes(search.toLowerCase()) || b.propertyName.toLowerCase().includes(search.toLowerCase()) || b.id.toLowerCase().includes(search.toLowerCase()));
     if (statusFilter !== "All") r = r.filter(b => b.status === statusFilter);
     if (platformFilter !== "All") r = r.filter(b => b.platform === platformFilter);
