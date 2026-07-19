@@ -257,33 +257,7 @@ const mkBookingDirect = (id, guestName, propName, checkIn, checkOut, platform, r
     status: daysBetween(TODAY,checkIn)>0?"Upcoming":daysBetween(checkOut,TODAY)>0?"Checked Out":"In-House", cleans };
 };
 
-const INITIAL_BOOKINGS = [
-  mkBookingDirect("HMD9DDPMNY","Nomusa Buthelezi","Unit 3 Castella Mare","2026-05-02","2026-06-02","Airbnb",16705.35,["Completed","Completed","Completed","Upcoming"]),
-  mkBookingDirect("HMMM4NRS3D","Lene Van Dyk","10 Duet Cottage","2026-05-01","2026-05-31","Airbnb",10541.63,["Completed","Completed","Completed","Upcoming"]),
-  mkBookingDirect("HMDSP3XDZD","Abigail Windvogel","35 Uxolo","2026-04-30","2026-05-28","Airbnb",13446.79,["Completed","Completed","Completed"]),
-  mkBookingDirect("HMPPK4ZEN5","Anthony Chijioke","2309 16 on Bree","2026-04-16","2026-05-16","Airbnb",28009.34,["Completed","Completed","Completed","Completed"]),
-  mkBookingDirect("HMZZYR9NP8","Oluwamayowa Fanoiki","2108 The Rubik","2026-04-13","2026-05-14","Airbnb",20117.40,["Completed","Completed","Completed","Completed"]),
-  mkBookingDirect("HMNZ59ABRW","Sylvester Selepe","601 Quayside Apartments","2026-04-24","2026-06-30","Airbnb",52196.41,["Completed","Completed","Completed","Completed","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming"]),
-  mkBookingDirect("HMKMTC9JAQ","Tonye Tariah","1005 Arnhem","2026-04-06","2026-05-08","Airbnb",23030.40,["Completed","Completed","Completed","Completed"]),
-  mkBookingDirect("HMQESEWZMJ","Francisca","Suite 103 Strand Beach","2026-05-01","2026-05-17","Airbnb",0,["Completed","Completed"],"Revenue missing"),
-  mkBookingDirect("HMH34D3NEA","Azeez Kehinde","504 Greenmarket","2026-04-30","2026-05-11","Airbnb",7763.89,["Completed"]),
-  mkBookingDirect("HMPRNKZKH4","Abdullah Habeeb","505 Bridgewater","2026-05-03","2026-06-03","Airbnb",24890.01,["Completed","Rescheduled","Upcoming","Upcoming"]),
-  mkBookingDirect("HMNRD2RRP9","Maya Dorel","8 Bramber Court","2026-04-11","2026-06-11","Airbnb",67965.89,["Completed","Completed","Completed","Completed","Rescheduled","Upcoming","Upcoming","Upcoming"]),
-  mkBookingDirect("HMMN2RHC4P","Serena Dell Angelo","504 The Centurion","2026-04-23","2026-05-25","Airbnb",22063.97,["Completed","Completed","Completed","Completed"]),
-  mkBookingDirect("HMJHWNNKMB","Milla Sequeira","201 The Suro","2026-05-04","2026-06-04","Airbnb",41017.65,["Completed","Completed","Upcoming","Upcoming"]),
-  mkBookingDirect("HMBRAYFMD2","Ontario","24 Upper Pepper","2026-05-04","2026-05-29","Airbnb",21933.38,["Completed","Completed","Upcoming"]),
-  mkBookingDirect("HMPFX4MBN2","Teresa Forester","10 Duet Loft","2026-05-07","2026-05-19","Airbnb",910.67,["Completed"]),
-  mkBookingDirect("HMC344RY9N","Brian Van Eyssen","Unit 2, 2 Munnik Laas","2026-05-08","2026-05-31","Airbnb",0,["Rescheduled","Rescheduled","Upcoming"],"Revenue missing"),
-  mkBookingDirect("5986083519","Alexis","417 Station House","2026-05-10","2026-08-01","Booking.com",0,["Rescheduled","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming"],"Revenue missing"),
-  mkBookingDirect("NA-601","Guest","601 Station House","2026-05-04","2026-08-01","Direct",0,["Completed","Completed","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming"],"Guest name missing"),
-  mkBookingDirect("HM3TX2FDHZ","Rhianne Tisdale","602 The Suro","2026-05-09","2026-06-14","Airbnb",0,["Rescheduled","Upcoming","Upcoming","Upcoming","Upcoming"],"Revenue missing"),
-  mkBookingDirect("HMEWYEMCWH","Guest","Unit 1, 2 Munnik Laas","2026-05-10","2026-06-30","Airbnb",0,["Rescheduled","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming","Upcoming"],"Guest name missing"),
-  mkBookingDirect("HMXRKNYWJN","Guest","10 Duet Main House","2026-05-14","2026-05-23","Airbnb",0,["Completed"],"Guest name missing"),
-  mkBookingDirect("4PL7YF","John","314 Station House","2026-05-11","2026-06-11","Direct",0,["Completed","Upcoming","Upcoming","Upcoming"],"Revenue missing"),
-  mkBookingDirect("NA-614","Guest","614 Albert","2026-05-14","2026-05-22","Airbnb",0,["Completed"],"Guest name missing"),
-  mkBookingDirect("NA-220","Guest","209 220 on Loop","2026-05-15","2026-06-15","Airbnb",0,["Completed","Upcoming","Upcoming","Upcoming"],"Guest name missing"),
-  mkBookingDirect("NA-126","Guest","602 126 on Main","2026-05-15","2026-05-28","Airbnb",0,["Completed"],"Guest name missing"),
-];
+const INITIAL_BOOKINGS = [];
 INITIAL_BOOKINGS.forEach(b => {
   b.cleans = b.cleans.map(c => ["Completed","Rescheduled"].includes(c.status) ? c : {...c, status:getCleanStatus(c)});
   b.status = daysBetween(TODAY,b.checkIn)>0?"Upcoming":daysBetween(b.checkOut,TODAY)>0?"Checked Out":"In-House";
