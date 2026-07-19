@@ -6312,41 +6312,44 @@ function Reservations() {
     }
   };
 
+  // Always recalculate booking status live based on today's date
+  const getLiveStatus = (b) => {
+    if (b.checkIn > TODAY) return "Upcoming";
+    if (b.checkOut <= TODAY) return "Checked Out";
+    return "In-House";
+  };
+
   const filtered = useMemo(() => {
-    let r = bookings;
+    let r = bookings.map(b => ({ ...b, liveStatus: getLiveStatus(b) }));
+
     if (search) r = r.filter(b =>
       b.guestName.toLowerCase().includes(search.toLowerCase()) ||
       b.propertyName.toLowerCase().includes(search.toLowerCase()) ||
       b.id.toLowerCase().includes(search.toLowerCase())
     );
-    if (statusFilter !== "All") r = r.filter(b => b.status === statusFilter);
+    // Filter by LIVE status not stored status
+    if (statusFilter !== "All") r = r.filter(b => b.liveStatus === statusFilter);
     if (platformFilter !== "All") r = r.filter(b => b.platform === platformFilter);
     if (bookingStatusFilter === "Cancelled") r = r.filter(b => b.bookingStatus === "Cancelled");
     if (bookingStatusFilter === "Accepted") r = r.filter(b => b.bookingStatus !== "Cancelled");
-    // Sort: In-House first → Upcoming soonest → Checked Out most recent last
-    // Recalculate live status based on TODAY to ensure accuracy
-    const liveStatus = (b) => {
-      if (b.checkIn > TODAY) return "Upcoming";
-      if (b.checkOut <= TODAY) return "Checked Out";
-      return "In-House";
-    };
+
     const statusOrder = { "In-House": 0, "Upcoming": 1, "Checked Out": 2 };
     return [...r].sort((a, b) => {
       if (sortBy === "revenue") return b.revenue - a.revenue;
       if (sortBy === "nights") return b.nights - a.nights;
       if (sortBy === "checkOut") return b.checkOut.localeCompare(a.checkOut);
-      const sa = liveStatus(a), sb = liveStatus(b);
-      const so = (statusOrder[sa] ?? 1) - (statusOrder[sb] ?? 1);
+      // Status-aware sort
+      const so = (statusOrder[a.liveStatus] ?? 1) - (statusOrder[b.liveStatus] ?? 1);
       if (so !== 0) return so;
-      if (sa === "Checked Out") return b.checkOut.localeCompare(a.checkOut);
-      return a.checkIn.localeCompare(b.checkIn);
+      if (a.liveStatus === "Checked Out") return b.checkOut.localeCompare(a.checkOut); // newest first
+      return a.checkIn.localeCompare(b.checkIn); // soonest upcoming first
     });
   }, [bookings, search, statusFilter, platformFilter, sortBy, bookingStatusFilter]);
 
   const totalRevenue = bookings.reduce((s,b) => s+b.revenue, 0);
-  const inHouse = bookings.filter(b => b.status==="In-House").length;
-  const upcoming = bookings.filter(b => b.status==="Upcoming").length;
-  const checkedOut = bookings.filter(b => b.status==="Checked Out").length;
+  const inHouse   = bookings.filter(b => getLiveStatus(b) === "In-House").length;
+  const upcoming  = bookings.filter(b => getLiveStatus(b) === "Upcoming").length;
+  const checkedOut = bookings.filter(b => getLiveStatus(b) === "Checked Out").length;
   const shortStays = bookings.filter(b => b.nights < 10).length;
   const longStays = bookings.filter(b => b.nights >= 10).length;
 
