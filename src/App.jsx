@@ -80,22 +80,70 @@ fontLink.href = "https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;
 document.head.appendChild(fontLink);
 const gStyle = document.createElement("style");
 gStyle.textContent = `
-  *{box-sizing:border-box;margin:0;padding:0;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
   body{font-family:'Plus Jakarta Sans',sans-serif;background:#0D0F14;}
-  ::-webkit-scrollbar{width:6px;height:6px;}
+  ::-webkit-scrollbar{width:4px;height:4px;}
   ::-webkit-scrollbar-track{background:#13161C;}
-  ::-webkit-scrollbar-thumb{background:#2A2D35;border-radius:3px;}
-  ::-webkit-scrollbar-thumb:hover{background:#3A3D45;}
+  ::-webkit-scrollbar-thumb{background:#2A2D35;border-radius:2px;}
   input,select,textarea{font-family:'Plus Jakarta Sans',sans-serif;}
   .mono{font-family:'DM Mono',monospace;}
   .syne{font-family:'Syne',sans-serif;}
-  @keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
-  @keyframes slideIn{from{transform:translateX(100%);}to{transform:translateX(0);}}
-  @keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  @keyframes slideIn{from{transform:translateX(-100%);}to{transform:translateX(0);}}
+  @keyframes slideUp{from{transform:translateY(100%);opacity:0;}to{transform:translateY(0);opacity:1;}}
+  @keyframes toastIn{from{opacity:0;transform:translateX(100%);}to{opacity:1;transform:none;}}
   @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+
+  /* ── MOBILE RESPONSIVE ── */
   @media(max-width:768px){
-    input,select,textarea{font-size:16px!important;}
+    /* Touch-friendly inputs */
+    input,select,textarea{font-size:16px!important;min-height:38px;}
+    button{min-height:36px;}
+
+    /* KPI grid: 2 columns */
+    .kpi-row{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important;flex-wrap:unset!important;}
+
+    /* Scrollable tables */
+    .tbl-scroll{overflow-x:auto!important;-webkit-overflow-scrolling:touch!important;}
+
+    /* Stack filters vertically */
+    .filter-bar{flex-direction:column!important;gap:8px!important;}
+    .filter-bar>*,.filter-bar select,.filter-bar input{width:100%!important;max-width:100%!important;}
+
+    /* Forms: single column */
+    .form-2col{grid-template-columns:1fr!important;}
+    .form-3col{grid-template-columns:1fr!important;}
+
+    /* Button rows wrap */
+    .btn-row{flex-wrap:wrap!important;gap:8px!important;}
+
+    /* Page padding with space for bottom tab bar */
+    .page-content{padding:14px 12px 78px!important;}
+
+    /* Hide desktop-only elements */
+    .hide-mobile{display:none!important;}
+
+    /* Full width cards */
+    .mobile-full{width:100%!important;}
+
+    /* Smaller section titles */
+    .sec-title{font-size:18px!important;}
+
+    /* Modal: slide up from bottom */
+    .modal-wrap{align-items:flex-end!important;padding:0!important;}
+    .modal-inner{
+      width:100%!important;max-width:100%!important;
+      max-height:90vh!important;overflow-y:auto!important;
+      border-radius:16px 16px 0 0!important;margin:0!important;
+    }
   }
+
+  /* ── HIDE BOTTOM TAB ON DESKTOP ── */
+  @media(min-width:769px){
+    .bottom-tab-bar{display:none!important;}
+    .mobile-only{display:none!important;}
+  }
+
   @media print{
     body{background:#fff!important;}
     #print-hide{display:none!important;}
@@ -6220,6 +6268,8 @@ function Reservations() {
   const [syncing, setSyncing] = useState(false);
   const [showCleanup, setShowCleanup] = useState(false);
   const [resTab, setResTab] = useState("bookings");
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 50;
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState(null);
   const fileRef = useRef(null);
@@ -6358,6 +6408,8 @@ function Reservations() {
       return a.checkIn.localeCompare(b.checkIn); // soonest upcoming first
     });
   }, [bookings, search, statusFilter, platformFilter, sortBy, bookingStatusFilter]);
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const paginated = filtered.slice((page-1)*PAGE_SIZE, page*PAGE_SIZE);
 
   const totalRevenue = bookings.reduce((s,b) => s+b.revenue, 0);
   const inHouse   = bookings.filter(b => getLiveStatus(b) === "In-House").length;
@@ -6765,6 +6817,35 @@ function Reservations() {
       />}
 
       </> }
+
+      {/* Pagination */}
+      {totalPages > 1 && resTab === "bookings" && (
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8, marginTop:16, flexWrap:"wrap" }}>
+          <button onClick={() => setPage(p => Math.max(1,p-1))} disabled={page===1}
+            style={{ padding:"6px 14px", background:C.bg2, border:`1px solid ${C.border}`,
+              borderRadius:6, color:page===1?C.text3:C.text1, cursor:page===1?"default":"pointer", fontSize:13 }}>← Prev</button>
+          {Array.from({length:Math.min(totalPages,7)},(_,i)=>{
+            let p = i+1;
+            if (totalPages>7) {
+              if (page<=4) p=i+1;
+              else if (page>=totalPages-3) p=totalPages-6+i;
+              else p=page-3+i;
+            }
+            return (
+              <button key={p} onClick={() => setPage(p)}
+                style={{ width:34, height:34, borderRadius:6, border:`1px solid ${page===p?C.teal:C.border}`,
+                  background:page===p?C.tealBg:C.bg2, color:page===p?C.teal:C.text2,
+                  cursor:"pointer", fontSize:13, fontWeight:page===p?700:400 }}>{p}</button>
+            );
+          })}
+          <button onClick={() => setPage(p => Math.min(totalPages,p+1))} disabled={page===totalPages}
+            style={{ padding:"6px 14px", background:C.bg2, border:`1px solid ${C.border}`,
+              borderRadius:6, color:page===totalPages?C.text3:C.text1, cursor:page===totalPages?"default":"pointer", fontSize:13 }}>Next →</button>
+          <span style={{ fontSize:12, color:C.text3 }}>
+            Showing {((page-1)*PAGE_SIZE)+1}–{Math.min(page*PAGE_SIZE,filtered.length)} of {filtered.length}
+          </span>
+        </div>
+      )}
 
       {/* Add Booking Modal */}
       <Modal open={showAdd} onClose={() => setShowAdd(false)} title="Add New Booking" width={520}>
