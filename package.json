@@ -1,23 +1,35 @@
 {
-  "name": "zwart-group",
-  "private": true,
+  "name": "zwartgroup-ops",
   "version": "1.0.0",
-  "type": "module",
+  "description": "Zwart Group Ops & Portfolio Command",
+  "main": "main.js",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "start": "electron .",
+    "build-win": "electron-builder --win",
+    "build-mac": "electron-builder --mac"
   },
-  "dependencies": {
-    "lucide-react": "^0.383.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "recharts": "^2.12.7"
+  "build": {
+    "appId": "com.zwartgroup.ops",
+    "productName": "ZwartGroup Ops",
+    "icon": "icon",
+    "win": {
+      "target": "nsis",
+      "icon": "icon.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "icon.icns",
+      "category": "public.app-category.business"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "icon.ico",
+      "uninstallerIcon": "icon.ico"
+    }
   },
   "devDependencies": {
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.0",
-    "@vitejs/plugin-react": "^4.3.1",
-    "vite": "^5.3.4"
+    "electron": "^28.0.0",
+    "electron-builder": "^24.0.0"
   }
 }
