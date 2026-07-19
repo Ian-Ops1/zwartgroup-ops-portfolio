@@ -5728,8 +5728,10 @@ function AppInner() {
 
     const fetchFromSupabase = async () => {
       try {
+        // Only pull bookings from May 2026 onwards to avoid browser freeze
+        const fromDate = "2026-05-01";
         const res = await fetch(
-          `${supabaseUrl}/rest/v1/hospitable_bookings?select=*&order=check_in.asc`,
+          `${supabaseUrl}/rest/v1/hospitable_bookings?select=*&check_in=gte.${fromDate}&order=check_in.asc&limit=500`,
           { headers: { "apikey": supabaseKey, "Authorization": `Bearer ${supabaseKey}` } }
         );
         if (!res.ok) return;
@@ -6474,8 +6476,9 @@ function Reservations() {
             }
             setSyncing(true);
             try {
+              const fromDate = "2026-05-01";
               const res = await fetch(
-                `${supabaseUrl}/rest/v1/hospitable_bookings?select=*&order=check_in.asc`,
+                `${supabaseUrl}/rest/v1/hospitable_bookings?select=*&check_in=gte.${fromDate}&order=check_in.asc&limit=500`,
                 { headers: { "apikey": supabaseKey, "Authorization": `Bearer ${supabaseKey}` } }
               );
               if (!res.ok) throw new Error("Supabase error " + res.status);
@@ -6790,7 +6793,7 @@ function PropertyMapper() {
     setLoading(true);
     try {
       const res = await fetch(
-        `${supabaseUrl}/rest/v1/hospitable_bookings?select=property_name&order=property_name.asc`,
+        `${supabaseUrl}/rest/v1/hospitable_bookings?select=property_name&check_in=gte.2026-05-01&order=property_name.asc`,
         { headers: { "apikey": supabaseKey, "Authorization": `Bearer ${supabaseKey}` } }
       );
       const rows = await res.json();
