@@ -670,6 +670,15 @@ function reducer(state, action) {
     }
     case "DELETE_BOOKING": return { ...state, bookings: state.bookings.filter(b => b.id !== action.payload) };
     case "CLEAR_ALL_BOOKINGS": return { ...state, bookings: [] };
+    case "DEDUP_BOOKINGS": {
+      const seen = new Set();
+      const deduped = state.bookings.filter(b => {
+        if (seen.has(b.id)) return false;
+        seen.add(b.id);
+        return true;
+      });
+      return { ...state, bookings: deduped };
+    }
     case "ADD_BOOKING": return { ...state, bookings: [...state.bookings, action.payload] };
     case "UPDATE_BOOKING": return { ...state, bookings: state.bookings.map(b => b.id === action.payload.id ? { ...b, ...action.payload } : b) };
             case "ADD_INCIDENT": return { ...state, incidents: [...state.incidents, action.payload] };
@@ -5802,6 +5811,11 @@ function AppInner() {
     return () => clearInterval(interval);
   }, [state.settings?.hospitable?.apiUrl, state.settings?.hospitable?.enabled]);
 
+  // Deduplicate bookings on app load (fix any existing duplicates in localStorage)
+  useEffect(() => {
+    dispatch({ type:"DEDUP_BOOKINGS" });
+  }, []);
+
   // Supabase sync — pull bookings from hospitable_bookings table on load and every 2 min
   useEffect(() => {
     const supabaseUrl = import.meta.env?.VITE_SUPABASE_URL;
@@ -5824,9 +5838,8 @@ function AppInner() {
         let added = 0;
 
         rows.forEach(row => {
-          if (!row.id || existingIds.has(row.id)) return;
-          if (!row.check_in || !row.check_out) return;
-          // Apply property name mapping
+          if (!row.id || !row.check_in || !row.check_out) return;
+          if (existingIds.has(row.id)) return; // skip duplicates
           const rawName = row.property_name || "Unknown Property";
           const mappedName = state.propertyMap?.[rawName] || rawName;
           const booking = mkBookingDirect(
@@ -5837,12 +5850,14 @@ function AppInner() {
             row.platform || "Airbnb", 0, []
           );
           booking.code = row.code || row.id;
-          booking.hospListingName = rawName; // keep original for reference
+          booking.hospListingName = rawName;
           if (row.status === "cancelled") booking.bookingStatus = "Cancelled";
           dispatch({ type:"ADD_BOOKING", payload:booking });
-          existingIds.add(row.id);
+          existingIds.add(row.id); // track so we don't add again in same sync
           added++;
         });
+        // Deduplicate after sync in case state had duplicates
+        dispatch({ type:"DEDUP_BOOKINGS" });
 
         if (added > 0) toast(`✓ ${added} new booking${added !== 1 ? "s" : ""} synced from Hospitable`);
       } catch(e) {
