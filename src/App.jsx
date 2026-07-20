@@ -1364,7 +1364,7 @@ function ResCleans() {
     let r = bookings.filter(b =>
       b.nights >= 10 &&
       b.cleans && b.cleans.length > 0 &&
-      b.checkOut >= addDays(TODAY, -14) // exclude bookings checked out more than 14 days ago
+      b.checkOut > TODAY // only show bookings that have NOT checked out yet
     );
     if (search) r = r.filter(b => b.guestName.toLowerCase().includes(search.toLowerCase()) || b.propertyName.toLowerCase().includes(search.toLowerCase()) || b.id.toLowerCase().includes(search.toLowerCase()));
     if (statusFilter !== "All") r = r.filter(b => b.status === statusFilter);
