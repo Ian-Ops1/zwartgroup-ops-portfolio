@@ -6468,11 +6468,13 @@ function Reservations() {
       if (sortBy === "revenue") return b.revenue - a.revenue;
       if (sortBy === "nights") return b.nights - a.nights;
       if (sortBy === "checkOut") return b.checkOut.localeCompare(a.checkOut);
-      // Status-aware sort
-      const so = (statusOrder[a.liveStatus] ?? 1) - (statusOrder[b.liveStatus] ?? 1);
+      // Status-aware sort: In-House first, then Upcoming (soonest first), then Checked Out (newest first)
+      const sa = a.liveStatus || getLiveStatus(a);
+      const sb = b.liveStatus || getLiveStatus(b);
+      const so = (statusOrder[sa] ?? 1) - (statusOrder[sb] ?? 1);
       if (so !== 0) return so;
-      if (a.liveStatus === "Checked Out") return b.checkOut.localeCompare(a.checkOut); // newest first
-      return a.checkIn.localeCompare(b.checkIn); // soonest upcoming first
+      if (sa === "Checked Out") return b.checkOut.localeCompare(a.checkOut); // most recent checkout first
+      return a.checkIn.localeCompare(b.checkIn) // soonest check-in first; // soonest upcoming first
     });
   }, [bookings, search, statusFilter, platformFilter, sortBy, bookingStatusFilter]);
   useEffect(() => { setPage(1); }, [search, statusFilter, platformFilter, bookingStatusFilter]);
