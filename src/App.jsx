@@ -6318,6 +6318,12 @@ function BookingDetailModal({ booking, properties, onClose, onSave }) {
 // ─── RESERVATIONS ────────────────────────────────────────────────────────────
 function Reservations() {
   const { state, dispatch, toast } = useApp();
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [platformFilter, setPlatformFilter] = useState("All");
